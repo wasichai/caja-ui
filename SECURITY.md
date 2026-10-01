@@ -1,21 +1,16 @@
-# Security Policy
+# Política de seguridad
 
-## Supported Versions
+## Versiones soportadas
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Solo se da soporte a la rama `main`. No hay otras ramas ni versiones mantenidas.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Cómo reportar una vulnerabilidad
 
-## Reporting a Vulnerability
+Reporta las vulnerabilidades de forma privada con
+[GitHub Security Advisories](https://github.com/wasichai/caja-ui/security/advisories/new) del repositorio
+(pestaña **Security** > **Report a vulnerability**).
 
-Use this section to tell people how to report a vulnerability.
+**No abras un issue público** ni publiques el detalle en un pull request: el reporte quedaría expuesto antes de que
+exista una corrección.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Incluye, si puedes, los pasos para reproducirlo, la versión o el commit afectado y el impacto que ves.
