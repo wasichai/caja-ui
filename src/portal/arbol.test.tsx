@@ -66,6 +66,9 @@ describe('the tree of tesorería, by /api/auth/me/permissions', () => {
     expect(await inicio().findByText('Elija una pantalla del menú.')).toBeInTheDocument()
     expect(hojas()).toEqual(['Ir al inicio', 'Duplicado de recibo', 'Recaudación por área'])
     expect(within(lateral()).getByRole('button', { name: 'Tesorería' })).toBeInTheDocument()
+    // the lateral's title is the cash desk's, not a taxpayer's procedures
+    expect(within(lateral()).getByText('Ventanilla')).toBeInTheDocument()
+    expect(lateral()).not.toHaveTextContent('Mis trámites')
   })
 
   it('does not offer it when a pair is missing', async () => {

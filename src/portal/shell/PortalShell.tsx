@@ -7,7 +7,7 @@ import { MenuSesion } from './MenuSesion'
 
 // the shell of the portal-tributario theme (useVarianteTema() === 'portal'), drawn in AppShell's frame: a brand bar in
 // the shell colours with the administration, the theme menu and the session menu; a light lateral with the tree of
-// trámites, which folds; and the footer. the bar, the lateral and the footer do not print
+// Tesorería, which folds; and the footer. the bar, the lateral and the footer do not print
 export const PortalShell: PiezasShell = {
   cabecera: 'flex h-14 shrink-0 items-center gap-2 bg-shell px-4 text-shell-ink sm:gap-4 print:hidden',
   // the prototype's 30px hamburger, on the bar's colours: it brings back the folded tree (the tree folds itself)
@@ -18,8 +18,8 @@ export const PortalShell: PiezasShell = {
   admin:
     'hidden items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-shell-muted hover:bg-shell-ink/10 hover:text-shell-ink focus-visible:outline-shell-ink sm:flex',
   Marca,
-  // the prototype's bar also shows the contributor's condition and a notices tray (a button with a badge) here,
-  // before the session. the staff portal has no data for either, so neither is drawn: no empty button
+  // the prototype's bar also shows a status of the person served and a notices tray (a button with a badge) here,
+  // before the session. the cash desk has no data for either, so neither is drawn: no empty button
   Sesion: MenuSesion,
   Lateral: LateralPortal,
   Pie

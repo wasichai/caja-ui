@@ -45,7 +45,8 @@ const rutas = () =>
 // the clerk's portal: the ventanilla of tesorería. under core's providers, like the admin: one session, and the theme
 // the user picked (stored for them) on both sides. no modules: the portal draws its own screens. it registers caja's
 // themes like the admin does (their labels are in core's i18n). spanish only, so a locale picked in the admin is left
-// alone, with the portal's wording and figures over core's strings (ajustarI18n)
+// alone, with the portal's wording and figures over core's strings (ajustarI18n). the login starts empty: the seed's
+// admin is /admin's development login, never a cash desk's
 export function PortalApp() {
   const [app] = useState(() => {
     const config = resolveConfig({
@@ -53,8 +54,7 @@ export function PortalApp() {
       storagePrefix: 'caja',
       appName: 'Caja',
       languages: ['es'],
-      themes: CAJA_THEMES,
-      defaultLoginEmail: 'admin@wasichai.local'
+      themes: CAJA_THEMES
     })
     const registry = createRegistry([])
     const i18n = createWasichaiI18n({ languages: config.languages, storageKey: client.keys.lang, modules: registry.modules })

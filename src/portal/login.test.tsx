@@ -60,6 +60,12 @@ describe('login', () => {
     expect(JSON.parse(localStorage.getItem('caja.user') ?? 'null')).toEqual(CAJERA)
   })
 
+  // the seed's admin is /admin's development login only: a cash desk's login starts empty
+  it('does not fill in any email', async () => {
+    start('/login', [])
+    expect(await screen.findByLabelText('Correo')).toHaveValue('')
+  })
+
   it('says so on a 401, and keeps no session', async () => {
     start('/login', [login(401)])
     await ingresar('cajera@caja.test', 'equivocada')

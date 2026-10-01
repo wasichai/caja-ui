@@ -3,8 +3,8 @@ import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, 
 import { useLocation, useNavigate } from 'react-router'
 import { TABS_KEY } from '../auth/session'
 
-// the workspace tabs, like gisxp's: every page one opens stays a tab until it is closed, so a clerk
-// attending several people keeps them all a click away. kept per browser tab (sessionStorage)
+// the workspace tabs: every screen one opens stays a tab until it is closed, so the clerk at the cash desk keeps a
+// duplicate, the day's close and the pending payments a click away. kept per browser tab (sessionStorage)
 
 export interface WorkspaceTab {
   path: string

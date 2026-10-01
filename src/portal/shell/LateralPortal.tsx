@@ -5,8 +5,8 @@ import type { LateralProps } from './comun'
 import { useArbol } from './navTree'
 import { guardarNav, leerNav } from './panelLateral'
 
-// the portal's lateral: the tree of trámites the account is offered (useArbol), its groups remembered for the browser
-// tab like the panel (usePanelLateral)
+// the portal's lateral: the screens of Tesorería the account is offered (useArbol), its groups remembered for the
+// browser tab like the panel (usePanelLateral)
 export function LateralPortal({ abierto, onNavegar, onPlegar }: LateralProps) {
   const nodos = useArbol()
   const [grupos, setGrupos] = useState(() => leerNav().grupos ?? {})
@@ -21,7 +21,7 @@ export function LateralPortal({ abierto, onNavegar, onPlegar }: LateralProps) {
     <ArbolNav
       id="sidebar"
       etiqueta="Secciones"
-      titulo="Mis trámites"
+      titulo="Ventanilla"
       nodos={nodos}
       abierto={abierto}
       grupos={grupos}

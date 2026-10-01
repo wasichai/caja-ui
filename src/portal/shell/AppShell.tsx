@@ -15,8 +15,8 @@ import { PortalShell } from './PortalShell'
 import { TabBar } from './TabBar'
 import { ThemeMenu } from './ThemeMenu'
 
-// gisxp's shell: light header, dark sidebar, workspace tabs over the content.
-// under the portal-tributario theme it delegates to PortalShell (brand bar, the tree of trámites, footer). one frame for
+// the classic shell of the cash desk: light header, dark sidebar, workspace tabs over the content.
+// under the portal-tributario theme it delegates to PortalShell (brand bar, the tree of Tesorería, footer). one frame for
 // both, each variant bringing its pieces: a theme switch redraws the bar, the lateral and the footer but keeps the
 // page (and whatever is not saved in it) and the theme menu, with its focus and its error, mounted
 export function AppShell() {
