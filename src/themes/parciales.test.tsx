@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { contrast, rule, rules } from './css'
+import { contrast, rule, rules } from '../test/css'
 
 // portal-tributario's partials for the pieces the portal draws: every rule under the theme and outside any layer (so
 // it wins over tailwind's utilities), each imported by the theme's index.css. the tokens are @wasichai/ui's
