@@ -29,7 +29,7 @@ const PERMITIDOS: { archivo: string; llamada: keyof typeof CALCULO; veces: numbe
     llamada: 'Number(',
     veces: 1,
     motivo:
-      'copiado de srtm-ui: fromForm convierte un campo decimal o money al enviarlo, sin sumar nada. ' +
+      'pieza del kit copiado: fromForm convierte un campo decimal o money al enviarlo, sin sumar nada. ' +
       'Una pantalla de caja que envíe importes los manda como texto (el backend espera la cadena decimal), no con kind money'
   }
 ]
