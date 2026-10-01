@@ -4,6 +4,9 @@ import { Button, Card, CardBody, Input, Label } from '@wasichai/ui'
 import { Landmark } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
+import { Alerta } from '../components/Alerta'
+import { hayBorradores } from '../escritura/borrador'
+import { SESION_CADUCADA } from '../escritura/useEscritura'
 import { safeNext } from './RequireSession'
 import { useSession } from './session'
 
@@ -12,6 +15,9 @@ export function LoginPage() {
   const { appName, defaultLoginEmail } = useWasichaiConfig()
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  // a write that got a 401 sent the clerk here, and kept what they typed (escritura/useEscritura.tsx): only that
+  // leaves a draft in the tab
+  const [caducada] = useState(hayBorradores)
   const next = safeNext(params.get('next'))
   const [email, setEmail] = useState(defaultLoginEmail)
   const [password, setPassword] = useState('')
@@ -45,6 +51,7 @@ export function LoginPage() {
             <h1 className="text-xl font-semibold">{appName}</h1>
             <p className="text-sm text-ink-muted">Ventanilla de Tesorería</p>
           </div>
+          {caducada && <Alerta tono="atencion">{SESION_CADUCADA}</Alerta>}
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Correo</Label>
