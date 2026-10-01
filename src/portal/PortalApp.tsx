@@ -8,6 +8,7 @@ import { client } from './api'
 import { LoginPage } from './auth/LoginPage'
 import { RequireSession } from './auth/RequireSession'
 import { ajustarI18n } from './i18n'
+import { KitDelPortal } from './KitDelPortal'
 import { InicioPage } from './pages/InicioPage'
 import { PANTALLAS } from './pantallas'
 import { AppShell } from './shell/AppShell'
@@ -46,7 +47,8 @@ const rutas = () =>
 // the user picked (stored for them) on both sides. no modules: the portal draws its own screens. it registers caja's
 // themes like the admin does (their labels are in core's i18n). spanish only, so a locale picked in the admin is left
 // alone, with the portal's wording and figures over core's strings (ajustarI18n). the login starts empty: the seed's
-// admin is /admin's development login, never a cash desk's
+// admin is /admin's development login, never a cash desk's. the kit's forms take the portal's labels and error box
+// (KitDelPortal)
 export function PortalApp() {
   const [app] = useState(() => {
     const config = resolveConfig({
@@ -65,7 +67,9 @@ export function PortalApp() {
 
   return (
     <WasichaiProviders config={app.config} registry={app.registry} apiClient={client} i18n={app.i18n} queryClient={app.queryClient}>
-      <RouterProvider router={app.router} />
+      <KitDelPortal>
+        <RouterProvider router={app.router} />
+      </KitDelPortal>
     </WasichaiProviders>
   )
 }
