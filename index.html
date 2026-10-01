@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Caja</title>
+        <script>
+            // before the bundle: the stored theme (portal and admin share caja.*), so a dark user never sees a light flash.
+            // every theme core knows, id -> color scheme: light, dark and src/themes' CAJA_THEMES (a test keeps them in step).
+            // system and an id not listed (an old build, another app's theme) take the os setting, as core's resolveTheme
+            try {
+                const schemes = { light: 'light', dark: 'dark', 'portal-tributario': 'light' }
+                const stored = localStorage.getItem('caja.theme')
+                const dark = matchMedia('(prefers-color-scheme: dark)').matches
+                const theme = stored && Object.hasOwn(schemes, stored) ? stored : dark ? 'dark' : 'light'
+                document.documentElement.dataset.theme = theme
+                document.documentElement.style.colorScheme = schemes[theme]
+            } catch {}
+        </script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

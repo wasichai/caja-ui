@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import '@wasichai/ui/theme.css';
+/* after the base theme: the portal-tributario theme of @wasichai/ui (its tokens, and the prototype's shape for the
+   library's controls, tables and tabs), then caja's own partials for the portal's pieces */
+@import '@wasichai/ui/themes/portal-tributario.css';
+@import './themes/portal-tributario/index.css';
+/* the @wasichai packages ship class names, not css, so tailwind scans them */
+@source '../node_modules/@wasichai';

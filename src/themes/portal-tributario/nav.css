@@ -1,0 +1,22 @@
+/* copiado de srtm-ui@a1df33a (src/themes/portal-tributario/nav.css): sube a wasichai-ui en la fase 2 (wasichai-ui#14) */
+/* portal-tributario: the tree menu of the lateral, with what the prototype gives it and no token has. the component
+   (src/portal/shell/ArbolNav.tsx) draws it with tokens (bg-table-head, text-link, bg-ink/6 and /4 for the current
+   leaf and the hover, text-ink-muted carets) and marks the parts with data-ui; this pins the prototype's values.
+   unlayered, so it beats the utilities */
+[data-theme='portal-tributario'] [data-ui='arbol-nav'] [data-ui='arbol-caret'] {
+    color: #555555;
+}
+
+[data-theme='portal-tributario'] [data-ui='arbol-nav'] [data-ui='arbol-grupo']:hover {
+    color: #0d4d80;
+}
+
+[data-theme='portal-tributario'] [data-ui='arbol-nav'] [data-ui='arbol-hoja']:hover {
+    background-color: #e9e9e9;
+}
+
+/* after the hover: the current leaf keeps its background under the pointer */
+[data-theme='portal-tributario'] [data-ui='arbol-nav'] [data-ui='arbol-hoja'][aria-current='page'] {
+    color: #0d4d80;
+    background-color: #e6e6e6;
+}
