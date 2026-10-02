@@ -264,18 +264,22 @@ Un pago que agotó sus reintentos (`MUERTO`) impide cerrar su turno. Quien tiene
 el turno cierra. Es el bloque «Pagos pendientes de entrega» de caja-web, dentro de «Cierre y arqueo de caja».
 
 - **La lista**: `GET /api/caja/pagos/sin-entregar` (una lista, no una página: los `MUERTO`, del más antiguo al más
-  reciente). Una tabla con pago, tipo (`etiqueta`), destino, recibo, intentos, último error, creado (hora de Lima) y
-  estado (`etiqueta`). Lo que falta dice por qué (`SinDato`): el recibo que no se pudo leer, un error que no se
+  reciente). Una tabla con pago, turno, tipo (`etiqueta`), destino, recibo, intentos, último error, creado (hora de
+  Lima) y estado (`etiqueta`). La lista trae los de todos los turnos: el turno de cada fila se nombra por su caja y su
+  día si es uno de los del cajero de hoy (el que va a cerrar, marcado), o por su id si no; y **los del turno que va a
+  cerrar van primero**, en el orden del backend, igual que los demás. Lo que falta dice por qué (`SinDato`): el recibo que no se pudo leer, un error que no se
   registró. Sin pagos: «No hay pagos sin entregar». Los `PENDIENTE` no salen aquí: se entregan solos, y el arqueo los
   nombra. Un 403 (sin lectura de `pago_evento` o `recibo`) se dice en el hueco del bloque, y la hoja sigue.
-- **Explicar** (`buzon/ExplicarElPago.tsx`): la explicación (qué pasó y qué se hizo, de 5 a 500; queda en el evento) y
+- **Explicar** (`buzon/ExplicarElPago.tsx`): la explicación (qué pasó y qué se hizo, de 5 a 500, con su cuenta de
+  caracteres: una más larga nunca se corta, se dice por qué no se envía; queda en el evento) y
   la observación (de 5 a 500; queda en la auditoría). Se confirma con `ConfirmDialog`, porque no se deshace, y va
   `POST /api/caja/pagos/{pago_id}/explicacion` con el `pago_id` de la fila, nunca uno tecleado.
   - **El estado no se cambia en el cliente**: con éxito se dice lo que contestó el backend («Se explicó el pago …: el
     backend lo dejó «Explicado».»), y se vuelven a leer los pagos **y** el arqueo, para que «puede cerrar» lo diga el
     backend. Si el backend lo siguiera listando, la pantalla lo seguiría mostrando.
   - Un 400 se dice bajo su campo (`explicacion`, `observacion`), y otro (`pago_id`) encima del botón. El 409 (ya no está
-    `MUERTO`: se entregó o alguien ya lo explicó) se dice con su `detail` y relee los pagos y el arqueo. Un 403 y un
+    `MUERTO`: se entregó o alguien ya lo explicó) se dice con su `detail` en el bloque, no en el acto, porque al releer
+    el pago sale de la lista y el acto con él; luego relee los pagos y el arqueo. Un 403 y un
     404, con su `detail`.
   - Un 401 guarda la explicación y la observación con `useEscritura`, con la clave **`explicacion.<pago_id>`**: al
     volver a entrar con la misma cuenta, el acto de **ese** pago se abre relleno, y el de otro pago no lo ve. Cancelar
@@ -284,8 +288,9 @@ el turno cierra. Es el bloque «Pagos pendientes de entrega» de caja-web, dentr
   (solo la tiene `SUPERVISOR_CAJA`) o sin lectura de `recibo`, una vez encima de la tabla y como descripción de cada
   botón; y, a su lado, si el pago no está `MUERTO`.
 
-Tests: `src/portal/pagosSinEntregar.test.tsx` (la lista, sin pagos, el 403, explicar y releer, el estado que no se
-cambia aquí, cada error, el borrador por pago, una prueba por motivo de «Explicar» y el enlace desde el 409 del cierre).
+Tests: `src/portal/pagosSinEntregar.test.tsx` (la lista con su turno, los del turno que va a cerrar primero, sin pagos,
+el 403, explicar y releer, el estado que no se cambia aquí, cada error, el 409 que sobrevive a la relectura, la
+explicación de más de 500 que no se corta, el borrador por pago, una prueba por motivo de «Explicar» y el enlace desde el 409 del cierre).
 
 ## El kit de formularios (`src/kit`)
 

@@ -91,7 +91,7 @@ export function CierreCajaPage() {
         </section>
       )}
 
-      <BloqueDePagosSinEntregar />
+      <BloqueDePagosSinEntregar turno={turno} turnosDelDia={delDia.data?.turnos ?? []} />
 
       {acta && acta.turno_id === turno?.turno_id && <ActaDelCierre acta={acta} />}
 

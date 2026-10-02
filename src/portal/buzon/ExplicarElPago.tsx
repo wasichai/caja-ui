@@ -18,7 +18,8 @@ import { pagos } from './api'
 export const CAMPOS_DE_LA_EXPLICACION = ['explicacion', 'observacion'] as const
 type Campo = (typeof CAMPOS_DE_LA_EXPLICACION)[number]
 
-// the explanation: 5 to 500, trimmed (caja-backend asks at least 5 that are not spaces)
+// the explanation: 5 to 500, trimmed (caja-backend asks at least 5 that are not spaces). a longer one is never cut: it is
+// counted, and the form says why it is not sent
 const EXPLICACION = { minimo: 5, maximo: 500 }
 // how a field of the explanation the form has no control for reads above the button
 const ROTULOS: Record<string, string> = { pago_id: 'Pago' }
@@ -26,6 +27,13 @@ const ROTULOS: Record<string, string> = { pago_id: 'Pago' }
 const entre = (valor: string, { minimo, maximo }: { minimo: number; maximo: number }) => {
   const largo = valor.trim().length
   return largo >= minimo && largo <= maximo
+}
+
+// why the explanation cannot go, or nothing
+function errorDeLaExplicacion(explicacion: string): string | undefined {
+  const largo = explicacion.trim().length
+  if (largo > EXPLICACION.maximo) return `La explicación tiene ${largo} caracteres y el máximo es ${EXPLICACION.maximo}: acórtela para poder enviarla.`
+  return largo < EXPLICACION.minimo ? 'Diga qué pasó con el pago y qué se hizo: de 5 a 500 caracteres.' : undefined
 }
 
 // «Pago registrado a rentas, del recibo 001-0000001»
@@ -44,8 +52,9 @@ export function ExplicarElPago({
   pago: PagoDelBuzon
   onCerrar: () => void
   onExplicado: (hecho: PagoDelBuzon) => void
-  // a 409: the payment is not MUERTO any more (delivered, or explained by someone else): it is read again
-  onChoque: () => void
+  // a 409: the payment is not MUERTO any more (delivered, or explained by someone else). the block keeps its detail,
+  // because the re-read takes the payment, and this act, away
+  onChoque: (detalle: string) => void
 }) {
   const id = pago.pago_id
   const { borrador, escribir, cancelar } = useEscritura(`explicacion.${id}`, CAMPOS_DE_LA_EXPLICACION)
@@ -58,8 +67,9 @@ export function ExplicarElPago({
 
   const pedir = (event: FormEvent) => {
     event.preventDefault()
+    const deLaExplicacion = errorDeLaExplicacion(explicacion)
     const halladas: Partial<Record<Campo, string>> = {
-      ...(entre(explicacion, EXPLICACION) ? {} : { explicacion: 'Diga qué pasó con el pago y qué se hizo: de 5 a 500 caracteres.' }),
+      ...(deLaExplicacion ? { explicacion: deLaExplicacion } : {}),
       ...(entre(observacion, OBSERVACION) ? {} : { observacion: 'Explique por qué se registra: de 5 a 500 caracteres.' })
     }
     setErrores(halladas)
@@ -85,10 +95,11 @@ export function ExplicarElPago({
       onExplicado(hecho)
     } catch (e) {
       // a 401: the draft is kept and the login says so
-      if (!(e instanceof SesionCaducada)) {
-        contar(e)
-        if (e instanceof ApiError && e.status === 409) onChoque()
-      }
+      if (e instanceof ApiError && e.status === 409) {
+        // nothing left to explain here: what was typed is dropped, and the block says why
+        cancelar()
+        onChoque(errorMessage(e, 'El pago ya no se puede explicar'))
+      } else if (!(e instanceof SesionCaducada)) contar(e)
     } finally {
       setEnviando(false)
       setConfirmando(false)
@@ -112,11 +123,13 @@ export function ExplicarElPago({
           <Textarea
             id={`${prefijo}-explicacion`}
             rows={3}
-            maxLength={EXPLICACION.maximo}
             value={explicacion}
             onChange={(e) => setExplicacion(e.target.value)}
             {...conError(`${prefijo}-explicacion`, errores.explicacion)}
           />
+          <p className={`text-xs ${explicacion.trim().length > EXPLICACION.maximo ? 'text-danger' : 'text-ink-muted'}`}>
+            {explicacion.trim().length} de {EXPLICACION.maximo} caracteres
+          </p>
           <ErrorDelCampo id={`${prefijo}-explicacion`} error={errores.explicacion} />
         </div>
         <div className="space-y-1.5">

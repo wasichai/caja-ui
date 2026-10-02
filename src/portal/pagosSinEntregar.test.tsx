@@ -45,8 +45,11 @@ const pago = (otros: Record<string, unknown> = {}) => ({
   explicacion: null,
   ...otros
 })
+// a turno that is not one of the clerk's today (another cashier's, another day): the screen only knows its id
+const T_AJENO = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d'
 const OTRO_PAGO = pago({
   pago_id: OTRO,
+  turno_id: T_AJENO,
   tipo: 'PAGO_ANULADO',
   destino: 'licencias',
   recibo: null,
@@ -179,10 +182,22 @@ describe('Pagos sin entregar: the list', () => {
   it('lists each payment with its kind, destination, recibo, attempts, last error, when it was charged (in Lima) and its state', async () => {
     start({ sinEntregar: [pago(), OTRO_PAGO] })
     expect(await filas()).toEqual([
-      ['Pago', 'Tipo', 'Destino', 'Recibo', 'Intentos', 'Último error', 'Creado', 'Estado', 'Explicar'],
-      [PAGO, 'Pago registrado', 'rentas', '001-0000001', '8', ERROR, '02/10/2026 10:15 (hora de Lima)', 'No se pudo entregar', 'Explicar'],
+      ['Pago', 'Turno', 'Tipo', 'Destino', 'Recibo', 'Intentos', 'Último error', 'Creado', 'Estado', 'Explicar'],
+      [
+        PAGO,
+        'C-01 del 02/10/2026 (el que va a cerrar)',
+        'Pago registrado',
+        'rentas',
+        '001-0000001',
+        '8',
+        ERROR,
+        '02/10/2026 10:15 (hora de Lima)',
+        'No se pudo entregar',
+        'Explicar'
+      ],
       [
         OTRO,
+        T_AJENO,
         'Pago anulado',
         'licencias',
         '— el recibo no se pudo leer',
@@ -194,6 +209,18 @@ describe('Pagos sin entregar: the list', () => {
       ]
     ])
     expect(llamadas('GET', '/caja/pagos/sin-entregar').map((c) => c.path)).toEqual(['/caja/pagos/sin-entregar'])
+  })
+
+  it('puts the payments of the turno being closed first, and keeps the backend’s order otherwise', async () => {
+    const TERCERO = '7e6d5c4b-3a29-4180-9f7e-6d5c4b3a2918'
+    // the backend gives them oldest first: the turno's own payment is the last one
+    start({ sinEntregar: [OTRO_PAGO, pago({ pago_id: TERCERO, turno_id: null }), pago()] })
+    const enOrden = (await filas()).slice(1).map(([id, turno]) => [id, turno])
+    expect(enOrden).toEqual([
+      [PAGO, 'C-01 del 02/10/2026 (el que va a cerrar)'],
+      [OTRO, T_AJENO],
+      [TERCERO, '— el backend no mandó su turno']
+    ])
   })
 
   it('says it when there are none', async () => {
@@ -286,10 +313,17 @@ describe('Pagos sin entregar: explicar', () => {
     const detail = `Solo se explica un pago MUERTO, y el ${PAGO} está EXPLICADO: alguien ya se hizo cargo de él`
     Object.assign(rutaDe('POST', `/caja/pagos/${PAGO}/explicacion`), { status: 409, body: problema(409, detail) })
     await abrirYLlenar()
+    // someone else explained it meanwhile: read again, the payment is no longer listed
+    rutaDe('GET', '/caja/pagos/sin-entregar').body = []
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo([])
     await confirmar()
-    expect(await elActo().findByRole('alert')).toHaveTextContent(detail)
     await waitFor(() => expect(llamadas('GET', '/caja/pagos/sin-entregar')).toHaveLength(2))
     await waitFor(() => expect(llamadas('GET', `/caja/turnos/${T1}/arqueo`)).toHaveLength(2))
+    const bloque = await elBloque()
+    expect(await bloque.findByText('No hay pagos sin entregar')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: `Explicar el pago ${PAGO}` })).not.toBeInTheDocument()
+    // the refusal survives the re-read that took the payment away
+    expect(bloque.getByRole('alert')).toHaveTextContent(`No se explicó el pago ${PAGO}: ${detail}`)
   })
 
   it.each([
@@ -302,6 +336,26 @@ describe('Pagos sin entregar: explicar', () => {
     await confirmar()
     expect(await elActo().findByRole('alert')).toHaveTextContent(detail)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('never cuts a longer explanation: it counts it, and says why it cannot be sent over 500', async () => {
+    start()
+    await waitFor(async () => expect(await botonExplicar()).toBeEnabled())
+    await userEvent.click(await botonExplicar())
+    const campo = elActo().getByRole('textbox', { name: 'Explicación' })
+    expect(campo).not.toHaveAttribute('maxLength')
+    expect(elActo().getByText('0 de 500 caracteres')).toBeInTheDocument()
+    await userEvent.click(campo)
+    await userEvent.paste('x'.repeat(501))
+    expect(campo).toHaveValue('x'.repeat(501))
+    expect(elActo().getByText('501 de 500 caracteres')).toBeInTheDocument()
+    await escribir(elActo().getByRole('textbox', { name: 'Observación' }), OBSERVACION)
+    await userEvent.click(elActo().getByRole('button', { name: 'Registrar la explicación' }))
+    const mensaje = 'La explicación tiene 501 caracteres y el máximo es 500: acórtela para poder enviarla.'
+    expect(await elActo().findByText(mensaje)).toBeInTheDocument()
+    expect(campo).toHaveAccessibleDescription(mensaje)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(llamadas('POST', `/caja/pagos/${PAGO}/explicacion`)).toHaveLength(0)
   })
 
   it('cancelling closes the act and forgets what was typed', async () => {
