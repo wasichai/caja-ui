@@ -140,6 +140,24 @@ describe('Recaudación por área: the rows', () => {
     expect(main().getByText(SIN_PARTIDA)).toBeInTheDocument()
   })
 
+  it('with an área chosen, says that what orders charged is left out, instead of the sentence of the neto sin partida', async () => {
+    start({ path: '/recaudacion-area?area=A-113300' })
+    rutaDe('/caja/recaudacion/por-area').body = {
+      ...POR_AREA,
+      filas: [POR_AREA.filas[1]],
+      neto: cifra('36.90'),
+      neto_sin_partida: cifra('0.00')
+    }
+    await filas()
+    expect(
+      main().getByText(
+        'Con un área elegida solo cuentan las tasas de esa área: lo cobrado por órdenes no tiene área, así que queda fuera de esta consulta, y por eso el neto sin partida es cero.'
+      )
+    ).toBeInTheDocument()
+    expect(main().queryByText(SIN_PARTIDA)).not.toBeInTheDocument()
+    expect(llamadas().map((c) => c.path)).toEqual(['/caja/recaudacion/por-area?area=A-113300'])
+  })
+
   it('shows the backend’s neto, which no sum with Number would give', async () => {
     start()
     const [a, b] = ['45035996273704.97', '45035996273704.96']

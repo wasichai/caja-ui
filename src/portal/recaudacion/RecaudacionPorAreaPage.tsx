@@ -25,6 +25,10 @@ const CAMPOS: CampoDeFiltro<Filtro>[] = [
 
 const SIN_PARTIDA =
   'Lo cobrado por órdenes de los sistemas de origen no tiene área ni partida: se cuenta aparte, en el neto sin partida, y no se reparte entre las áreas.'
+// with an área the backend counts only its tasas, and sends neto_sin_partida in 0.00: said, so the zero is not read as
+// «nothing was charged by orders»
+const CON_AREA =
+  'Con un área elegida solo cuentan las tasas de esa área: lo cobrado por órdenes no tiene área, así que queda fuera de esta consulta, y por eso el neto sin partida es cero.'
 
 export function RecaudacionPorAreaPage() {
   const [filtros, poner] = useFiltrosDeLaRuta(FILTROS_POR_AREA)
@@ -56,14 +60,15 @@ export function RecaudacionPorAreaPage() {
         ) : porArea.isError ? (
           <Alerta tono="error">No se pudo leer la recaudación por área: {errorMessage(porArea.error, 'el backend no contestó')}</Alerta>
         ) : (
-          <ElPeriodo porArea={porArea.data} />
+          <ElPeriodo porArea={porArea.data} conArea={filtros.area !== ''} />
         )}
       </section>
     </div>
   )
 }
 
-function ElPeriodo({ porArea }: { porArea: RecaudacionPorArea }) {
+// `conArea`: the query asked for an área (the url's)
+function ElPeriodo({ porArea, conArea }: { porArea: RecaudacionPorArea; conArea: boolean }) {
   return (
     <>
       <dl data-testid="periodo" className="grid gap-1 sm:grid-cols-3">
@@ -77,7 +82,7 @@ function ElPeriodo({ porArea }: { porArea: RecaudacionPorArea }) {
           <Importe cifra={porArea.neto_sin_partida} />
         </Dato>
       </dl>
-      <p className="text-sm text-ink-muted">{SIN_PARTIDA}</p>
+      <p className="text-sm text-ink-muted">{conArea ? CON_AREA : SIN_PARTIDA}</p>
       {porArea.filas.length === 0 && <p className="text-sm text-ink-muted">No se cobró nada en el periodo.</p>}
       <PorAreaYPartida porArea={porArea} />
     </>

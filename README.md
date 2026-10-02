@@ -363,6 +363,9 @@ dice en el hueco de la recaudación.
   Su fila lo dice en esas celdas («cobrado por órdenes: no tiene área»), con su sistema de origen como concepto, y la
   hoja dice que **se cuenta aparte, en el neto sin partida, y no se reparte entre las áreas**. No se esconde ni se
   rellena.
+- **Con un área elegida**, el backend cuenta solo las tasas de esa área y manda `neto_sin_partida` en `"0.00"`: la hoja
+  cambia esa frase por otra que dice que lo cobrado por órdenes queda fuera de la consulta y que por eso el neto sin
+  partida es cero, para que el cero no se lea como «no se cobró nada por órdenes».
 - Un 400 se dice bajo su filtro; un 403, en el hueco de la recaudación.
 
 Tests: `src/portal/recaudacionArea.test.tsx`.
