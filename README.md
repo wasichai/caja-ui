@@ -28,7 +28,8 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   todas.
   - **Una hoja sin pantalla no se dibuja** (caja ADR-0044): una entrada de menú que no lleva a ninguna parte es un
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
-    lo dice. Hoy hay tres: Caja tributaria, Caja de tasas y derechos administrativos, y Duplicado de recibo.
+    lo dice. Hoy hay cuatro: Caja tributaria, Caja de tasas y derechos administrativos, Duplicado de recibo, y Cierre y arqueo
+    de caja.
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
@@ -48,13 +49,13 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
 - Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `Alerta`, `BandaTitulo`, `KitDelPortal`) llevan
   arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14).
 - **Las etiquetas de los enums** de caja-backend (`forma_pago`, `estado_orden`, `estado_recibo`, `tipo_pago`,
-  `tipo_evento_pago` y `estado_evento`) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
+  `tipo_evento_pago`, `estado_evento` y `estado_del_turno`) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
   conoce se escribe tal cual.
 
 El admin (`src/admin`) no cambia: sus pantallas salen de lo que caja-backend carga en Core. El enlace
 "Administración" del portal solo aparece para ADMIN.
 
-## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`)
+## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`, `src/portal/turno`)
 
 Las dos cajas comparten sus piezas, que viven en `src/portal/cobro`:
 
@@ -201,6 +202,53 @@ guarda su ruta.
 
 Tests: `src/portal/duplicadoRecibo.test.tsx` (una prueba por fila de la tabla y una por motivo de cada botón impedido).
 
+### Cierre y arqueo de caja (`/cierre-caja`)
+
+El turno del día del cajero, su arqueo por forma de pago, el cierre con lo que contó y su reversión. Se ofrece con
+lectura de `turno` (lo que ya decía el árbol), y con lo mismo se guarda su ruta. Los pagos sin entregar y la
+conciliación llegan con sus pantallas.
+
+- **El turno del día**: `GET /api/caja/turnos/del-dia` (el cajero de la sesión, hoy en Lima; no abre ningún turno). La
+  situación se dice en palabras: `SIN_ABRIR` (el turno se abre con el primer cobro), `ABIERTO`, `CERRADO` (para seguir
+  cobrando no se abre otro: se reversa) o `VARIOS_ABIERTOS` (abierto en más de una caja: hay que elegir). Debajo, sus
+  turnos con la caja (código y nombre), cuándo se abrió (hora de Lima) y su estado, cada uno con «Arquear».
+- **El turno elegido vive en la ruta**: `/cierre-caja?turno=<turno_id>`. Con un solo turno se toma ese; con varios y
+  ninguno en la ruta, se pide elegir; uno de la ruta que no es de hoy se dice y no se elige. Recargar o pasar el enlace
+  muestra el mismo.
+- **El arqueo lo calcula el backend**: `GET /api/caja/turnos/{turno_id}/arqueo`. Una tabla por forma de pago (con su
+  `etiqueta`) con cobrado, anulado, neto, declarado y diferencia, y la fila del total; cada cifra es un `Importe`, con
+  la fecha una vez en el título de la tabla si todas la comparten. En vivo nadie ha contado: lo declarado, la diferencia
+  y si cuadra dicen **«sin declarar»** (`SinDato`), nunca 0. Además: los recibos emitidos y anulados, lo cobrado con
+  evento y sin evento, el estado del turno y, si los hay, los **pagos sin entregar** (`lo_que_impide_cerrar`) uno a
+  uno, con su `pago_id`, su tipo y su estado, hasta que llegue su pantalla.
+- **Cerrar** (`turno/CerrarElTurno.tsx`): lo declarado por forma de pago, las cinco, **como texto**: sin signo, con
+  punto y a lo sumo 2 decimales y 13 enteros, validado como texto y enviado tal cual se tecleó (recortado), nunca como
+  `Number` ni con los `kind` `money` o `decimal` del kit. Lo que se deja en blanco no se envía, y el backend lo cierra
+  en cero: el formulario y la confirmación lo dicen. Observación de 5 a 500. Se confirma con `ConfirmDialog` y va
+  `POST /api/caja/turnos/cierre` con la caja y la fecha del turno.
+  - **La diferencia no la calcula el cliente**: antes de cerrar se dice que la da el backend; después se muestra el
+    acta que contestó (secuencia, registrado el, por quién, observación, si cuadra, lo cobrado con y sin evento, y su
+    arqueo con lo declarado y la diferencia). Un descuadre no impide cerrar: queda en el acta.
+  - Después, el turno del día y el arqueo se vuelven a leer: el estado es el del backend, nunca se cambia aquí.
+  - Un 400 de `declarado` se dice bajo «Lo declarado», el de `observacion` bajo su campo, y otro (`caja`, `fecha`)
+    encima del botón. Un 409 («ya está cerrado», «Hay pagos sin entregar», un choque) se dice con su `detail` y vuelve a
+    leer el turno y el arqueo, que lista los pagos. Un 403 y un 404, con su `detail`.
+  - Un 401 guarda lo declarado y la observación con `useEscritura`, con la clave **`cierre.<turno_id>`**: al volver a
+    entrar con la misma cuenta, el cierre de **ese** turno se rellena, y el de otro turno no lo ve.
+- **Reversar** (`turno/ReversarElCierre.tsx`): motivo (obligatorio, hasta 80) y observación (de 5 a 500), confirmación y
+  `POST /api/caja/turnos/reversion`. El cierre no se borra: se agrega la reversión y el turno se vuelve a abrir. Que
+  vuelva a `ABIERTO` se ve porque el turno se relee; si el backend dijera otra cosa, la pantalla diría lo que dice el
+  backend. Errores como en el cierre; un 401 guarda el borrador con la clave `reversion.<turno_id>`.
+- **Ningún botón mudo** (`turno/impedimentos.ts`, `components/BotonConMotivo.tsx`). Gana el primer motivo, en el orden
+  en que se arreglan:
+  - «Cerrar el turno»: sin creación de `cierre_turno` y `cierre_turno_linea`; el turno del día no se pudo leer; hoy no
+    hay turno; no se eligió ninguno; el backend no mandó su caja; el arqueo no se pudo leer; ya está cerrado; hay pagos
+    sin entregar; el backend dice que no se puede cerrar (`puede_cerrar`) sin otro motivo.
+  - «Reversar el cierre»: sin creación de `reversion_cierre` (un CAJERO; lo hace un supervisor de caja); el turno del
+    día no se pudo leer; hoy no hay turno; no se eligió ninguno; el backend no mandó su caja; el turno está abierto.
+
+Tests: `src/portal/cierreCaja.test.tsx` (una prueba por situación y una por motivo de cada botón impedido).
+
 ## El kit de formularios (`src/kit`)
 
 Es una **copia temporal y marcada** del kit de `srtm-ui@a1df33a`: `RecordForm`, `FieldGrid`, `EditableList`,
@@ -261,7 +309,7 @@ Backend y datos: ver el README de `caja-backend`.
 ## Comandos
 
 ```bash
-yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo y guardas
+yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo, cierre y arqueo y guardas
 yarn typecheck
 yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview

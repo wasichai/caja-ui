@@ -18,6 +18,8 @@ describe('etiqueta', () => {
     ['tipo_pago', 'TASA', 'Tasa'],
     ['tipo_evento_pago', 'PAGO_REGISTRADO', 'Pago registrado'],
     ['tipo_evento_pago', 'PAGO_ANULADO', 'Pago anulado'],
+    ['estado_del_turno', 'ABIERTO', 'Abierto'],
+    ['estado_del_turno', 'CERRADO', 'Cerrado'],
     ['estado_evento', 'PENDIENTE', 'Pendiente de entrega'],
     ['estado_evento', 'ENTREGADO', 'Entregado'],
     ['estado_evento', 'MUERTO', 'No se pudo entregar'],

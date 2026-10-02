@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoadingState, useAuth } from '@wasichai/core'
-import { Button, type PdfFile } from '@wasichai/ui'
+import type { PdfFile } from '@wasichai/ui'
 import { Ban, FileText } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { FieldGrid } from '../../kit/forms/FieldGrid'
@@ -8,6 +8,7 @@ import type { FieldSpec, SectionSpec } from '../../kit/forms/spec'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { LINEA_DE_ORDEN, LINEA_DE_TASA, pagadorDelRecibo } from '../cobro/ReciboEmitido'
 import { Alerta } from '../components/Alerta'
+import { BotonConMotivo } from '../components/BotonConMotivo'
 import { PdfDialog } from '../components/PdfDialog'
 import { useEscritura } from '../escritura/useEscritura'
 import { fechaYHoraEnLima, hoyEnLima } from '../fechas'
@@ -206,33 +207,6 @@ function Acciones({
         <Ban className="size-4" />
         Anular
       </BotonConMotivo>
-    </div>
-  )
-}
-
-function BotonConMotivo({
-  id,
-  impedido,
-  onClick,
-  variante,
-  children
-}: {
-  id: string
-  impedido: string | null
-  onClick?: () => void
-  variante: 'secondary' | 'danger'
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-end gap-3">
-      {impedido && (
-        <p id={id} className="max-w-xl text-right text-sm text-ink-muted">
-          {impedido}
-        </p>
-      )}
-      <Button variant={variante} disabled={impedido !== null} aria-describedby={impedido ? id : undefined} onClick={onClick}>
-        {children}
-      </Button>
     </div>
   )
 }

@@ -202,3 +202,118 @@ export interface AnulacionHecha {
   importe: Cifra
   pago_anulado_id: string | null
 }
+
+// --- the turno of the clerk, its arqueo, its cierre and its reversal (/api/caja/turnos/**) ---
+
+// GET /api/caja/turnos/del-dia: a turno of today, by the code of its caja, with when it was opened and its state
+// (ABIERTO or CERRADO, worked out by the backend)
+export interface TurnoEnElDia {
+  turno_id: string
+  caja: string | null
+  caja_nombre: string | null
+  cajero: string
+  fecha: string
+  abierto_en: string
+  estado_del_turno: string
+}
+
+// the clerk's turnos of today and their situation: SIN_ABRIR (none), ABIERTO (exactly one open), CERRADO (all closed)
+// or VARIOS_ABIERTOS (open in more than one caja). asking opens nothing
+export interface TurnoDelDia {
+  cajero: string
+  fecha: string
+  situacion: string
+  turnos: TurnoEnElDia[]
+}
+
+// a line of the arqueo, one per forma de pago with movement (or with something declared, in a cierre). live, declarado
+// and diferencia are null: nobody has counted, and a 0 would read as «counted zero»
+export interface LineaDeArqueo {
+  forma_pago: string
+  cobrado: Cifra
+  anulado: Cifra
+  neto: Cifra
+  declarado: Cifra | null
+  diferencia: Cifra | null
+}
+
+// the arqueo, every figure the backend's as of the turno's day. live, total_declarado, diferencia and cuadra are null
+export interface Arqueo {
+  lineas: LineaDeArqueo[]
+  recibos_emitidos: number
+  recibos_anulados: number
+  total_cobrado: Cifra
+  total_anulado: Cifra
+  neto: Cifra
+  total_declarado: Cifra | null
+  diferencia: Cifra | null
+  cuadra: boolean | null
+}
+
+// a payment its source system does not know yet (PENDIENTE or MUERTO): it keeps the turno from closing
+export interface PagoSinEntregar {
+  pago_id: string
+  tipo: string
+  estado: string
+}
+
+// GET /api/caja/turnos/{turno_id}/arqueo: the live arqueo, its two halves and what keeps it from closing
+export interface ArqueoDelTurno {
+  turno_id: string
+  estado_del_turno: string
+  puede_cerrar: boolean
+  arqueo: Arqueo
+  cobrado_con_evento: Cifra
+  cobrado_sin_evento: Cifra
+  lo_que_impide_cerrar: PagoSinEntregar[]
+}
+
+// POST /api/caja/turnos/cierre: what was counted by forma de pago, as the text typed (never a number: the backend reads
+// the decimal string). no cajero: the backend takes the session's
+export interface PeticionDeCierre {
+  caja: string
+  fecha: string
+  declarado: Record<string, string>
+  observacion: string
+}
+
+// its answer (201): the acta, with the arqueo as declared and its diferencia, the backend's
+export interface CierreHecho {
+  cierre_id: string
+  turno_id: string
+  caja: string
+  cajero: string
+  fecha: string
+  secuencia: number
+  registrado_en: string
+  usuario: string
+  observacion: string
+  estado_del_turno: string
+  arqueo: Arqueo
+  cobrado_con_evento: Cifra
+  cobrado_sin_evento: Cifra
+}
+
+// POST /api/caja/turnos/reversion
+export interface PeticionDeReversion {
+  caja: string
+  fecha: string
+  motivo: string
+  observacion: string
+}
+
+// its answer (201): the cierre it leaves without effect stays where it was, and the turno is open again
+export interface ReversionHecha {
+  reversion_id: string
+  turno_id: string
+  caja: string
+  cajero: string
+  fecha: string
+  secuencia: number
+  cierre_revertido: string
+  motivo: string
+  registrado_en: string
+  usuario: string
+  observacion: string
+  estado_del_turno: string
+}

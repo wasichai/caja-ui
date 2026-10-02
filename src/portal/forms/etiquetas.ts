@@ -26,6 +26,10 @@ const POR_CAMPO: Record<string, Record<string, string>> = {
     EMITIDO: 'Emitido',
     ANULADO: 'Anulado'
   },
+  estado_del_turno: {
+    ABIERTO: 'Abierto',
+    CERRADO: 'Cerrado'
+  },
   estado_evento: {
     PENDIENTE: 'Pendiente de entrega',
     ENTREGADO: 'Entregado',
