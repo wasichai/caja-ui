@@ -63,6 +63,7 @@ const arqueo = (turno_id: string, otros: Record<string, unknown> = {}) => ({
   cobrado_con_evento: cifra('150.50'),
   cobrado_sin_evento: cifra('37.60'),
   lo_que_impide_cerrar: [],
+  cierre_vigente: null,
   ...otros
 })
 
@@ -707,6 +708,99 @@ describe('Cierre y arqueo de caja: reversar', () => {
       cuenta: SUPERVISORA.id,
       campos: { motivo: 'ARQUEO MAL CONTADO', observacion: 'se contó mal el cajón' }
     })
+  })
+})
+
+// the acta of the cierre in force, as caja-backend's arqueo of a closed turno carries it (cierre_vigente, PR #22): the
+// arqueo as it was declared, its date the turno's. its diferencia is the backend's (-6.90 of 30.00 declared over 36.90)
+const CIERRE_VIGENTE = {
+  cierre_id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+  secuencia: 1,
+  fecha: AL,
+  registrado_en: '2026-10-02T18:30:05.123456-05:00',
+  usuario: 'ana@muni.gob.pe',
+  observacion: 'cierre del turno de la mañana',
+  arqueo: {
+    lineas: [linea('EFECTIVO', '36.90', '0.00', '36.90', '30.00', '-6.90'), linea('TARJETA', '12.30', '0.00', '12.30', '12.30', '0.00')],
+    recibos_emitidos: 2,
+    recibos_anulados: 0,
+    total_cobrado: cifra('49.20'),
+    total_anulado: cifra('0.00'),
+    neto: cifra('49.20'),
+    total_declarado: cifra('42.30'),
+    diferencia: cifra('-6.90'),
+    cuadra: false
+  },
+  cobrado_con_evento: cifra('0.00'),
+  cobrado_sin_evento: cifra('49.20')
+}
+
+describe('Cierre y arqueo de caja: the acta of the cierre in force', () => {
+  it('shows the acta of a closed turno after a reload, as the backend kept it, with nothing recomputed', async () => {
+    cerrado()
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1, { estado_del_turno: 'CERRADO', puede_cerrar: false, cierre_vigente: CIERRE_VIGENTE })
+
+    expect(await filas('Arqueo del cierre')).toEqual([
+      ['Forma de pago', 'Cobrado', 'Anulado', 'Neto', 'Declarado', 'Diferencia'],
+      ['Efectivo', 'S/ 36.90', 'S/ 0.00', 'S/ 36.90', 'S/ 30.00', '-S/ 6.90'],
+      ['Tarjeta', 'S/ 12.30', 'S/ 0.00', 'S/ 12.30', 'S/ 12.30', 'S/ 0.00'],
+      ['Total', 'S/ 49.20', 'S/ 0.00', 'S/ 49.20', 'S/ 42.30', '-S/ 6.90']
+    ])
+    expect(texto(await tablaDeArqueo('Arqueo del cierre'))).toContain('Cifras al 02/10/2026')
+    expect(main().getByRole('heading', { name: 'Acta del cierre vigente del 02/10/2026' })).toBeInTheDocument()
+    const acta = texto(main().getByTestId('acta-del-cierre'))
+    expect(acta).toContain('Secuencia: 1')
+    expect(acta).toContain('Registrado el: 02/10/2026 18:30 (hora de Lima)')
+    expect(acta).toContain('Por: ana@muni.gob.pe')
+    expect(acta).toContain('Observación: cierre del turno de la mañana')
+    expect(acta).toContain('Cobrado con evento: S/ 0.00 al 02/10/2026')
+    expect(acta).toContain('Cobrado sin evento: S/ 49.20 al 02/10/2026')
+    expect(acta).toContain('¿Cuadra?: No: el descuadre quedó registrado en el acta.')
+    expect(texto(screen.getByRole('region', { name: 'Acta del cierre vigente del 02/10/2026' }))).not.toMatch(/sin declarar/)
+    // read, never written: the reload closed nothing
+    expect(llamadas('POST', '/caja/turnos/cierre')).toHaveLength(0)
+  })
+
+  it('says whether it squares as the backend does', async () => {
+    cerrado()
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1, {
+      estado_del_turno: 'CERRADO',
+      puede_cerrar: false,
+      cierre_vigente: { ...CIERRE_VIGENTE, arqueo: { ...CIERRE_VIGENTE.arqueo, cuadra: true } }
+    })
+    expect(texto(await main().findByTestId('acta-del-cierre'))).toContain('¿Cuadra?: Sí: lo declarado coincide con el neto.')
+  })
+
+  it('has no acta for an open turno (cierre_vigente null)', async () => {
+    start()
+    await tablaDeArqueo()
+    expect(main().queryByTestId('acta-del-cierre')).not.toBeInTheDocument()
+    expect(main().queryByRole('table', { name: 'Arqueo del cierre' })).not.toBeInTheDocument()
+  })
+
+  it('after closing here, shows the acta once: the one the arqueo read again carries', async () => {
+    start()
+    await llenarYCerrar()
+    rutaDe('GET', '/caja/turnos/del-dia').body = delDia('CERRADO', [{ ...EN_C01, estado_del_turno: 'CERRADO' }])
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1, { estado_del_turno: 'CERRADO', puede_cerrar: false, cierre_vigente: CIERRE_VIGENTE })
+    await confirmarElCierre()
+    expect(await main().findByText('El turno quedó cerrado.')).toBeInTheDocument()
+    await waitFor(() => expect(llamadas('GET', `/caja/turnos/${T1}/arqueo`)).toHaveLength(2))
+    await waitFor(async () => expect((await filas('Arqueo del cierre'))[1]).toEqual(['Efectivo', 'S/ 36.90', 'S/ 0.00', 'S/ 36.90', 'S/ 30.00', '-S/ 6.90']))
+    expect(main().getAllByRole('table', { name: 'Arqueo del cierre' })).toHaveLength(1)
+    expect(main().getAllByTestId('acta-del-cierre')).toHaveLength(1)
+  })
+
+  it('after a reversal, the turno open again has no acta', async () => {
+    cerrado()
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1, { estado_del_turno: 'CERRADO', puede_cerrar: false, cierre_vigente: CIERRE_VIGENTE })
+    await main().findByTestId('acta-del-cierre')
+    await llenarYReversar()
+    rutaDe('GET', '/caja/turnos/del-dia').body = delDia('ABIERTO', [EN_C01])
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1)
+    await confirmarLaReversion()
+    await main().findByText('Se reversó el cierre del turno de la caja C-01.')
+    await waitFor(() => expect(main().queryByTestId('acta-del-cierre')).not.toBeInTheDocument())
   })
 })
 

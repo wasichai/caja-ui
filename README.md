@@ -235,6 +235,12 @@ sin entregar»** y su explicación (más abajo). La conciliación llega con su p
     acta que contestó (secuencia, registrado el, por quién, observación, si cuadra, lo cobrado con y sin evento, y su
     arqueo con lo declarado y la diferencia). Un descuadre no impide cerrar: queda en el acta.
   - Después, el turno del día y el arqueo se vuelven a leer: el estado es el del backend, nunca se cambia aquí.
+- **El acta del cierre vigente**: con el turno cerrado, el arqueo trae `cierre_vigente`, el acta del último cierre
+  vigente tal como se guardó (a la fecha del turno). La hoja la muestra con el título «Acta del cierre vigente del …»:
+  secuencia, registrado el, por quién, observación, lo cobrado con y sin evento, si cuadra y su arqueo con lo declarado
+  y la diferencia. **También después de recargar**, sin recalcular ni restar nada. Con el turno abierto (también después
+  de reversar) viene en null y no hay acta. Tras cerrar aquí se ve una sola acta: la de la respuesta del cierre, hasta que
+  el arqueo releído trae la vigente.
   - Un 400 de `declarado` se dice bajo «Lo declarado», el de `observacion` bajo su campo, y otro (`caja`, `fecha`)
     encima del botón. Un 409 («ya está cerrado», «Hay pagos sin entregar», un choque) se dice con su `detail` y vuelve a
     leer el turno y el arqueo, que lista los pagos. Si el arqueo releído trae alguno `MUERTO`, el aviso del 409 lleva un

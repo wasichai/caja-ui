@@ -257,7 +257,22 @@ export interface PagoSinEntregar {
   estado: string
 }
 
-// GET /api/caja/turnos/{turno_id}/arqueo: the live arqueo, its two halves and what keeps it from closing
+// the acta of the last cierre in force of a closed turno, as it was kept: the arqueo as declared, as of the turno's day
+// (the same shape and values as the arqueo of POST /turnos/cierre's 201)
+export interface CierreVigente {
+  cierre_id: string
+  secuencia: number
+  fecha: string
+  registrado_en: string
+  usuario: string
+  observacion: string
+  arqueo: Arqueo
+  cobrado_con_evento: Cifra
+  cobrado_sin_evento: Cifra
+}
+
+// GET /api/caja/turnos/{turno_id}/arqueo: the live arqueo, its two halves, what keeps it from closing and, with the
+// turno closed, the acta of its cierre in force (null while it is open, also after a reversal)
 export interface ArqueoDelTurno {
   turno_id: string
   estado_del_turno: string
@@ -266,6 +281,7 @@ export interface ArqueoDelTurno {
   cobrado_con_evento: Cifra
   cobrado_sin_evento: Cifra
   lo_que_impide_cerrar: PagoSinEntregar[]
+  cierre_vigente: CierreVigente | null
 }
 
 // POST /api/caja/turnos/cierre: what was counted by forma de pago, as the text typed (never a number: the backend reads

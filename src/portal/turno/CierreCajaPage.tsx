@@ -8,7 +8,7 @@ import { Importe } from '../cifras/Importe'
 import { PagosSinEntregar as BloqueDePagosSinEntregar } from '../buzon/PagosSinEntregar'
 import { Alerta } from '../components/Alerta'
 import { fechaYHoraEnLima } from '../fechas'
-import type { CierreHecho, TurnoDelDia as ElDelDia } from '../types'
+import type { CierreHecho, CierreVigente, TurnoDelDia as ElDelDia } from '../types'
 import { CLAVE_DE_LOS_TURNOS, turnos } from './api'
 import { Cuadra, Dato, PagosSinEntregar, porQueSinDeclarar, ResumenDelArqueo, TablaDeArqueo, SIN_DECLARAR } from './Arqueo'
 import { CerrarElTurno } from './CerrarElTurno'
@@ -55,6 +55,10 @@ export function CierreCajaPage() {
   // what the backend answered to this screen's last act, by the turno it was for
   const [acta, setActa] = useState<CierreHecho | null>(null)
   const [reversado, setReversado] = useState<string | null>(null)
+  const recienCerrado = acta && acta.turno_id === turno?.turno_id ? acta : null
+  // the acta of a closed turno is the one its arqueo carries, as the backend kept it: after a reload too. the one this
+  // screen's cierre answered stands in only until the arqueo read again carries it
+  const vigente = elArqueo.estado === 'leido' ? elArqueo.arqueo.cierre_vigente : null
 
   // what the backend says now: today's turno and the arqueo, read again
   const leerOtraVez = () => void queryClient.invalidateQueries({ queryKey: CLAVE_DE_LOS_TURNOS, refetchType: 'all' })
@@ -93,7 +97,12 @@ export function CierreCajaPage() {
 
       <BloqueDePagosSinEntregar turno={turno} turnosDelDia={delDia.data?.turnos ?? []} />
 
-      {acta && acta.turno_id === turno?.turno_id && <ActaDelCierre acta={acta} />}
+      {recienCerrado?.estado_del_turno === 'CERRADO' && <Alerta tono="exito">El turno quedó cerrado.</Alerta>}
+      {vigente ? (
+        <ActaDelCierre acta={vigente} titulo={`Acta del cierre vigente del ${formatDate(vigente.fecha)}`} />
+      ) : (
+        recienCerrado && <ActaDelCierre acta={recienCerrado} titulo={`Acta del cierre del ${formatDate(recienCerrado.fecha)}`} />
+      )}
 
       <CerrarElTurno
         key={`cierre-${clave}`}
@@ -125,14 +134,14 @@ export function CierreCajaPage() {
   )
 }
 
-// the acta the backend answered: the turno as it was closed, with what was declared and its difference, the backend's
-function ActaDelCierre({ acta }: { acta: CierreHecho }) {
+// the acta as the backend has it (the cierre's answer, or the cierre in force of the arqueo): the turno as it was
+// closed, with what was declared and its difference, the backend's. nothing is recomputed here
+function ActaDelCierre({ acta, titulo }: { acta: CierreHecho | CierreVigente; titulo: string }) {
   return (
     <section aria-labelledby="acta-titulo" className="space-y-3">
       <h2 id="acta-titulo" className="text-lg font-semibold text-ink">
-        Acta del cierre del {formatDate(acta.fecha)}
+        {titulo}
       </h2>
-      {acta.estado_del_turno === 'CERRADO' && <Alerta tono="exito">El turno quedó cerrado.</Alerta>}
       <dl data-testid="acta-del-cierre" className="grid gap-1 sm:grid-cols-2">
         <Dato rotulo="Secuencia">{acta.secuencia}</Dato>
         <Dato rotulo="Registrado el">{fechaYHoraEnLima(acta.registrado_en)}</Dato>
