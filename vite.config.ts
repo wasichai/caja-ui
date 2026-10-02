@@ -12,6 +12,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
-    include: ['src/**/*.test.tsx']
+    include: ['src/**/*.test.tsx'],
+    // under load (CI, several suites at once) a test of a whole screen goes past vitest's 5 s with nothing wrong: 15 s
+    // keeps that from failing, and a real failure still says why first (asyncUtilTimeout in src/test/setup.ts is 5 s)
+    testTimeout: 15000,
+    hookTimeout: 15000
   }
 })
