@@ -44,7 +44,12 @@ export function Cobro({
   onCobrado: (hecho: CobroHecho) => void
 }) {
   const { can } = useAuth()
-  const { borrador, errores, general, enviando, revisar, enviar } = useEnvioDelCobro({ acto, borradorDe: CAMPOS, controles: CAMPOS, rotulos: ROTULOS })
+  const { borrador, errores, general, enviando, revisar, enviar } = useEnvioDelCobro({
+    acto,
+    borradorDe: CAMPOS,
+    controles: CAMPOS,
+    rotular: (campo) => ROTULOS[campo] ?? campo
+  })
   const [forma, setForma] = useState(borrador?.forma_pago ?? '')
   const [observacion, setObservacion] = useState(borrador?.observacion ?? '')
   const [confirmando, setConfirmando] = useState(false)

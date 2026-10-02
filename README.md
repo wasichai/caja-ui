@@ -28,7 +28,7 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   todas.
   - **Una hoja sin pantalla no se dibuja** (caja ADR-0044): una entrada de menú que no lleva a ninguna parte es un
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
-    lo dice. Hoy hay una: Caja tributaria.
+    lo dice. Hoy hay dos: Caja tributaria y Caja de tasas y derechos administrativos.
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
@@ -54,7 +54,16 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
 El admin (`src/admin`) no cambia: sus pantallas salen de lo que caja-backend carga en Core. El enlace
 "Administración" del portal solo aparece para ADMIN.
 
-## Pantallas de Tesorería (`src/portal/cobro`)
+## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`)
+
+Las dos cajas comparten sus piezas, que viven en `src/portal/cobro`:
+
+- `ElegirCaja.tsx`: la caja elegida en la ruta (`useCajaDeLaRuta`), solo las activas, y por qué no hay caja.
+- `Formulario.tsx`: la forma de pago, la observación, el total de la vista previa con sus motivos, el botón «Cobrar»
+  que dice por qué no puede y la confirmación.
+- `envio.ts`: la validación común y `useEnvioDelCobro` (la `Idempotency-Key` de `intento.ts`, el borrador de
+  `useEscritura` ante un 401, y el 400 bajo su campo o encima del botón).
+- `ReciboEmitido.tsx`: el recibo emitido y su PDF; cada pantalla dice cómo se lee una línea.
 
 ### Caja tributaria (`/caja-tributaria`)
 
@@ -90,6 +99,43 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   original ya no se puede pedir y que hay que pedir un duplicado.
 
 Tests: `src/portal/cajaTributaria.test.tsx`, `src/portal/guarda.test.tsx` y `src/portal/pdf.test.tsx`.
+
+### Caja de tasas y derechos administrativos (`/caja-tasas`)
+
+Cobra tasas y derechos del TUPA al precio de su tarifa vigente, y emite el recibo. Se ofrece con lectura de `tasa`, y
+con el mismo par se guarda su ruta. La caja vive en la ruta como en la tributaria (`/caja-tasas?caja=C-01`).
+
+- **Las tasas vigentes**: `GET /api/caja/tasas?vigentes_a=<hoy en Lima>`, con código, descripción, área, partida y
+  precio (`Importe`, con su fecha). El buscador filtra esa lista por código o descripción, sin acentos ni mayúsculas:
+  no le pregunta nada al backend.
+- **Las tasas a cobrar** viven en la pantalla hasta cobrar. «Agregar» pone la tasa con cantidad 1; una que ya está no
+  se agrega otra vez, y lo dice. Cada línea muestra lo que dijo `GET /tasas`, la cantidad y el monto, y se quita con
+  «Quitar».
+  - **La cantidad** se escribe como texto y se valida: un entero de al menos 1, de hasta nueve cifras (el backend la
+    lee como `Int`). Una que no lo es se dice bajo su campo y no llega al backend. Nunca va con `kind: 'money'` ni
+    `'decimal'`.
+  - Es una tabla propia, no el `EditableList` del kit: `EditableList` lee sus filas solo de una consulta
+    (`queryKey` + `load`), su «+» abre siempre un formulario que sería otra forma de agregar una tasa sin la lista de
+    vigentes, y su confirmación de borrado dice «El historial del registro lo conserva», que es falso para una línea
+    que el backend nunca vio. Usarlo así habría pedido cambiar el kit, y el kit no se cambia.
+- **El precio, los montos y el total son del backend.** El precio unitario es el de `GET /tasas`; el monto de cada
+  línea y el total, los de `POST /api/caja/cobros/tasas/vista-previa`, que se vuelve a pedir al cambiar las líneas o
+  una cantidad. El cliente no multiplica ni suma. Una tasa sin tarifa vigente o con tarifa en cero aparece en los
+  `motivos`, su monto dice que el backend no la cobra, y el cobro queda impedido.
+- **Cobrar**: forma de pago, pagador opcional (documento y nombre: si no se escribe, no se manda) y observación. Se
+  confirma con `ConfirmDialog`, con las líneas y el total de la vista previa y el pagador («no se identificó» si no
+  hay). `POST /api/caja/cobros/tasas` va con su `Idempotency-Key`, la misma en el reintento.
+  - **El botón «Cobrar» nunca está mudo**: sin CREATE de `recibo`, sin caja (o sin las cajas, con su motivo), sin
+    tasas, con una cantidad inválida, sin el total o con motivos del backend, dice por qué a su lado.
+  - Un 400 se dice bajo su campo, o encima del botón (el de una línea, con su código: «Cantidad de T-001: …»). Un 403,
+    el 404 de una tasa sin tarifa vigente y el 409 de una tarifa en cero, con su `detail`.
+  - Un 401 guarda la forma de pago, el pagador, la observación y **las líneas como código y cantidad** (nunca un
+    precio ni un monto), con la clave `caja-tasas.<caja>`; al volver a entrar con la misma cuenta, todo se rellena.
+- **El recibo emitido**, con las piezas de la tributaria: número, emitido en, forma de pago, total, el pagador con el
+  que se cobró (el recibo que contesta el backend no lo trae; sin pagador dice «No se identificó al pagador», como el
+  PDF) y cada línea con concepto, código, cantidad, precio unitario y monto. «Ver el recibo» abre su PDF.
+
+Tests: `src/portal/cajaTasas.test.tsx`.
 
 ## El kit de formularios (`src/kit`)
 
@@ -151,7 +197,7 @@ Backend y datos: ver el README de `caja-backend`.
 ## Comandos
 
 ```bash
-yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria y guardas
+yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas y guardas
 yarn typecheck
 yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview

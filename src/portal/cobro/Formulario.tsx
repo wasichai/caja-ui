@@ -136,6 +136,7 @@ export function ConfirmarCobro({
   enviando,
   onConfirm,
   onCancel,
+  extra,
   children
 }: {
   // "estas órdenes", "estas tasas"
@@ -146,6 +147,8 @@ export function ConfirmarCobro({
   enviando: boolean
   onConfirm: () => void
   onCancel: () => void
+  // what the screen adds after the forma de pago (the payer), as spans
+  extra?: ReactNode
   // a span role="listitem" per line
   children: ReactNode
 }) {
@@ -166,6 +169,7 @@ export function ConfirmarCobro({
             </span>
           )}
           <span className="block text-ink">Forma de pago: {etiqueta('forma_pago', forma)}</span>
+          {extra}
           <span className="mt-2 block">Un cobro no se deshace: para devolverlo hay que anular el recibo.</span>
         </>
       }

@@ -24,7 +24,7 @@ export function useEnvioDelCobro<Campo extends string>({
   acto,
   borradorDe,
   controles,
-  rotulos
+  rotular
 }: {
   // the draft's key, and what of the typed values a 401 keeps (module constants: useEscritura's callbacks depend on them)
   acto: string
@@ -32,7 +32,7 @@ export function useEnvioDelCobro<Campo extends string>({
   // the fields the form has a control for: a 400 on one goes under it
   controles: readonly Campo[]
   // how a field with no control reads above the button
-  rotulos: Record<string, string>
+  rotular: (campo: string) => string
 }) {
   const { borrador, escribir } = useEscritura(acto, borradorDe)
   const [errores, setErrores] = useState<Partial<Record<Campo, string>>>({})
@@ -54,7 +54,7 @@ export function useEnvioDelCobro<Campo extends string>({
     const propias = violaciones.filter((v) => esControl(v.field))
     const ajenas = violaciones.filter((v) => !esControl(v.field))
     setErrores(Object.fromEntries(propias.map((v) => [v.field, v.message])) as Partial<Record<Campo, string>>)
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${rotulos[v.field] ?? v.field}: ${v.message}`).join(' · '))
+    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${rotular(v.field)}: ${v.message}`).join(' · '))
     else if (propias.length === 0) setGeneral(errorMessage(e, 'No se pudo cobrar'))
   }
 

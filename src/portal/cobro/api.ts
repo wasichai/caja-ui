@@ -5,7 +5,9 @@ import type { CajaEnLista, CobroHecho, NuevoCobro, OrdenDeCobro, Pagina, VistaPr
 // (wasichai's PageRequest.MAX_SIZE): a screen that gets fewer than there are says so
 export const TAMANO_DE_PAGINA = 200
 
-const enviar = <T>(path: string, cuerpo: unknown, headers?: HeadersInit) => client.request<T>(path, { method: 'POST', body: JSON.stringify(cuerpo), headers })
+// a POST of JSON, with headers of its own (the Idempotency-Key)
+export const enviar = <T>(path: string, cuerpo: unknown, headers?: HeadersInit) =>
+  client.request<T>(path, { method: 'POST', body: JSON.stringify(cuerpo), headers })
 
 export const cobro = {
   // by code. a closed one comes too, with activa false

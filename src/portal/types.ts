@@ -48,7 +48,8 @@ export interface OrdenDeCobro {
   observacion: string | null
 }
 
-// a line of a recibo, or of a preview: what one order costs
+// a line of a recibo, or of a preview: what one order costs, or one tasa. a tasa's has its codigo, its cantidad and its
+// precio_unitario, which an order's does not carry (caja-backend leaves them out)
 export interface LineaDeRecibo {
   orden_id: string | null
   sistema_origen: string | null
@@ -56,6 +57,9 @@ export interface LineaDeRecibo {
   detalle: string | null
   referencia_externa: string | null
   monto: Cifra
+  codigo?: string
+  cantidad?: number
+  precio_unitario?: Cifra
 }
 
 // POST /api/caja/cobros/vista-previa: what cobrar those orders would be today, written nowhere. total null when no
@@ -98,4 +102,30 @@ export interface CobroHecho {
   pago_id: string | null
   estado_del_pago: string
   emitido: boolean
+}
+
+// GET /api/caja/tasas?vigentes_a=: a tasa in force that day, by code, with its price as of it. its area is the code
+export interface TasaVigente {
+  codigo: string
+  descripcion: string | null
+  area: string | null
+  partida_presupuestal: string | null
+  precio: Cifra
+}
+
+// a concepto the clerk adds: the tasa's code and how many times, never a price (the backend takes the tarifa in force)
+export interface ConceptoPedido {
+  codigo: string
+  cantidad: number
+}
+
+// POST /api/caja/cobros/tasas: what the clerk sends. the payer may be anonymous: its keys go only when typed. no cajero
+// nor fecha_de_cobro: the backend takes the session's and today
+export interface NuevoCobroDeTasas {
+  caja: string
+  forma_pago: string
+  conceptos: ConceptoPedido[]
+  observacion: string
+  pagador_documento?: string
+  pagador_nombre?: string
 }
