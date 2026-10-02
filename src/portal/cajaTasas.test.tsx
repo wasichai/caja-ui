@@ -87,6 +87,8 @@ let rutas: MockRoute[] = []
 // the headers of each POST /caja/cobros/tasas, which mockFetch does not keep
 let cabeceras: Headers[] = []
 let pdf: Response | null = null
+// what POST /caja/cobros/tasas throws instead of answering (the network failed), or null
+let caida: Error | null = null
 
 const rutaDe = (method: string, path: string) => rutas.find((r) => r.method === method && r.path === path)!
 
@@ -95,6 +97,7 @@ beforeEach(() => {
   sessionStorage.clear()
   cabeceras = []
   pdf = null
+  caida = null
   Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:recibo-2'), revokeObjectURL: vi.fn() })
 })
 afterEach(() => {
@@ -117,13 +120,18 @@ function start({ path = EN_C01, permisos = PUEDE_COBRAR, user = CAJERA }: { path
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     if (url.endsWith('/pdf') && pdf) return pdf
-    if (url === '/api/caja/cobros/tasas' && init?.method === 'POST') cabeceras.push(new Headers(init.headers))
+    if (url === '/api/caja/cobros/tasas' && init?.method === 'POST') {
+      cabeceras.push(new Headers(init.headers))
+      if (caida) throw caida
+    }
     return simulado(input, init)
   }) as typeof globalThis.fetch
   render(<PortalApp />)
 }
 
 const EN_C01 = '/caja-tasas?caja=C-01'
+const NO_SE_SABE = 'No se sabe si se cobró: vuelva a pulsar Cobrar sin cambiar nada (se reconoce el mismo intento), o busque el recibo en Duplicado de recibo.'
+const OTRO_COBRO = 'Ya lo revisé: es un cobro nuevo'
 const main = () => within(screen.getByRole('main'))
 const texto = (element: Element | null) => (element?.textContent ?? '').replace(/\s/g, ' ')
 const llamadas = (method: string, path: string) => fetch!.calls.filter((c) => c.method === method && c.path.split('?')[0] === path)
@@ -396,6 +404,65 @@ describe('Caja de tasas: cobrar', () => {
     await confirmar()
     await waitFor(() => expect(cabeceras).toHaveLength(2))
     expect(cabeceras[1].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
+  })
+
+  // the case that would issue a second recibo: the first went through but its answer was lost, and the clerk edits a
+  // line before cobrar again. a new key would be a new cobro; the same one is answered with the first recibo
+  it('says an unknown outcome and keeps the key through an edited line and a 400, until a cobro is answered', async () => {
+    start()
+    caida = new TypeError('Failed to fetch')
+    await tresT001()
+    await llenarYCobrar()
+    await confirmar()
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+
+    caida = null
+    await cambiarCantidad('T-001', '2')
+    const cobro = rutaDe('POST', '/caja/cobros/tasas')
+    Object.assign(cobro, {
+      status: 400,
+      body: { title: 'Bad Request', status: 400, detail: 'La observación no es válida', errors: [{ field: 'observacion', message: 'demasiado corta' }] }
+    })
+    await waitFor(() => expect(botonCobrar()).toBeEnabled())
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    expect(await main().findByText('demasiado corta')).toBeInTheDocument()
+    // a 400 to the second says nothing of the first: it is still not known
+    expect(texto(screen.getByRole('main'))).toContain(NO_SE_SABE)
+
+    Object.assign(cobro, { status: 200, body: { ...RECIBO, emitido: false } })
+    await llenarYCobrar({ observacion: 'cobro de tasas, tercer intento' })
+    await confirmar()
+    expect(await main().findByText('Este cobro ya se había registrado con este mismo intento: no se cobró otra vez.')).toBeInTheDocument()
+    expect(cabeceras.map((c) => c.get('Idempotency-Key'))).toEqual(Array(3).fill(cabeceras[0].get('Idempotency-Key')))
+  })
+
+  it.each([500, 504])('says a %i is an unknown outcome too', async (status) => {
+    start()
+    Object.assign(rutaDe('POST', '/caja/cobros/tasas'), { status, body: { title: 'Error', status, detail: 'El servidor no contestó a tiempo' } })
+    await tresT001()
+    await llenarYCobrar()
+    await confirmar()
+    const aviso = await main().findByRole('alert')
+    expect(texto(aviso)).toContain(NO_SE_SABE)
+    expect(texto(aviso)).toContain('Lo que pasó: El servidor no contestó a tiempo.')
+  })
+
+  it('lets the clerk say it is another cobro once checked, and then the key is new', async () => {
+    start()
+    caida = new TypeError('Failed to fetch')
+    await tresT001()
+    await llenarYCobrar()
+    await confirmar()
+    await main().findByRole('alert')
+
+    await userEvent.click(main().getByRole('button', { name: OTRO_COBRO }))
+    expect(main().queryByText(/No se sabe si se cobró/)).not.toBeInTheDocument()
+    caida = null
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    await waitFor(() => expect(cabeceras).toHaveLength(2))
+    expect(cabeceras[1].get('Idempotency-Key')).not.toBe(cabeceras[0].get('Idempotency-Key'))
   })
 
   it.each([

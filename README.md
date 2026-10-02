@@ -88,6 +88,18 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   `ConfirmDialog`, que lista las órdenes y el total de la vista previa, porque no se deshace. `POST /api/caja/cobros`
   va con un `Idempotency-Key`: un UUID por intento, el mismo si se reenvía ese intento y otro si cambia lo que se manda
   (`cobro/intento.ts`).
+  - **Un cobro sin respuesta puede haberse cobrado.** Si la red falla, la respuesta no se puede leer, o contesta un 5xx
+    o un 408, el formulario dice «No se sabe si se cobró: vuelva a pulsar Cobrar sin cambiar nada (se reconoce el mismo
+    intento), o busque el recibo en Duplicado de recibo.», con lo que pasó. **Mientras lo dice, todo cobro sale con la
+    `Idempotency-Key` de ese intento, aunque se cambie algo** (lo marcado, las líneas, un campo): caja-backend contesta
+    una clave que ya nombra un recibo con ese recibo (200, `emitido: false`), sea cual sea el cuerpo. Así el primero
+    nunca se cobra dos veces, y si no se cobró, lo que está en pantalla se cobra una vez. No se bloquea la edición: no se
+    pierde lo tecleado, y una clave fija no deja ningún cambio que pueda cobrar otra vez. Solo un cobro contestado (2xx)
+    resuelve la duda; un 400 de un intento posterior no dice nada del primero, y el aviso sigue. «Ya lo revisé: es un
+    cobro nuevo» suelta la clave a propósito, para cuando en Duplicado de recibo se vio que no se cobró, o que se anuló
+    (la clave de un recibo anulado el backend ya no la acepta). Hueco conocido: la clave vive en el cobro en pantalla;
+    cambiar de caja o de pagador, salir de la hoja, recargar o un 401 la pierden, y por eso el aviso remite a Duplicado
+    de recibo. Lo comparten las dos cajas (`cobro/envio.ts`).
   - **El botón «Cobrar» nunca está mudo**: si no se puede (sin CREATE de `recibo` o UPDATE de `orden_de_cobro`, sin
     caja, sin nada marcado, sin el total, o con motivos del backend) dice por qué a su lado. Si las cajas no se
     pudieron leer (un 403, un error), dice eso con su motivo, no «Elija la caja».
@@ -129,7 +141,9 @@ con el mismo par se guarda su ruta. La caja vive en la ruta como en la tributari
   total».
 - **Cobrar**: forma de pago, pagador opcional (documento y nombre: si no se escribe, no se manda) y observación. Se
   confirma con `ConfirmDialog`, con las líneas y el total de la vista previa y el pagador («no se identificó» si no
-  hay). `POST /api/caja/cobros/tasas` va con su `Idempotency-Key`, la misma en el reintento.
+  hay). `POST /api/caja/cobros/tasas` va con su `Idempotency-Key`, la misma en el reintento, y la misma mientras no se
+  sabe si un intento se cobró, aunque cambien las líneas (como en la tributaria: aquí una clave nueva emitiría un segundo
+  recibo).
   - **El botón «Cobrar» nunca está mudo**: sin CREATE de `recibo`, sin caja (o sin las cajas, con su motivo), sin
     tasas, con una cantidad inválida, sin el total o con motivos del backend, dice por qué a su lado.
   - Un 400 se dice bajo su campo, o encima del botón (el de una línea, con su código: «Cantidad de T-001: …»). Un 403,

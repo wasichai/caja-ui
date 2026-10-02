@@ -103,6 +103,8 @@ let rutas: MockRoute[] = []
 let cabeceras: Headers[] = []
 // the PDF the backend gives, or its problem
 let pdf: Response | null = null
+// what POST /caja/cobros throws instead of answering (the network failed), or null
+let caida: Error | null = null
 
 const rutaDe = (method: string, path: string) => rutas.find((r) => r.method === method && r.path === path)!
 
@@ -111,6 +113,7 @@ beforeEach(() => {
   sessionStorage.clear()
   cabeceras = []
   pdf = null
+  caida = null
   Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:recibo-1'), revokeObjectURL: vi.fn() })
 })
 afterEach(() => {
@@ -143,13 +146,18 @@ function start({
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     if (url.endsWith('/pdf') && pdf) return pdf
-    if (url === '/api/caja/cobros' && init?.method === 'POST') cabeceras.push(new Headers(init.headers))
+    if (url === '/api/caja/cobros' && init?.method === 'POST') {
+      cabeceras.push(new Headers(init.headers))
+      if (caida) throw caida
+    }
     return simulado(input, init)
   }) as typeof globalThis.fetch
   render(<PortalApp />)
 }
 
 const EN_C01 = `/caja-tributaria?caja=C-01&documento=${DOCUMENTO}`
+const NO_SE_SABE = 'No se sabe si se cobró: vuelva a pulsar Cobrar sin cambiar nada (se reconoce el mismo intento), o busque el recibo en Duplicado de recibo.'
+const OTRO_COBRO = 'Ya lo revisé: es un cobro nuevo'
 const main = () => within(screen.getByRole('main'))
 const texto = (element: Element | null) => (element?.textContent ?? '').replace(/\s/g, ' ')
 const casilla = (referencia: string) => screen.getByRole('checkbox', { name: `Cobrar ${referencia}` })
@@ -408,6 +416,67 @@ describe('Caja tributaria: cobrar', () => {
     await confirmar()
     await waitFor(() => expect(cabeceras).toHaveLength(3))
     expect(cabeceras[2].get('Idempotency-Key')).not.toBe(cabeceras[0].get('Idempotency-Key'))
+  })
+
+  it('says an unknown outcome when the backend does not answer, and keeps the attempt’s key even after an edit', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    const aviso = await main().findByRole('alert')
+    expect(texto(aviso)).toContain(NO_SE_SABE)
+    expect(texto(aviso)).toContain('Lo que pasó: no llegó la respuesta del backend (Failed to fetch).')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    // the clerk changes the observación and cobra again: it goes with the same key, so the backend, which did charge
+    // the first, answers its recibo (200, emitido false) and charges nothing more
+    caida = null
+    Object.assign(rutaDe('POST', '/caja/cobros'), { status: 200, body: { ...RECIBO, emitido: false } })
+    await llenarYCobrar({ observacion: 'cobro en ventanilla, otra vez' })
+    // pressing «Cobrar» does not hide it (behind the confirmation): the outcome is still not known
+    expect(texto(document.querySelector('main'))).toContain(NO_SE_SABE)
+    await confirmar()
+    expect(await main().findByRole('heading', { name: 'Recibo 001-0000001' })).toBeInTheDocument()
+    expect(main().getByText('Este cobro ya se había registrado con este mismo intento: no se cobró otra vez.')).toBeInTheDocument()
+    expect(cabeceras).toHaveLength(2)
+    expect(cabeceras[1].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
+    expect(llamadas('POST', '/caja/cobros').at(-1)?.body).toMatchObject({ observacion: 'cobro en ventanilla, otra vez' })
+  })
+
+  it.each([500, 503])('says a %i is an unknown outcome too, and keeps the key until a cobro is answered', async (status) => {
+    start({ path: EN_C01 })
+    Object.assign(rutaDe('POST', '/caja/cobros'), { status, body: { title: 'Error', status, detail: 'El servidor no pudo terminar' } })
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    const aviso = await main().findByRole('alert')
+    expect(texto(aviso)).toContain(NO_SE_SABE)
+    expect(texto(aviso)).toContain('Lo que pasó: El servidor no pudo terminar.')
+
+    await llenarYCobrar({ forma: 'Cheque', observacion: 'cobro con cheque' })
+    await confirmar()
+    await waitFor(() => expect(cabeceras).toHaveLength(2))
+    expect(cabeceras[1].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+  })
+
+  it('lets the clerk say it is another cobro once checked, and then the key is new', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    await main().findByRole('alert')
+
+    await userEvent.click(main().getByRole('button', { name: OTRO_COBRO }))
+    expect(main().queryByText(/No se sabe si se cobró/)).not.toBeInTheDocument()
+    caida = null
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    expect(await main().findByRole('heading', { name: 'Recibo 001-0000001' })).toBeInTheDocument()
+    expect(cabeceras).toHaveLength(2)
+    expect(cabeceras[1].get('Idempotency-Key')).not.toBe(cabeceras[0].get('Idempotency-Key'))
   })
 
   it('checks the form before asking: a forma de pago and an observación of 5 to 500 characters', async () => {

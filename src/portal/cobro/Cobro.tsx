@@ -44,7 +44,7 @@ export function Cobro({
   onCobrado: (hecho: CobroHecho) => void
 }) {
   const { can } = useAuth()
-  const { borrador, errores, general, enviando, revisar, enviar } = useEnvioDelCobro({
+  const { borrador, errores, general, incierto, enviando, revisar, enviar, olvidarIntento } = useEnvioDelCobro({
     acto,
     borradorDe: CAMPOS,
     controles: CAMPOS,
@@ -103,7 +103,7 @@ export function Cobro({
       <form onSubmit={pedir} noValidate className="max-w-xl space-y-4">
         <CampoFormaDePago value={forma} onChange={setForma} error={errores.forma_pago} />
         <CampoObservacion value={observacion} onChange={setObservacion} error={errores.observacion} />
-        <PieDelCobro general={general} impedido={impedido} enviando={enviando} />
+        <PieDelCobro general={general} incierto={incierto} onOtroCobro={olvidarIntento} impedido={impedido} enviando={enviando} />
       </form>
 
       {confirmando && previa && caja && (

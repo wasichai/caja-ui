@@ -6,7 +6,7 @@ import { Importe, SinDato } from '../cifras/Importe'
 import { Alerta } from '../components/Alerta'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type VistaPrevia } from '../types'
-import { OBSERVACION } from './envio'
+import { MISMO_INTENTO, NO_SE_SABE, OBSERVACION, OTRO_COBRO } from './envio'
 
 // the pieces of a cobro's form that «Caja tributaria» and «Caja de tasas» share: the forma de pago, the observación,
 // the total the backend previews, the button that is never mute and the confirmation (a cobro is not undone)
@@ -56,11 +56,39 @@ export function CampoObservacion({ value, onChange, error }: { value: string; on
   )
 }
 
-// what the backend refused that no field of the form has, and the button: while it cannot cobrar, it says why at its
-// side, never mute
-export function PieDelCobro({ general, impedido, enviando }: { general: string | null; impedido: string | null; enviando: boolean }) {
+// what the backend refused that no field of the form has, an attempt whose outcome is not known (envio.ts), and the
+// button: while it cannot cobrar, it says why at its side, never mute
+export function PieDelCobro({
+  general,
+  incierto,
+  onOtroCobro,
+  impedido,
+  enviando
+}: {
+  general: string | null
+  // what happened to the attempt that may have been charged, or null
+  incierto: string | null
+  onOtroCobro: () => void
+  impedido: string | null
+  enviando: boolean
+}) {
   return (
     <>
+      {incierto && (
+        <Alerta tono="error">
+          <span className="block font-semibold">{NO_SE_SABE}</span>
+          <span className="mt-1 block">{MISMO_INTENTO}</span>
+          <span className="mt-1 block">Lo que pasó: {incierto}.</span>
+          <span className="mt-2 flex flex-wrap items-center gap-3">
+            <Button type="button" variant="secondary" size="sm" onClick={onOtroCobro} aria-describedby="cobro-otro-cobro">
+              {OTRO_COBRO}
+            </Button>
+            <span id="cobro-otro-cobro" className="text-xs">
+              Solo si en Duplicado de recibo vio que no se cobró, o que se anuló: el siguiente cobro irá como uno nuevo.
+            </span>
+          </span>
+        </Alerta>
+      )}
       {general && <Alerta tono="error">{general}</Alerta>}
       <div className="flex flex-wrap items-center justify-end gap-3">
         {impedido && (

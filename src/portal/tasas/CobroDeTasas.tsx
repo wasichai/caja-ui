@@ -68,7 +68,7 @@ export function CobroDeTasas({
   onCobrado: (hecho: CobroHecho) => void
 }) {
   const { can } = useAuth()
-  const { borrador, errores, general, enviando, revisar, enviar } = useEnvioDelCobro({
+  const { borrador, errores, general, incierto, enviando, revisar, enviar, olvidarIntento } = useEnvioDelCobro({
     acto: `caja-tasas.${caja.deLaRuta}`,
     borradorDe: BORRADOR,
     controles: CONTROLES,
@@ -201,7 +201,7 @@ export function CobroDeTasas({
             />
           </div>
           <CampoObservacion value={observacion} onChange={setObservacion} error={errores.observacion} />
-          <PieDelCobro general={general} impedido={impedido} enviando={enviando} />
+          <PieDelCobro general={general} incierto={incierto} onOtroCobro={olvidarIntento} impedido={impedido} enviando={enviando} />
         </form>
 
         {confirmando && previa && caja.activa && (
