@@ -1,3 +1,5 @@
+import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { AuthUser, CallerPermissions } from '@wasichai/core'
 import type { MockRoute } from '@wasichai/testing'
 
@@ -28,4 +30,15 @@ export function rutasDeSesion(user: AuthUser, permisos: CallerPermissions): Mock
 export function abrirSesion(user: AuthUser) {
   localStorage.setItem('caja.token', 't')
   localStorage.setItem('caja.user', JSON.stringify(user))
+}
+
+// signs in again from the login a 401 led to, and waits until the portal is drawn again. right after «Ingresar» there is
+// a moment with neither the login nor the shell (signIn has answered, the route of `next` is not drawn yet): a query of
+// `main` run then, synchronously, finds nothing, and how long that moment lasts depends on the load of the machine.
+// the caller mocks POST /auth/login first
+export async function volverAEntrar(user: AuthUser, contrasena = 'secreta') {
+  await userEvent.type(screen.getByLabelText('Correo'), user.email)
+  await userEvent.type(screen.getByLabelText('Contraseña'), contrasena)
+  await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await screen.findByRole('main')
 }
