@@ -70,8 +70,9 @@ Lo que caja-web cumplía en cada pantalla, como primitivas que cada pantalla usa
   pierde un céntimo) y dice «al DD/MM/AAAA». En una tabla, la fecha va una vez en la cabecera (`FechaDeLasCifras`).
   Test: `src/portal/cifras/Importe.test.tsx`.
 - **Un dato que falta dice por qué, nunca un 0.** `SinDato` dibuja «—» y el motivo. `Importe` con `importe: null`
-  exige el motivo por los tipos (lo comprueba un `@ts-expect-error` en el test) y nunca dibuja `0` ni `S/ 0.00`. Test:
-  `src/portal/cifras/Importe.test.tsx`.
+  exige el motivo por los tipos (lo comprueba un `@ts-expect-error` en el test) y nunca dibuja `0` ni `S/ 0.00`. Un nulo
+  que llega sin motivo (el backend mandó `null` donde los tipos prometían un importe) dice «El backend no mandó el
+  importe», nunca «—» solo. Test: `src/portal/cifras/Importe.test.tsx`.
 - **Ningún total sale del cliente.** Un barrido de `src/` sin los tests: `parseFloat(`, `toFixed(` y `Number(` solo
   donde lo dice una lista blanca exacta, con el motivo de cada entrada. Test: `src/garantias.test.tsx`.
 - **Un 401 al escribir pide volver a entrar y guarda lo escrito** (ADR-0044 §Decisión·4 de caja). `useEscritura` y

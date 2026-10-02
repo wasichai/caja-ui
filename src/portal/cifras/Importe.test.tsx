@@ -52,6 +52,17 @@ describe('Importe', () => {
     expect(container).not.toHaveTextContent(/\b0\b|S\//)
   })
 
+  // the types demand the reason, but a null the backend sent where the types promised an amount comes without one:
+  // then the generic reason, never a bare dash
+  it('says the generic reason when a missing amount comes without one', () => {
+    const sinMotivo = { importe: null, actualizado_a: null } as unknown as Cifra
+    const { container, rerender } = render(<Importe cifra={sinMotivo} />)
+    expect(texto(container)).toBe('— El backend no mandó el importe')
+    rerender(<Importe cifra={{ importe: null, actualizado_a: null }} motivo="  " />)
+    expect(texto(container)).toBe('— El backend no mandó el importe')
+    expect(container).not.toHaveTextContent(/\b0\b|S\//)
+  })
+
   it('says why when what the backend sent is no amount, instead of NaN or a 0', () => {
     const { container } = render(<Importe cifra={{ importe: 'doce', actualizado_a: '2026-10-01' }} />)
     expect(texto(container)).toBe('— El importe que mandó el backend no se entiende')

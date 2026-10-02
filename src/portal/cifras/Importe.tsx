@@ -23,10 +23,14 @@ const esDecimal = (texto: string): texto is `${number}` => DECIMAL.test(texto)
 // what a figure says that it is as of: "al 01/10/2026"
 const alDia = (fecha: string) => `al ${formatDate(fecha)}`
 
+// what a missing amount says when no reason came with it: a null the backend sent where the types promised an amount
+// has none, and a bare dash would read as nothing to pay
+const SIN_MOTIVO = 'El backend no mandó el importe'
+
 // a figure the client formats and never computes, with its date. in a table whose heading says the date once
 // (FechaDeLasCifras), `fechaDeLaTabla` drops the figure's own when it is that one; one of another date keeps it
 export function Importe({ cifra, motivo, fechaDeLaTabla }: ImporteProps) {
-  if (cifra.importe === null) return <SinDato motivo={motivo ?? ''} />
+  if (cifra.importe === null) return <SinDato motivo={motivo?.trim() ? motivo : SIN_MOTIVO} />
   if (!esDecimal(cifra.importe)) return <SinDato motivo="El importe que mandó el backend no se entiende" />
   return (
     <span data-ui="importe" className="tabular-nums">
