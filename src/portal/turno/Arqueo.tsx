@@ -170,13 +170,13 @@ export function ResumenDelArqueo({ delTurno }: { delTurno: ArqueoDelTurno }) {
   )
 }
 
-// the payments that keep the turno from closing, one by one: its id, its kind and its state. until the screen of the
-// payments not delivered comes, they are named here
+// the payments that keep the turno from closing, one by one: its id, its kind and its state (PENDIENTE or MUERTO). the
+// MUERTO ones are explained in «Pagos sin entregar» (buzon/PagosSinEntregar.tsx), below
 export function PagosSinEntregar({ pagos }: { pagos: PagoSinEntregar[] }) {
   if (pagos.length === 0) return null
   return (
     <Alerta tono="atencion" titulo="Hay pagos sin entregar a su sistema de origen.">
-      Hasta que se entreguen, el turno no se cierra.
+      Hasta que se entreguen, o se expliquen los que no se pudieron entregar (en «Pagos sin entregar», más abajo), el turno no se cierra.
       <ul aria-label="Pagos sin entregar" className="mt-1 list-disc space-y-0.5 pl-5">
         {pagos.map((pago) => (
           <li key={pago.pago_id} className="tabular-nums">

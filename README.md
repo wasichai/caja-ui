@@ -55,7 +55,7 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
 El admin (`src/admin`) no cambia: sus pantallas salen de lo que caja-backend carga en Core. El enlace
 "Administración" del portal solo aparece para ADMIN.
 
-## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`, `src/portal/turno`)
+## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`, `src/portal/turno`, `src/portal/buzon`)
 
 Las dos cajas comparten sus piezas, que viven en `src/portal/cobro`:
 
@@ -205,8 +205,8 @@ Tests: `src/portal/duplicadoRecibo.test.tsx` (una prueba por fila de la tabla y 
 ### Cierre y arqueo de caja (`/cierre-caja`)
 
 El turno del día del cajero, su arqueo por forma de pago, el cierre con lo que contó y su reversión. Se ofrece con
-lectura de `turno` (lo que ya decía el árbol), y con lo mismo se guarda su ruta. Los pagos sin entregar y la
-conciliación llegan con sus pantallas.
+lectura de `turno` (lo que ya decía el árbol), y con lo mismo se guarda su ruta. Debajo del arqueo, el bloque **«Pagos
+sin entregar»** y su explicación (más abajo). La conciliación llega con su pantalla.
 
 - **El turno del día**: `GET /api/caja/turnos/del-dia` (el cajero de la sesión, hoy en Lima; no abre ningún turno). La
   situación se dice en palabras: `SIN_ABRIR` (el turno se abre con el primer cobro), `ABIERTO`, `CERRADO` (para seguir
@@ -222,7 +222,8 @@ conciliación llegan con sus pantallas.
   nadie ha contado, y dicen **«sin declarar»** (`SinDato`), que el backend los da al cerrar; con el turno cerrado, que el
   arqueo en vivo no guarda lo declarado, que quedó en el acta del cierre (`porQueSinDeclarar` en `turno/Arqueo.tsx`). Además: los recibos emitidos y anulados, lo cobrado con
   evento y sin evento, el estado del turno y, si los hay, los **pagos sin entregar** (`lo_que_impide_cerrar`) uno a
-  uno, con su `pago_id`, su tipo y su estado, hasta que llegue su pantalla.
+  uno, con su `pago_id`, su tipo y su estado (`PENDIENTE` o `MUERTO`); los que no se pudieron entregar se explican en el
+  bloque «Pagos sin entregar».
 - **Cerrar** (`turno/CerrarElTurno.tsx`): lo declarado por forma de pago, las cinco, **como texto**: sin signo, con
   punto y a lo sumo 2 decimales y 13 enteros, validado como texto y enviado tal cual se tecleó (recortado), nunca como
   `Number` ni con los `kind` `money` o `decimal` del kit. Lo que se deja en blanco no se envía, y el backend lo cierra
@@ -236,7 +237,8 @@ conciliación llegan con sus pantallas.
   - Después, el turno del día y el arqueo se vuelven a leer: el estado es el del backend, nunca se cambia aquí.
   - Un 400 de `declarado` se dice bajo «Lo declarado», el de `observacion` bajo su campo, y otro (`caja`, `fecha`)
     encima del botón. Un 409 («ya está cerrado», «Hay pagos sin entregar», un choque) se dice con su `detail` y vuelve a
-    leer el turno y el arqueo, que lista los pagos. Un 403 y un 404, con su `detail`.
+    leer el turno y el arqueo, que lista los pagos. Si el arqueo releído trae alguno `MUERTO`, el aviso del 409 lleva un
+    enlace, «Ir a los pagos sin entregar», que pone el foco en el bloque. Un 403 y un 404, con su `detail`.
   - Un 401 guarda lo declarado y la observación con `useEscritura`, con la clave **`cierre.<turno_id>`**: al volver a
     entrar con la misma cuenta, el cierre de **ese** turno se rellena, y el de otro turno no lo ve.
 - **Reversar** (`turno/ReversarElCierre.tsx`): motivo (obligatorio, hasta 80) y observación (de 5 a 500), confirmación y
@@ -255,6 +257,35 @@ conciliación llegan con sus pantallas.
     día no se pudo leer; hoy no hay turno; no se eligió ninguno; el backend no mandó su caja; el turno está abierto.
 
 Tests: `src/portal/cierreCaja.test.tsx` (una prueba por situación y una por motivo de cada botón impedido).
+
+#### Pagos sin entregar (en la hoja `cierre-caja`, `src/portal/buzon`)
+
+Un pago que agotó sus reintentos (`MUERTO`) impide cerrar su turno. Quien tiene el permiso lo **explica**, y entonces
+el turno cierra. Es el bloque «Pagos pendientes de entrega» de caja-web, dentro de «Cierre y arqueo de caja».
+
+- **La lista**: `GET /api/caja/pagos/sin-entregar` (una lista, no una página: los `MUERTO`, del más antiguo al más
+  reciente). Una tabla con pago, tipo (`etiqueta`), destino, recibo, intentos, último error, creado (hora de Lima) y
+  estado (`etiqueta`). Lo que falta dice por qué (`SinDato`): el recibo que no se pudo leer, un error que no se
+  registró. Sin pagos: «No hay pagos sin entregar». Los `PENDIENTE` no salen aquí: se entregan solos, y el arqueo los
+  nombra. Un 403 (sin lectura de `pago_evento` o `recibo`) se dice en el hueco del bloque, y la hoja sigue.
+- **Explicar** (`buzon/ExplicarElPago.tsx`): la explicación (qué pasó y qué se hizo, de 5 a 500; queda en el evento) y
+  la observación (de 5 a 500; queda en la auditoría). Se confirma con `ConfirmDialog`, porque no se deshace, y va
+  `POST /api/caja/pagos/{pago_id}/explicacion` con el `pago_id` de la fila, nunca uno tecleado.
+  - **El estado no se cambia en el cliente**: con éxito se dice lo que contestó el backend («Se explicó el pago …: el
+    backend lo dejó «Explicado».»), y se vuelven a leer los pagos **y** el arqueo, para que «puede cerrar» lo diga el
+    backend. Si el backend lo siguiera listando, la pantalla lo seguiría mostrando.
+  - Un 400 se dice bajo su campo (`explicacion`, `observacion`), y otro (`pago_id`) encima del botón. El 409 (ya no está
+    `MUERTO`: se entregó o alguien ya lo explicó) se dice con su `detail` y relee los pagos y el arqueo. Un 403 y un
+    404, con su `detail`.
+  - Un 401 guarda la explicación y la observación con `useEscritura`, con la clave **`explicacion.<pago_id>`**: al
+    volver a entrar con la misma cuenta, el acto de **ese** pago se abre relleno, y el de otro pago no lo ve. Cancelar
+    lo olvida.
+- **Ningún botón mudo** (`buzon/impedimentos.ts`). «Explicar» dice por qué no puede: sin modificación de `pago_evento`
+  (solo la tiene `SUPERVISOR_CAJA`) o sin lectura de `recibo`, una vez encima de la tabla y como descripción de cada
+  botón; y, a su lado, si el pago no está `MUERTO`.
+
+Tests: `src/portal/pagosSinEntregar.test.tsx` (la lista, sin pagos, el 403, explicar y releer, el estado que no se
+cambia aquí, cada error, el borrador por pago, una prueba por motivo de «Explicar» y el enlace desde el 409 del cierre).
 
 ## El kit de formularios (`src/kit`)
 
@@ -316,7 +347,7 @@ Backend y datos: ver el README de `caja-backend`.
 ## Comandos
 
 ```bash
-yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo, cierre y arqueo y guardas
+yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo, cierre y arqueo, pagos sin entregar y guardas
 yarn typecheck
 yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview

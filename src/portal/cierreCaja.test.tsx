@@ -153,6 +153,7 @@ function start({
     { method: 'GET', path: `/caja/turnos/${T2}/arqueo`, body: arqueo(T2, { arqueo: { ...EN_VIVO, lineas: [linea('EFECTIVO', '12.00', '0.00', '12.00')] } }) },
     { method: 'POST', path: '/caja/turnos/cierre', status: 201, body: CIERRE },
     { method: 'POST', path: '/caja/turnos/reversion', status: 201, body: REVERSION },
+    { method: 'GET', path: '/caja/pagos/sin-entregar', body: [] },
     ...rutasDeSesion(user, permisos)
   ]
   window.history.pushState({}, '', path)
@@ -765,7 +766,7 @@ describe('Cierre y arqueo de caja: no mute button, each impediment says why', ()
     await tablaDeArqueo()
     expect(await botonCerrar()).toBeDisabled()
     expect(await botonCerrar()).toHaveAccessibleDescription(
-      'Hay pagos sin entregar a su sistema de origen (vea la lista del arqueo): hasta que se entreguen, el turno no se cierra.'
+      'Hay pagos sin entregar a su sistema de origen (vea la lista del arqueo): hasta que se entreguen, o se expliquen los que no se pudieron entregar, el turno no se cierra.'
     )
   })
 

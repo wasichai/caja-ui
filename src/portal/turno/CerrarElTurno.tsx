@@ -4,6 +4,7 @@ import { Lock } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
+import { IrALosPagosSinEntregar } from '../buzon/PagosSinEntregar'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
 import { Alerta } from '../components/Alerta'
@@ -47,6 +48,7 @@ const vacio = (): Errores => ({ porForma: {} })
 export function CerrarElTurno({
   turno,
   conMovimiento,
+  hayPagosPorExplicar,
   impedido,
   onCerrado,
   onChoque
@@ -55,6 +57,9 @@ export function CerrarElTurno({
   turno: TurnoEnElDia | null
   // the formas de pago with a line in the live arqueo (the backend's): each asks for an explicit value
   conMovimiento: readonly string[]
+  // the arqueo lists a payment that could not be delivered (MUERTO): a 409 leads to «Pagos sin entregar», where it is
+  // explained
+  hayPagosPorExplicar: boolean
   impedido: string | null
   onCerrado: (hecho: CierreHecho) => void
   // a 409: the turno is not what the screen says any more, so it is read again
@@ -67,6 +72,7 @@ export function CerrarElTurno({
   const [observacion, setObservacion] = useState(borrador?.observacion ?? '')
   const [errores, setErrores] = useState<Errores>(vacio)
   const [general, setGeneral] = useState<string | null>(null)
+  const [choque, setChoque] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
   const [enviando, setEnviando] = useState(false)
 
@@ -88,6 +94,7 @@ export function CerrarElTurno({
     }
     setErrores(halladas)
     setGeneral(null)
+    setChoque(false)
     if (Object.keys(porForma).length === 0 && !halladas.observacion) setConfirmando(true)
   }
 
@@ -120,7 +127,9 @@ export function CerrarElTurno({
       // a 401: the draft is kept and the login says so
       if (!(e instanceof SesionCaducada)) {
         contar(e)
-        if (e instanceof ApiError && e.status === 409) onChoque()
+        const es409 = e instanceof ApiError && e.status === 409
+        setChoque(es409)
+        if (es409) onChoque()
       }
     } finally {
       setEnviando(false)
@@ -180,7 +189,17 @@ export function CerrarElTurno({
           </div>
         </form>
       )}
-      {general && <Alerta tono="error">{general}</Alerta>}
+      {general && (
+        <Alerta tono="error">
+          {general}
+          {choque && hayPagosPorExplicar && (
+            <>
+              {' '}
+              <IrALosPagosSinEntregar />
+            </>
+          )}
+        </Alerta>
+      )}
       <BotonConMotivo id="cerrar-impedido" impedido={impedido} variante="primary" type="submit" form={formulario}>
         <Lock className="size-4" />
         Cerrar el turno

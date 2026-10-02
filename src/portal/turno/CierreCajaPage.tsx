@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe } from '../cifras/Importe'
+import { PagosSinEntregar as BloqueDePagosSinEntregar } from '../buzon/PagosSinEntregar'
 import { Alerta } from '../components/Alerta'
 import { fechaYHoraEnLima } from '../fechas'
 import type { CierreHecho, TurnoDelDia as ElDelDia } from '../types'
@@ -18,7 +19,8 @@ import { TurnoDelDia } from './TurnoDelDia'
 // «Cierre y arqueo de caja» (cierre-caja): the clerk's turno of today and its situation, the live arqueo of the turno
 // chosen (in the route, ?turno=, when there is more than one), the cierre with what was counted, and its reversal.
 // every figure is the backend's, and so is every state: after a write, the turno and its arqueo are read again, never
-// changed here. the payments not delivered and the reconciliation come in their own screens
+// changed here. below the arqueo, the payments not delivered (MUERTO) and their explanation, which lets the turno close
+// (buzon/PagosSinEntregar.tsx). the reconciliation comes in its own screen
 
 // the turno of the route, or the only one of the day; with several and none in the route, none
 function elTurnoDe(delDia: { isPending: boolean; isError: boolean; error: unknown; data?: ElDelDia }, pedido: string | null): ElTurno {
@@ -89,12 +91,15 @@ export function CierreCajaPage() {
         </section>
       )}
 
+      <BloqueDePagosSinEntregar />
+
       {acta && acta.turno_id === turno?.turno_id && <ActaDelCierre acta={acta} />}
 
       <CerrarElTurno
         key={`cierre-${clave}`}
         turno={turno}
         conMovimiento={elArqueo.estado === 'leido' ? elArqueo.arqueo.arqueo.lineas.map((linea) => linea.forma_pago) : []}
+        hayPagosPorExplicar={elArqueo.estado === 'leido' && elArqueo.arqueo.lo_que_impide_cerrar.some((pago) => pago.estado === 'MUERTO')}
         impedido={impedimentoDeCerrar(can, elTurno, elArqueo)}
         onCerrado={(hecho) => {
           setActa(hecho)

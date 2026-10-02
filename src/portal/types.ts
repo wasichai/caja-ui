@@ -317,3 +317,29 @@ export interface ReversionHecha {
   observacion: string
   estado_del_turno: string
 }
+
+// --- the payments not delivered and their explanation (/api/caja/pagos/**) ---
+
+// a row of GET /api/caja/pagos/sin-entregar (a list, not a page: the MUERTO ones, oldest first), and the answer of
+// POST …/explicacion, with the same shape. recibo is null when the recibo could not be read; ultimo_error comes cut to
+// 400 characters, without credentials; creado_en is when it was charged, in Lima's offset
+export interface PagoDelBuzon {
+  pago_id: string
+  tipo: string
+  destino: string
+  recibo: string | null
+  turno_id: string | null
+  estado: string
+  intentos: number
+  ultimo_error: string | null
+  creado_en: string | null
+  entregado_en: string | null
+  explicacion: string | null
+}
+
+// POST /api/caja/pagos/{pago_id}/explicacion: what happened and what was done (kept in the event), and the observación
+// (kept in the audit). any other key is a 400
+export interface PeticionDeExplicacion {
+  explicacion: string
+  observacion: string
+}

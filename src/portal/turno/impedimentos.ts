@@ -46,7 +46,7 @@ export function impedimentoDeCerrar(can: Oferta['can'], elTurno: ElTurno, elArqu
   if (arqueo.estado_del_turno === 'CERRADO')
     return 'Este turno ya está cerrado: un cierre no se modifica. Para rehacerlo, se reversa (más abajo) y se cierra otra vez.'
   if (arqueo.lo_que_impide_cerrar.length > 0)
-    return 'Hay pagos sin entregar a su sistema de origen (vea la lista del arqueo): hasta que se entreguen, el turno no se cierra.'
+    return 'Hay pagos sin entregar a su sistema de origen (vea la lista del arqueo): hasta que se entreguen, o se expliquen los que no se pudieron entregar, el turno no se cierra.'
   if (!arqueo.puede_cerrar) return 'El backend dice que este turno no se puede cerrar todavía.'
   return null
 }
