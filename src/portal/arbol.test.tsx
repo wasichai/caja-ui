@@ -56,13 +56,15 @@ const hojas = () =>
 const inicio = () => within(screen.getByRole('main'))
 
 // the screen registered on two leaves: duplicado-recibo (recibo READ, or anulacion_recibo CREATE) and recaudacion-area
-// (linea_recibo READ and area READ)
+// (recibo, linea_recibo, area and tasa READ)
 const dosHojas = () => Object.assign(registradas, { 'duplicado-recibo': Prueba, 'recaudacion-area': Prueba })
 
 describe('the tree of tesorería, by /api/auth/me/permissions', () => {
   it('offers a leaf when the account has every pair of one of its alternatives', async () => {
     dosHojas()
-    start({ permisos: { admin: false, objects: { anulacion_recibo: ['CREATE'], linea_recibo: ['READ'], area: ['READ', 'UPDATE'] } } })
+    start({
+      permisos: { admin: false, objects: { anulacion_recibo: ['CREATE'], recibo: ['READ'], linea_recibo: ['READ'], area: ['READ', 'UPDATE'], tasa: ['READ'] } }
+    })
     expect(await inicio().findByText('Elija una pantalla del menú.')).toBeInTheDocument()
     expect(hojas()).toEqual(['Ir al inicio', 'Duplicado de recibo', 'Recaudación por área'])
     expect(within(lateral()).getByRole('button', { name: 'Tesorería' })).toBeInTheDocument()

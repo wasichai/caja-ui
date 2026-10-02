@@ -95,7 +95,7 @@ const problema = (status: number, detail: string, errors?: { field: string; mess
 })
 
 describe('Avance de recaudación: the leaf', () => {
-  it('is offered with READ on linea_recibo, and its screen asks the avance', async () => {
+  it('is offered with READ on recibo and linea_recibo, and its screen asks the avance', async () => {
     start()
     expect(await main().findByRole('heading', { name: 'Avance de recaudación', level: 1 })).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Avance de recaudación' }).length).toBeGreaterThan(0)
@@ -112,9 +112,11 @@ describe('Avance de recaudación: the leaf', () => {
     expect(within(screen.getByRole('navigation', { name: 'Secciones' })).getByRole('link', { name: 'Avance de recaudación' })).toBeInTheDocument()
   })
 
-  it('is kept by the same pair: without READ on linea_recibo its url says what the account lacks', async () => {
-    start({ permisos: { admin: false, objects: lee('recibo', 'turno') } })
-    expect(await main().findByText('Su cuenta no puede abrir «Avance de recaudación»: le falta lectura de linea_recibo.')).toBeInTheDocument()
+  it('is kept by the backend’s own pairs: without READ on recibo and linea_recibo its url says what the account lacks', async () => {
+    start({ permisos: { admin: false, objects: lee('turno') } })
+    expect(
+      await main().findByText('Su cuenta no puede abrir «Avance de recaudación»: le falta lectura de recibo y lectura de linea_recibo.')
+    ).toBeInTheDocument()
     expect(fetch!.calls.filter((c) => c.path.startsWith('/caja/'))).toEqual([])
   })
 })
@@ -196,9 +198,10 @@ describe('Avance de recaudación: the range lives in the url', () => {
     expect(main().getByLabelText('Hasta')).toHaveAccessibleDescription(mensaje)
   })
 
-  it('says a 403 in its place', async () => {
+  // the pairs of the leaf are the backend's gate; core's 403 at read time (turno, anulacion_recibo…) is not among them
+  it('says a 403 of core at read time in its place', async () => {
     start()
-    const detail = 'Ver el avance de recaudación exige permiso de lectura sobre recibo: suma los recibos y sus líneas'
+    const detail = 'Leer anulacion_recibo exige permiso de lectura sobre anulacion_recibo'
     Object.assign(rutaDe('/caja/recaudacion/avance'), { status: 403, body: problema(403, detail) })
     expect(await main().findByText(`No se pudo leer el avance de recaudación: ${detail}`)).toBeInTheDocument()
   })

@@ -40,10 +40,19 @@ describe('NAV_TREE', () => {
     [['recibo READ'], ['duplicado-recibo']],
     [['anulacion_recibo CREATE'], ['duplicado-recibo']],
     [['turno READ'], ['cierre-caja']],
-    [['linea_recibo READ'], ['avance-recaudacion']],
+    // the avance and the recaudación por área, by caja-backend's exact gates: a pair short is not enough
+    [['linea_recibo READ'], []],
     [
-      ['linea_recibo READ', 'area READ'],
-      ['avance-recaudacion', 'recaudacion-area']
+      ['recibo READ', 'linea_recibo READ'],
+      ['duplicado-recibo', 'avance-recaudacion']
+    ],
+    [
+      ['recibo READ', 'linea_recibo READ', 'area READ'],
+      ['duplicado-recibo', 'avance-recaudacion']
+    ],
+    [
+      ['recibo READ', 'linea_recibo READ', 'area READ', 'tasa READ'],
+      ['caja-tasas', 'duplicado-recibo', 'avance-recaudacion', 'recaudacion-area']
     ],
     [['area READ'], []],
     [['orden_de_cobro CREATE', 'tasa UPDATE', 'recibo DELETE', 'anulacion_recibo READ', 'turno CREATE', 'linea_recibo UPDATE'], []]

@@ -67,8 +67,20 @@ export const NAV_TREE: NodoNav[] = [
         seOfreceCon: [[lee('recibo')], [{ objeto: 'anulacion_recibo', accion: 'CREATE' }]]
       },
       { clave: 'cierre-caja', label: 'Cierre y arqueo de caja', to: '/cierre-caja', seOfreceCon: [[lee('turno')]] },
-      { clave: 'avance-recaudacion', label: 'Avance de recaudación', to: '/avance-recaudacion', seOfreceCon: [[lee('linea_recibo')]] },
-      { clave: 'recaudacion-area', label: 'Recaudación por área', to: '/recaudacion-area', seOfreceCon: [[lee('linea_recibo'), lee('area')]] }
+      // the two of the recaudación, by caja-backend's exact gates (ConsultaDeRecaudacion): a pair short would open a
+      // screen whose read is a 403
+      {
+        clave: 'avance-recaudacion',
+        label: 'Avance de recaudación',
+        to: '/avance-recaudacion',
+        seOfreceCon: [[lee('recibo'), lee('linea_recibo')]]
+      },
+      {
+        clave: 'recaudacion-area',
+        label: 'Recaudación por área',
+        to: '/recaudacion-area',
+        seOfreceCon: [[lee('recibo'), lee('linea_recibo'), lee('area'), lee('tasa')]]
+      }
     ]
   },
   { label: 'Administración', to: '/admin', externa: true, soloAdmin: true, icono: Settings }

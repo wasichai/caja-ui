@@ -326,9 +326,10 @@ cobros, el 400 y el 403).
 
 ### Avance de recaudación (`/avance-recaudacion`)
 
-Lo recaudado en un rango de días del turno, por sistema de origen. Se ofrece con lectura de `linea_recibo` (lo que ya
-decía el árbol), y con lo mismo se guarda su ruta. caja-backend pide además lectura de `recibo`: sin ella, su 403 se dice
-en el hueco de la recaudación.
+Lo recaudado en un rango de días del turno, por sistema de origen. Se ofrece con lectura de `recibo` y de `linea_recibo`,
+**la misma compuerta que exige caja-backend** (`ConsultaDeRecaudacion`), y con lo mismo se guarda su ruta: una cuenta a
+la que le falta una no abre una pantalla llena de 403, lee qué le falta. El 403 que core da al leer (por ejemplo, sin
+lectura de `turno` o `anulacion_recibo`, que no son de la compuerta) se dice en el hueco de la recaudación.
 
 - **Los filtros viven en la ruta**: `/avance-recaudacion?desde=2026-10-01&hasta=2026-10-02&origen=rentas&caja=C-01&cajero=…`.
   «Consultar» los escribe (los vacíos no van) y recargar o pasar el enlace pide lo mismo. Sin rango, el backend pone el
@@ -347,9 +348,9 @@ Tests: `src/portal/avanceRecaudacion.test.tsx`.
 
 ### Recaudación por área (`/recaudacion-area`)
 
-Lo recaudado en un rango por área, partida y concepto. Se ofrece con lectura de `linea_recibo` y de `area` (lo que ya
-decía el árbol), y con lo mismo se guarda su ruta. caja-backend pide además lectura de `recibo` y `tasa`: sin ellas, su
-403 se dice en el hueco de la recaudación.
+Lo recaudado en un rango por área, partida y concepto. Se ofrece con lectura de `recibo`, `linea_recibo`, `area` y
+`tasa`, **la misma compuerta que exige caja-backend**, y con lo mismo se guarda su ruta. El 403 que core da al leer se
+dice en el hueco de la recaudación.
 
 - **El área y el rango viven en la ruta**: `/recaudacion-area?area=A-113300&desde=2026-10-01&hasta=2026-10-02`. El área
   se escribe por su código (el backend también acepta la etiqueta «COD — nombre»): no hay desplegable con áreas

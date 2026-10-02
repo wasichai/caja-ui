@@ -81,7 +81,7 @@ const SIN_PARTIDA =
   'Lo cobrado por órdenes de los sistemas de origen no tiene área ni partida: se cuenta aparte, en el neto sin partida, y no se reparte entre las áreas.'
 
 describe('Recaudación por área: the leaf', () => {
-  it('is offered with READ on linea_recibo and area, and its screen asks the recaudación', async () => {
+  it('is offered with READ on recibo, linea_recibo, area and tasa, and its screen asks the recaudación', async () => {
     start()
     expect(await main().findByRole('heading', { name: 'Recaudación por área', level: 1 })).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Recaudación por área' }).length).toBeGreaterThan(0)
@@ -98,9 +98,19 @@ describe('Recaudación por área: the leaf', () => {
     expect(within(screen.getByRole('navigation', { name: 'Secciones' })).getByRole('link', { name: 'Recaudación por área' })).toBeInTheDocument()
   })
 
-  it('is kept by the same pairs: without them its url says what the account lacks', async () => {
-    start({ permisos: { admin: false, objects: lee('recibo', 'tasa') } })
-    expect(await main().findByText('Su cuenta no puede abrir «Recaudación por área»: le falta lectura de linea_recibo y lectura de area.')).toBeInTheDocument()
+  it('is kept by the backend’s own pairs: without them its url says what the account lacks', async () => {
+    start({ permisos: { admin: false, objects: lee('turno') } })
+    expect(
+      await main().findByText(
+        'Su cuenta no puede abrir «Recaudación por área»: le falta lectura de recibo y lectura de linea_recibo y lectura de area y lectura de tasa.'
+      )
+    ).toBeInTheDocument()
+    expect(fetch!.calls.filter((c) => c.path.startsWith('/caja/'))).toEqual([])
+  })
+
+  it('is not opened a pair short: with all but tasa it names tasa, and asks nothing', async () => {
+    start({ permisos: { admin: false, objects: lee('recibo', 'linea_recibo', 'area') } })
+    expect(await main().findByText('Su cuenta no puede abrir «Recaudación por área»: le falta lectura de tasa.')).toBeInTheDocument()
     expect(fetch!.calls.filter((c) => c.path.startsWith('/caja/'))).toEqual([])
   })
 })
@@ -190,9 +200,10 @@ describe('Recaudación por área: the área and the range live in the url', () =
     expect(main().getByLabelText('Desde')).toHaveAccessibleDescription(mensaje)
   })
 
-  it('says a 403 in its place', async () => {
+  // the pairs of the leaf are the backend's gate; a 403 at read time still has its place
+  it('says a 403 of core at read time in its place', async () => {
     start()
-    const detail = 'Ver la recaudación por área exige permiso de lectura sobre tasa'
+    const detail = 'Leer area exige permiso de lectura sobre area'
     Object.assign(rutaDe('/caja/recaudacion/por-area'), { status: 403, body: problema(403, detail) })
     expect(await main().findByText(`No se pudo leer la recaudación por área: ${detail}`)).toBeInTheDocument()
   })
