@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import type { AuthUser, CallerPermissions } from '@wasichai/core'
 import { mockFetch, type FetchMock, type MockRoute } from '@wasichai/testing'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { abrirSesion, CAJERA, rutasDeSesion } from '../test/portal'
+import { abrirSesion, CAJERA, rutasDeSesion, volverAEntrar } from '../test/portal'
 import { hoyEnLima } from './fechas'
 import { PortalApp } from './PortalApp'
 
@@ -445,9 +445,7 @@ describe('Caja de tasas: cobrar', () => {
     expect(JSON.stringify(guardado)).not.toMatch(/importe|precio|monto|0\.30|12\.00/)
 
     rutas.unshift({ method: 'POST', path: '/auth/login', body: { token: 'nuevo', expiresAt: '2026-12-31T00:00:00Z', user: CAJERA } })
-    await userEvent.type(screen.getByLabelText('Correo'), CAJERA.email)
-    await userEvent.type(screen.getByLabelText('Contraseña'), 'secreta')
-    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+    await volverAEntrar(CAJERA)
 
     expect(await main().findByRole('textbox', { name: 'Cantidad de T-001' })).toHaveValue('3')
     expect(cantidad('T-002')).toHaveValue('1')
