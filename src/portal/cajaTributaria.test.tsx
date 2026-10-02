@@ -118,11 +118,12 @@ function start({
   path = '/caja-tributaria',
   permisos = PUEDE_COBRAR,
   user = CAJERA,
-  listado = ordenes()
-}: { path?: string; permisos?: CallerPermissions; user?: AuthUser; listado?: object } = {}) {
+  listado = ordenes(),
+  cajas = { body: CAJAS }
+}: { path?: string; permisos?: CallerPermissions; user?: AuthUser; listado?: object; cajas?: Omit<MockRoute, 'path'> } = {}) {
   abrirSesion(user)
   rutas = [
-    { method: 'GET', path: '/caja/cajas', body: CAJAS },
+    { ...cajas, method: 'GET', path: '/caja/cajas' },
     { method: 'GET', path: '/caja/ordenes-de-cobro', body: listado },
     {
       method: 'POST',
@@ -254,6 +255,32 @@ describe('Caja tributaria: the pending orders', () => {
     expect(casilla('PREDIAL-2026-0002')).toBeEnabled()
     await userEvent.click(casilla('PREDIAL-2026-0001'))
     expect(casilla('MERC-2026-0007')).toBeEnabled()
+  })
+
+  it('does not let another system be marked after one with no system either', async () => {
+    const listado = ordenes()
+    listado.content[0] = { ...listado.content[0], sistema_origen: null as unknown as string }
+    start({ path: EN_C01, listado })
+    await marcar('PREDIAL-2026-0001')
+    expect(casilla('PREDIAL-2026-0002')).toBeDisabled()
+    expect(casilla('PREDIAL-2026-0002')).toHaveAccessibleDescription(
+      'Es de «rentas» y lo marcado no tiene sistema de origen: un recibo cobra órdenes de un solo sistema, porque se anula entero.'
+    )
+    expect(casilla('MERC-2026-0007')).toBeDisabled()
+  })
+
+  it('forgets what was marked when the payer changes', async () => {
+    start({ path: EN_C01 })
+    await marcar('PREDIAL-2026-0001')
+    expect(casilla('PREDIAL-2026-0001')).toBeChecked()
+
+    // another payer: the mock answers the same orders, so only a list drawn anew forgets the mark
+    const documento = main().getByRole('textbox', { name: 'Documento del pagador' })
+    await userEvent.clear(documento)
+    await userEvent.type(documento, '87654321')
+    await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('documento')).toBe('87654321'))
+    expect(await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })).not.toBeChecked()
   })
 
   it('leaves an order not yet due unmarkable, with why', async () => {
@@ -451,6 +478,16 @@ describe('Caja tributaria: cobrar', () => {
     await userEvent.selectOptions(main().getByRole('combobox', { name: 'Caja' }), 'C-01 — VENTANILLA 1')
     expect(botonCobrar()).toBeDisabled()
     expect(botonCobrar()).toHaveAccessibleDescription('Marque las órdenes que va a cobrar.')
+  })
+
+  it('says why when the cajas cannot be read, instead of asking to choose one', async () => {
+    start({ path: EN_C01, cajas: { status: 403, body: { title: 'Forbidden', status: 403, detail: 'Leer las cajas exige lectura de caja' } } })
+    await marcar('PREDIAL-2026-0001')
+    await totalACobrar()
+    await waitFor(() =>
+      expect(botonCobrar()).toHaveAccessibleDescription('Sin caja no se cobra, y las cajas no se pudieron leer: Leer las cajas exige lectura de caja')
+    )
+    expect(botonCobrar()).toBeDisabled()
   })
 
   it('without READ on orden_de_cobro, the leaf says what is missing and asks caja-backend nothing', async () => {

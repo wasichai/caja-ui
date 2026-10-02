@@ -62,14 +62,14 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
 `orden_de_cobro`, y con el mismo par se guarda su ruta.
 
 - **Lo elegido vive en la ruta**, como en caja-web: `/caja-tributaria?caja=C-01&documento=12345678`. Recargar o pasar
-  el enlace muestra lo mismo. Lo marcado no va en la URL: es de ese momento.
+  el enlace muestra lo mismo. Lo marcado no va en la URL: es de ese momento, y se olvida al cambiar de pagador.
 - **La caja**: `GET /api/caja/cajas`, solo las activas. Una caja de la URL que está de baja, o que no existe, se dice
   y no se elige.
 - **Las órdenes pendientes del pagador**: `GET /api/caja/ordenes-de-cobro?pagador_documento=…&estado=PENDIENTE`, con
   concepto, detalle, referencia, sistema de origen, fecha de exigibilidad e importe (`Importe`, con su fecha), y una
   casilla por fila. Una orden que no se puede marcar dice por qué: la que todavía no es exigible (hoy en Lima) y la de
-  otro sistema que el de lo marcado, porque un recibo se anula entero. Sin órdenes: «Este documento no tiene órdenes
-  pendientes».
+  otro sistema que el de lo marcado, porque un recibo se anula entero (una orden sin sistema marcada también impide las
+  de otro). Sin órdenes: «Este documento no tiene órdenes pendientes».
 - **El total lo da el backend**: al cambiar lo marcado, `POST /api/caja/cobros/vista-previa` devuelve el total, que se
   dibuja tal cual con `Importe`, y los `motivos` por los que no se puede cobrar, que se dicen como vienen. El cliente
   no suma nada.
@@ -78,7 +78,8 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   va con un `Idempotency-Key`: un UUID por intento, el mismo si se reenvía ese intento y otro si cambia lo que se manda
   (`cobro/intento.ts`).
   - **El botón «Cobrar» nunca está mudo**: si no se puede (sin CREATE de `recibo` o UPDATE de `orden_de_cobro`, sin
-    caja, sin nada marcado, sin el total, o con motivos del backend) dice por qué a su lado.
+    caja, sin nada marcado, sin el total, o con motivos del backend) dice por qué a su lado. Si las cajas no se
+    pudieron leer (un 403, un error), dice eso con su motivo, no «Elija la caja».
   - Un 400 se dice bajo su campo, o encima del botón si el formulario no tiene ese campo. Un 403, 404 o 409, con su
     `detail`.
   - Un 401 guarda la forma de pago y la observación con `useEscritura`, con la clave `caja-tributaria.<caja>.<documento>`,

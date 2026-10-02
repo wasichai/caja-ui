@@ -48,13 +48,15 @@ function validar(forma: string, observacion: string): Errores {
 export function Cobro({
   acto,
   caja,
+  sinCaja,
   ordenes,
   onCobrado
 }: {
   // the draft's key: the caja and the document of the route
   acto: string
-  // the active caja chosen, or null
+  // the active caja chosen, or null, and then why
   caja: string | null
+  sinCaja: string
   // the orden_id marked, in the table's order
   ordenes: string[]
   onCobrado: (hecho: CobroHecho) => void
@@ -80,7 +82,7 @@ export function Cobro({
   const impedido = falta
     ? `Su cuenta no puede cobrar: le falta ${falta}.`
     : !caja
-      ? 'Elija la caja en la que cobra.'
+      ? sinCaja
       : ordenes.length === 0
         ? 'Marque las órdenes que va a cobrar.'
         : vista.isError

@@ -17,13 +17,22 @@ import { Cobro } from './Cobro'
 
 const SIN_DATO = 'El sistema de origen no lo mandó'
 
-// why the order cannot be marked, or null. `sistema`: the system of what is marked, if anything is
-function impedimento(orden: OrdenDeCobro, sistema: string | null, hoy: string): string | null {
+// what is marked: nothing, or the system of its orders. apart, because an order with no system marked is something
+// marked too (its system is null), and it keeps the others from being marked as much as one of rentas
+type Marcado = { algo: false } | { algo: true; sistema: string | null }
+
+// how a system reads in the reason: «rentas», or that it has none
+const deSistema = (sistema: string | null) => (sistema === null ? 'no tiene sistema de origen' : `es de «${sistema}»`)
+
+// why the order cannot be marked, or null
+function impedimento(orden: OrdenDeCobro, marcado: Marcado, hoy: string): string | null {
   if (!orden.fecha_exigibilidad) return 'No tiene fecha de exigibilidad: no se puede cobrar.'
   // ISO dates compare as text: no arithmetic on them
   if (orden.fecha_exigibilidad > hoy) return `Es exigible desde el ${formatDate(orden.fecha_exigibilidad)}: todavía no se puede cobrar.`
-  if (sistema !== null && orden.sistema_origen !== sistema)
-    return `Es de «${orden.sistema_origen ?? 'sin sistema'}» y lo marcado es de «${sistema}»: un recibo cobra órdenes de un solo sistema, porque se anula entero.`
+  if (marcado.algo && orden.sistema_origen !== marcado.sistema) {
+    const suyo = deSistema(orden.sistema_origen)
+    return `${suyo.charAt(0).toUpperCase()}${suyo.slice(1)} y lo marcado ${deSistema(marcado.sistema)}: un recibo cobra órdenes de un solo sistema, porque se anula entero.`
+  }
   return null
 }
 
@@ -33,12 +42,14 @@ export function OrdenesPendientes({
   documento,
   cajaDeLaRuta,
   caja,
+  sinCaja,
   onCobrado
 }: {
   documento: string
-  // the caja of the url, as it is (the draft's key), and the active one it names, or null
+  // the caja of the url, as it is (the draft's key), and the active one it names, or null with why
   cajaDeLaRuta: string
   caja: string | null
+  sinCaja: string
   onCobrado: (hecho: CobroHecho) => void
 }) {
   const ordenes = useQuery({ queryKey: ['caja', 'ordenes', documento], queryFn: () => cobro.ordenesPendientes(documento) })
@@ -52,7 +63,7 @@ export function OrdenesPendientes({
 
   // what is marked, in the table's order: the preview and the cobro get it so
   const elegidas = filas.filter((o) => marcadas.has(o.orden_id))
-  const sistema = elegidas.length > 0 ? elegidas[0].sistema_origen : null
+  const marcado: Marcado = elegidas.length > 0 ? { algo: true, sistema: elegidas[0].sistema_origen } : { algo: false }
   const hoy = hoyEnLima()
   const pagador = filas.find((o) => o.pagador_nombre)?.pagador_nombre
 
@@ -91,7 +102,7 @@ export function OrdenesPendientes({
               {filas.map((orden) => {
                 const marcada = marcadas.has(orden.orden_id)
                 // a marked one is of the system marked, and was due when marked
-                const porque = marcada ? null : impedimento(orden, sistema, hoy)
+                const porque = marcada ? null : impedimento(orden, marcado, hoy)
                 const motivoId = `impedida-${orden.orden_id}`
                 return (
                   <tr key={orden.orden_id} data-impedida={porque ? true : undefined}>
@@ -138,6 +149,7 @@ export function OrdenesPendientes({
         key={`${cajaDeLaRuta}|${documento}`}
         acto={`caja-tributaria.${cajaDeLaRuta}.${documento}`}
         caja={caja}
+        sinCaja={sinCaja}
         ordenes={elegidas.map((o) => o.orden_id)}
         onCobrado={onCobrado}
       />

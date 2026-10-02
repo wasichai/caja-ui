@@ -35,6 +35,13 @@ export function CajaTributariaPage() {
   // only an active caja of the list cobra: one closed or unknown is said, never chosen
   const activa = cajas.data?.content.find((c) => c.codigo === caja && c.activa === true)
 
+  // why no caja cobra: the cajas that could not be read say so, instead of asking to choose one there is no list of
+  const sinCaja = cajas.isError
+    ? `Sin caja no se cobra, y las cajas no se pudieron leer: ${errorMessage(cajas.error, 'el backend no contestó')}`
+    : cajas.isPending
+      ? 'Leyendo las cajas…'
+      : 'Elija la caja en la que cobra.'
+
   const cobrado = (hecho: CobroHecho) => {
     setRecibo(hecho)
     // the orders paid are no longer pending: asked again, even while the recibo is on screen
@@ -90,7 +97,9 @@ export function CajaTributariaPage() {
       {recibo ? (
         <ReciboEmitido cobro={recibo} onNuevo={() => setRecibo(null)} />
       ) : (
-        documento && <OrdenesPendientes documento={documento} cajaDeLaRuta={caja} caja={activa?.codigo ?? null} onCobrado={cobrado} />
+        documento && (
+          <OrdenesPendientes key={documento} documento={documento} cajaDeLaRuta={caja} caja={activa?.codigo ?? null} sinCaja={sinCaja} onCobrado={cobrado} />
+        )
       )}
     </div>
   )
