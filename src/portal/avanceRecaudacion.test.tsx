@@ -65,6 +65,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   vi.useRealTimers()
+  vi.restoreAllMocks()
   fetch?.restore()
   fetch = null
 })
@@ -100,6 +101,15 @@ describe('Avance de recaudación: the leaf', () => {
     expect(screen.getAllByRole('link', { name: 'Avance de recaudación' }).length).toBeGreaterThan(0)
     await filas()
     expect(llamadas().map((c) => c.path)).toEqual(['/caja/recaudacion/avance'])
+  })
+
+  it('takes down only itself when the backend answers something it cannot draw: the bar and the tree stay', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    start()
+    rutaDe('/caja/recaudacion/avance').body = { desde: '2026-10-01' }
+    expect(await main().findByRole('alert')).toHaveTextContent('Esta pantalla no se pudo dibujar')
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(within(screen.getByRole('navigation', { name: 'Secciones' })).getByRole('link', { name: 'Avance de recaudación' })).toBeInTheDocument()
   })
 
   it('is kept by the same pair: without READ on linea_recibo its url says what the account lacks', async () => {
