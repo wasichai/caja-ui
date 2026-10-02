@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ElegirCaja, useCajaDeLaRuta } from '../cobro/ElegirCaja'
-import { ReciboEmitido, seccionDeLinea } from '../cobro/ReciboEmitido'
+import { LINEA_DE_TASA, ReciboEmitido } from '../cobro/ReciboEmitido'
 import { hoyEnLima } from '../fechas'
 import type { CobroHecho } from '../types'
 import { tasas } from './api'
@@ -10,15 +10,6 @@ import { CobroDeTasas } from './CobroDeTasas'
 // «Caja de tasas y derechos administrativos» (caja-tasas): the tasas in force and their quantities, the total the
 // backend previews, the cobro and the recibo in PDF. the caja lives in the route, as in «Caja tributaria»
 // (?caja=C-01); the lines do not: they are this cobro's, and only a 401 keeps them (as code and quantity)
-
-// a line of the recibo: the tasa, how many, at what unit price and for how much, all as the backend issued them
-const LINEA_DE_TASA = seccionDeLinea([
-  { name: 'concepto', label: 'Concepto', span: 3 },
-  { name: 'codigo', label: 'Código' },
-  { name: 'cantidad', label: 'Cantidad' },
-  { name: 'precio_unitario', label: 'Precio unitario', kind: 'importe' },
-  { name: 'monto', label: 'Monto', kind: 'importe' }
-])
 
 // the recibo's payer: the one the cobro was sent with (the recibo the backend answers does not carry it), or that none
 // was identified, as the PDF says

@@ -28,7 +28,7 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   todas.
   - **Una hoja sin pantalla no se dibuja** (caja ADR-0044): una entrada de menú que no lleva a ninguna parte es un
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
-    lo dice. Hoy hay dos: Caja tributaria y Caja de tasas y derechos administrativos.
+    lo dice. Hoy hay tres: Caja tributaria, Caja de tasas y derechos administrativos, y Duplicado de recibo.
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
@@ -47,14 +47,14 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
     usuario. `index.html` aplica el tema antes de cargar la app, para que no parpadee.
 - Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `Alerta`, `BandaTitulo`, `KitDelPortal`) llevan
   arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14).
-- **Las etiquetas de los enums** de caja-backend (`forma_pago`, `estado_orden`, `tipo_pago`, `tipo_evento_pago` y
-  `estado_evento`) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
+- **Las etiquetas de los enums** de caja-backend (`forma_pago`, `estado_orden`, `estado_recibo`, `tipo_pago`,
+  `tipo_evento_pago` y `estado_evento`) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
   conoce se escribe tal cual.
 
 El admin (`src/admin`) no cambia: sus pantallas salen de lo que caja-backend carga en Core. El enlace
 "Administración" del portal solo aparece para ADMIN.
 
-## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`)
+## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`)
 
 Las dos cajas comparten sus piezas, que viven en `src/portal/cobro`:
 
@@ -63,7 +63,8 @@ Las dos cajas comparten sus piezas, que viven en `src/portal/cobro`:
   que dice por qué no puede y la confirmación.
 - `envio.ts`: la validación común y `useEnvioDelCobro` (la `Idempotency-Key` de `intento.ts`, el borrador de
   `useEscritura` ante un 401, y el 400 bajo su campo o encima del botón).
-- `ReciboEmitido.tsx`: el recibo emitido y su PDF; cada pantalla dice cómo se lee una línea.
+- `ReciboEmitido.tsx`: el recibo emitido y su PDF, y cómo se lee una línea de órdenes (`LINEA_DE_ORDEN`) y una de
+  tasas (`LINEA_DE_TASA`), que también usa la ficha de «Duplicado de recibo».
 
 ### Caja tributaria (`/caja-tributaria`)
 
@@ -141,6 +142,63 @@ con el mismo par se guarda su ruta. La caja vive en la ruta como en la tributari
 
 Tests: `src/portal/cajaTasas.test.tsx`.
 
+### Duplicado de recibo (`/duplicado-recibo`)
+
+Busca los recibos emitidos, muestra el elegido, entrega su duplicado en PDF y lo **anula donde está** (caja ADR-0044).
+Se ofrece con lectura de `recibo` **o** con creación de `anulacion_recibo` (lo que ya decía el árbol), y con lo mismo se
+guarda su ruta.
+
+- **El recibo elegido viaja en la ruta**, y los filtros en la query:
+  `/duplicado-recibo/001-0000123?documento=12345678&estado=EMITIDO`. Recargar o pasar el enlace muestra el mismo recibo
+  con la misma lista. La hoja lo declara con `conSujeto` (`navTree.ts`), y su ruta es `/duplicado-recibo/:sujeto?`.
+- **La lista**: `GET /api/caja/recibos` con los filtros de documento, caja, cajero (el correo), desde, hasta (días de
+  Lima) y estado, y la página con `PageSizePagination` (`page` y `size` en la URL, 25 por defecto). Columnas: número,
+  emitido (hora de Lima), documento, pagador, importe (`Importe`; si todas las cifras son del mismo día, la fecha va una
+  vez en la cabecera con `FechaDeLasCifras`), medio de pago, duplicados y estado, con su etiqueta. «Ver» lleva a la ruta
+  del recibo, sin perder los filtros. Un 400 se dice bajo su filtro; cualquier otro fallo (un 403) se dice en el hueco
+  de la lista, y la ficha sigue.
+- **El recibo elegido**: `GET /api/caja/recibos/{numero}`, en `FieldGrid`: número, estado, caja, cajero, emitido en,
+  forma y tipo de pago, pagador, duplicados emitidos, total (`kind: 'importe'`) y la observación del cobro; sus líneas
+  como las lee su tipo (órdenes o tasas, con código, cantidad y precio unitario); y, si está anulado, la anulación:
+  fecha, motivo, quién la autorizó, el memorando y quién la hizo.
+- **Duplicado en PDF** (solo PDF): pedir un duplicado **escribe**, porque registra la reimpresión. Por eso nunca se pide
+  al abrir la ficha: el botón abre un formulario que pide la observación (de 5 a 500), y solo entonces va
+  `POST /api/caja/recibos/{numero}/duplicados` (`blob`, con el cuerpo en JSON). El PDF que contestó se abre en
+  `PdfDialog` sin volver a pedirlo, y la ficha se vuelve a leer (sus duplicados). Un 409 dice que el recibo ya no se
+  dibuja igual que en su reimpresión anterior y que no se entregó ni se registró nada; un 400, bajo la observación; un
+  403, con su `detail`. Un 401 guarda la observación con la clave `duplicado.<numero>`.
+- **Anular** es un acto con `RecordForm`: motivo (obligatorio, hasta 80: el sustento del acto, que se imprime en el
+  duplicado), autorizado por (hasta 80), N.° de memorando (hasta 40) y observación (de 5 a 500, para la bitácora).
+  Antes de enviar se confirma con `ConfirmDialog`, que nombra el recibo, el pagador, el total y el motivo, porque no se
+  deshace. Luego `POST /api/caja/recibos/{numero}/anulacion`, con el número de la ruta y nunca uno tecleado; lo opcional
+  solo va si se escribió.
+  - Con éxito se dice «El recibo … quedó anulado.», y la ficha y la lista se vuelven a leer: el estado y la anulación son
+    los que contesta el backend. No se calcula nada.
+  - Un 400 se dice bajo su campo. El 403 (de otro cajero), el 409 (ya anulado) y el 422 (fuera del día), con su
+    `detail`.
+  - Un 401 guarda los cuatro campos con `useEscritura`, con la clave **`anulacion.<numero>`**: al volver a entrar con la
+    misma cuenta, el acto de **ese** recibo se abre relleno, y el de otro recibo no lo ve. Cancelar el acto lo olvida.
+- **Ningún botón mudo.** «Anular» y «Duplicado en PDF» dicen a su lado por qué no pueden, y gana el primer motivo, en el
+  orden en que se arreglan (`recibo/impedimentos.ts`):
+  - «Anular»: sin creación de `anulacion_recibo`; con ella pero sin poder leer el recibo (nombra las lecturas que faltan
+    de `recibo`, `linea_recibo`, `caja`, `tasa`, `anulacion_recibo` y `reimpresion_recibo`); sin recibo elegido; si el
+    recibo no se pudo leer; si ya se anuló (con su fecha); si no se emitió hoy en Lima (corresponde una devolución; el
+    backend mira el día de su turno, y su 422 también se dice); y si lo cobró otro cajero y la cuenta no tiene el rol
+    `SUPERVISOR_CAJA` (ni es ADMIN): el privilegio ESPECIAL. Los roles y el correo son los de la cuenta que dice
+    wasichai (`useAuth`), nunca inventados.
+  - «Duplicado en PDF»: sin creación de `reimpresion_recibo`; sin recibo elegido; si el recibo no se pudo leer.
+
+**ADR-0044 tal como se cumple aquí** — «Lo que ve quien sólo puede anular», con los permisos de caja-backend:
+
+| Lo que tiene la cuenta                                                     | Lo que ve                                                                                                                                        |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lectura del recibo y lo que lee su ficha, y creación de `anulacion_recibo` | La hoja, su lista, la ficha del recibo que elija y «Anular» **pulsable**. «Duplicado en PDF» impedido: le falta creación de `reimpresion_recibo` |
+| Solo creación de `anulacion_recibo`                                        | La misma hoja. La lista contesta 403 y se dice en su hueco; «Anular» sale **impedido** y nombra las lecturas que pedir                           |
+| Solo lectura (`recibo` y lo que lee su ficha)                              | La hoja entera, y «Anular» impedido: le falta creación de `anulacion_recibo`                                                                     |
+| Ninguna de las dos                                                         | La hoja no se ofrece, y su URL dice qué le falta a la cuenta (`GuardaDeHoja`)                                                                    |
+
+Tests: `src/portal/duplicadoRecibo.test.tsx` (una prueba por fila de la tabla y una por motivo de cada botón impedido).
+
 ## El kit de formularios (`src/kit`)
 
 Es una **copia temporal y marcada** del kit de `srtm-ui@a1df33a`: `RecordForm`, `FieldGrid`, `EditableList`,
@@ -201,7 +259,7 @@ Backend y datos: ver el README de `caja-backend`.
 ## Comandos
 
 ```bash
-yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas y guardas
+yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo y guardas
 yarn typecheck
 yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview

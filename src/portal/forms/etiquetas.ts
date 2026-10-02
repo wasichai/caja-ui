@@ -22,6 +22,10 @@ const POR_CAMPO: Record<string, Record<string, string>> = {
     PAGO_REGISTRADO: 'Pago registrado',
     PAGO_ANULADO: 'Pago anulado'
   },
+  estado_recibo: {
+    EMITIDO: 'Emitido',
+    ANULADO: 'Anulado'
+  },
   estado_evento: {
     PENDIENTE: 'Pendiente de entrega',
     ENTREGADO: 'Entregado',

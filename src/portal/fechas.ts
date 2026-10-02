@@ -29,3 +29,9 @@ export function fechaYHoraEnLima(instante: string): string {
   const { year, month, day, hour, minute } = partes(fecha)
   return `${day}/${month}/${year} ${hour}:${minute} (hora de Lima)`
 }
+
+// the day in Lima of an instant of the backend, as the backend writes a date (2026-10-02); null when it cannot be read
+export function diaEnLima(instante: string): string | null {
+  const fecha = new Date(instante)
+  return Number.isNaN(fecha.getTime()) ? null : hoyEnLima(fecha)
+}

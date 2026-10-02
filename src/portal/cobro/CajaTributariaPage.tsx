@@ -5,22 +5,11 @@ import { useState, type FormEvent } from 'react'
 import type { CobroHecho } from '../types'
 import { ElegirCaja, useCajaDeLaRuta, useEleccionEnLaRuta } from './ElegirCaja'
 import { OrdenesPendientes } from './OrdenesPendientes'
-import { ReciboEmitido, seccionDeLinea } from './ReciboEmitido'
+import { LINEA_DE_ORDEN, ReciboEmitido } from './ReciboEmitido'
 
 // «Caja tributaria» (caja-tributaria): the pending orders of a payer, the total the backend previews, the cobro and
 // the recibo in PDF. what is chosen lives in the route, as in caja-web: ?caja=C-01&documento=12345678, so a reload or
 // a link passed on shows the same. the orders marked do not: they are this moment's, and another payer forgets them
-
-const SIN_DATO = () => 'El sistema de origen no lo mandó'
-
-// a line of the recibo: the order it cobró
-const LINEA_DE_ORDEN = seccionDeLinea([
-  { name: 'concepto', label: 'Concepto', span: 3, placeholder: SIN_DATO },
-  { name: 'detalle', label: 'Detalle', span: 3, placeholder: SIN_DATO },
-  { name: 'referencia_externa', label: 'Referencia', placeholder: SIN_DATO },
-  { name: 'sistema_origen', label: 'Sistema de origen', placeholder: SIN_DATO },
-  { name: 'monto', label: 'Monto', kind: 'importe' }
-])
 
 export function CajaTributariaPage() {
   const { leer, elegir } = useEleccionEnLaRuta()

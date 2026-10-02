@@ -29,6 +29,9 @@ export interface HojaNav {
   seOfreceCon?: Par[][]
   // route patterns (react-router's) that draw this leaf's page too: current there, over any other leaf
   tambienEn?: string[]
+  // its screen takes what is chosen as the last segment of its route (/duplicado-recibo/001-0000123): a reload or a
+  // link passed on shows the same. the screen reads it as the route's param `sujeto`
+  conSujeto?: boolean
   // another app (the administration): a plain link, loaded in full, never current
   externa?: boolean
   soloAdmin?: boolean
@@ -60,6 +63,7 @@ export const NAV_TREE: NodoNav[] = [
         clave: 'duplicado-recibo',
         label: 'Duplicado de recibo',
         to: '/duplicado-recibo',
+        conSujeto: true,
         seOfreceCon: [[lee('recibo')], [{ objeto: 'anulacion_recibo', accion: 'CREATE' }]]
       },
       { clave: 'cierre-caja', label: 'Cierre y arqueo de caja', to: '/cierre-caja', seOfreceCon: [[lee('turno')]] },

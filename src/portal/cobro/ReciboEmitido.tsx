@@ -26,6 +26,26 @@ export const seccionDeLinea =
   (fields: FieldSpec[]) =>
   (indice: number): SectionSpec => ({ id: `linea-${indice}`, title: 'Línea', number: indice + 1, fields })
 
+const DEL_ORIGEN = () => 'El sistema de origen no lo mandó'
+
+// a line of a recibo of orders: the order it cobró, with what its source system sent
+export const LINEA_DE_ORDEN = seccionDeLinea([
+  { name: 'concepto', label: 'Concepto', span: 3, placeholder: DEL_ORIGEN },
+  { name: 'detalle', label: 'Detalle', span: 3, placeholder: DEL_ORIGEN },
+  { name: 'referencia_externa', label: 'Referencia', placeholder: DEL_ORIGEN },
+  { name: 'sistema_origen', label: 'Sistema de origen', placeholder: DEL_ORIGEN },
+  { name: 'monto', label: 'Monto', kind: 'importe' }
+])
+
+// a line of a recibo of tasas: the tasa, how many, at what unit price and for how much, all as the backend issued them
+export const LINEA_DE_TASA = seccionDeLinea([
+  { name: 'concepto', label: 'Concepto', span: 3 },
+  { name: 'codigo', label: 'Código' },
+  { name: 'cantidad', label: 'Cantidad' },
+  { name: 'precio_unitario', label: 'Precio unitario', kind: 'importe' },
+  { name: 'monto', label: 'Monto', kind: 'importe' }
+])
+
 const ORIGINAL_YA_NO = 'El original de este recibo ya no se puede pedir: pida un duplicado en «Duplicado de recibo».'
 
 export function ReciboEmitido({

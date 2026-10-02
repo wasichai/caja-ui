@@ -12,6 +12,8 @@ describe('etiqueta', () => {
     ['estado_orden', 'PENDIENTE', 'Pendiente'],
     ['estado_orden', 'PAGADA', 'Pagada'],
     ['estado_orden', 'ANULADA', 'Anulada'],
+    ['estado_recibo', 'EMITIDO', 'Emitido'],
+    ['estado_recibo', 'ANULADO', 'Anulado'],
     ['tipo_pago', 'NORMAL', 'Orden de cobro'],
     ['tipo_pago', 'TASA', 'Tasa'],
     ['tipo_evento_pago', 'PAGO_REGISTRADO', 'Pago registrado'],

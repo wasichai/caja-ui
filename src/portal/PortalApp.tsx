@@ -21,7 +21,7 @@ const retry = (count: number, error: unknown) => !(error instanceof ApiError && 
 
 // a data router: a page with changes not saved can hold a navigation (useBlocker). a leaf of the tree gets its route
 // with its screen, and only then (PANTALLAS): one with none is no page, as it is no menu entry. the screen is kept by
-// the leaf's seOfreceCon (GuardaDeHoja), as the tree offers it
+// the leaf's seOfreceCon (GuardaDeHoja), as the tree offers it. one conSujeto takes what is chosen as its last segment
 const rutas = () =>
   createRoutesFromElements(
     <>
@@ -42,7 +42,7 @@ const rutas = () =>
             ? [
                 <Route
                   key={hoja.to}
-                  path={hoja.to}
+                  path={hoja.conSujeto ? `${hoja.to}/:sujeto?` : hoja.to}
                   element={
                     <GuardaDeHoja hoja={hoja}>
                       <Pantalla />

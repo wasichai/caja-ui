@@ -129,3 +129,70 @@ export interface NuevoCobroDeTasas {
   pagador_documento?: string
   pagador_nombre?: string
 }
+
+// --- the recibo after it was issued (/api/caja/recibos/**) ---
+
+// EMITIDO, or ANULADO once an anulación was added: the recibo itself is never changed
+export const ESTADOS_DE_RECIBO = ['EMITIDO', 'ANULADO'] as const
+
+// GET /api/caja/recibos: a row of the list, with no lines (the ficha has them). the total as the recibo froze it
+export interface ReciboEnLista {
+  numero_impreso: string
+  emitido_en: string
+  pagador_documento: string | null
+  pagador_nombre: string | null
+  total: Cifra
+  forma_pago: string
+  duplicados: number
+  estado: string
+}
+
+// what the ficha says of an annulment: the day, the motive, who authorized it, the memorandum and who did it
+export interface AnulacionEnFicha {
+  fecha: string
+  motivo: string
+  autorizado_por: string | null
+  documento_autorizacion: string | null
+  usuario: string
+}
+
+// GET /api/caja/recibos/{numero_impreso}: the recibo as it was issued, its state, its reprints and its annulment
+export interface ReciboEnFicha {
+  numero_impreso: string
+  serie: string
+  numero: number
+  caja: string | null
+  cajero: string
+  emitido_en: string
+  pagador_documento: string | null
+  pagador_nombre: string | null
+  forma_pago: string
+  tipo_pago: string
+  total: Cifra
+  observacion: string | null
+  lineas: LineaDeRecibo[]
+  estado: string
+  duplicados: number
+  anulacion: AnulacionEnFicha | null
+}
+
+// POST /api/caja/recibos/{numero_impreso}/anulacion: the act. the optional keys go only when typed
+export interface PeticionDeAnulacion {
+  motivo: string
+  autorizado_por?: string
+  documento_autorizacion?: string
+  observacion: string
+}
+
+// its answer (201): the record of the annulment. pago_anulado_id is null on a recibo of tasas
+export interface AnulacionHecha {
+  numero_impreso: string
+  estado: string
+  fecha: string
+  motivo: string
+  autorizado_por: string | null
+  documento_autorizacion: string | null
+  usuario: string
+  importe: Cifra
+  pago_anulado_id: string | null
+}

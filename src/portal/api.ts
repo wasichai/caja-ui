@@ -31,12 +31,14 @@ function nombreDeArchivo(disposition: string | null): string | null {
 }
 
 // a file (the recibo in PDF): client.request only reads JSON, so it is fetched here, with the same token, the same
-// sign-out on a 401 and the same problem+json errors (core's ApiError, with the detail)
-export async function blob(path: string): Promise<{ blob: Blob; filename: string }> {
+// sign-out on a 401 and the same problem+json errors (core's ApiError, with the detail). with `cuerpo`, a POST of it as
+// JSON: a file that is written as it is asked for (a duplicate, which registers its reprint)
+export async function blob(path: string, cuerpo?: object): Promise<{ blob: Blob; filename: string }> {
   const headers = new Headers()
   const token = client.getToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  const response = await fetch(`${client.baseUrl}${path}`, { headers })
+  if (cuerpo) headers.set('Content-Type', 'application/json')
+  const response = await fetch(`${client.baseUrl}${path}`, cuerpo ? { method: 'POST', headers, body: JSON.stringify(cuerpo) } : { headers })
   if (!response.ok) {
     if (response.status === 401) {
       client.setToken(null)
