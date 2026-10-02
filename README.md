@@ -240,7 +240,8 @@ sin entregar»** y su explicación (más abajo), y al final la **«Conciliación
   secuencia, registrado el, por quién, observación, lo cobrado con y sin evento, si cuadra y su arqueo con lo declarado
   y la diferencia. **También después de recargar**, sin recalcular ni restar nada. Con el turno abierto (también después
   de reversar) viene en null y no hay acta. Tras cerrar aquí se ve una sola acta: la de la respuesta del cierre, hasta que
-  el arqueo releído trae la vigente.
+  el arqueo releído trae la vigente. Tras reversar, el acta del cierre que el backend dijo reversado (`cierre_revertido`) no se
+  muestra más, ni siquiera mientras se relee el arqueo de antes.
   - Un 400 de `declarado` se dice bajo «Lo declarado», el de `observacion` bajo su campo, y otro (`caja`, `fecha`)
     encima del botón. Un 409 («ya está cerrado», «Hay pagos sin entregar», un choque) se dice con su `detail` y vuelve a
     leer el turno y el arqueo, que lista los pagos. Si el arqueo releído trae alguno `MUERTO`, el aviso del 409 lleva un

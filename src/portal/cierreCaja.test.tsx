@@ -791,6 +791,34 @@ describe('Cierre y arqueo de caja: the acta of the cierre in force', () => {
     expect(main().getAllByTestId('acta-del-cierre')).toHaveLength(1)
   })
 
+  it('after a reversal, never shows the acta of the cierre reversed, not even while the arqueo is read again', async () => {
+    cerrado()
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1, { estado_del_turno: 'CERRADO', puede_cerrar: false, cierre_vigente: CIERRE_VIGENTE })
+    await main().findByTestId('acta-del-cierre')
+    await llenarYReversar()
+    rutaDe('GET', '/caja/turnos/del-dia').body = delDia('ABIERTO', [EN_C01])
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1)
+    // the arqueo read again is held: the screen still has the old one, with the cierre that was just reversed
+    const delMock = globalThis.fetch
+    let soltar = () => {}
+    const retenida = new Promise<void>((resolve) => (soltar = resolve))
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input)
+      if (url.includes(`/caja/turnos/${T1}/arqueo`)) await retenida
+      return delMock(input, init)
+    }) as typeof globalThis.fetch
+    await confirmarLaReversion()
+
+    expect(await main().findByText('Se reversó el cierre del turno de la caja C-01.')).toBeInTheDocument()
+    expect(main().queryByTestId('acta-del-cierre')).not.toBeInTheDocument()
+    expect(main().queryByRole('table', { name: 'Arqueo del cierre' })).not.toBeInTheDocument()
+
+    soltar()
+    await waitFor(() => expect(llamadas('GET', `/caja/turnos/${T1}/arqueo`)).toHaveLength(2))
+    await waitFor(async () => expect(await situacion()).toBe('Tiene un turno abierto: al terminar el día, cuente el cajón y ciérrelo aquí.'))
+    expect(main().queryByTestId('acta-del-cierre')).not.toBeInTheDocument()
+  })
+
   it('after a reversal, the turno open again has no acta', async () => {
     cerrado()
     rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo(T1, { estado_del_turno: 'CERRADO', puede_cerrar: false, cierre_vigente: CIERRE_VIGENTE })

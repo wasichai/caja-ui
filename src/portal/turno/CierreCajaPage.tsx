@@ -57,10 +57,14 @@ export function CierreCajaPage() {
   // what the backend answered to this screen's last act, by the turno it was for
   const [acta, setActa] = useState<CierreHecho | null>(null)
   const [reversado, setReversado] = useState<string | null>(null)
+  // the cierre this screen's reversal left without effect (the backend's cierre_revertido)
+  const [cierreRevertido, setCierreRevertido] = useState<string | null>(null)
   const recienCerrado = acta && acta.turno_id === turno?.turno_id ? acta : null
   // the acta of a closed turno is the one its arqueo carries, as the backend kept it: after a reload too. the one this
-  // screen's cierre answered stands in only until the arqueo read again carries it
-  const vigente = elArqueo.estado === 'leido' ? elArqueo.arqueo.cierre_vigente : null
+  // screen's cierre answered stands in only until the arqueo read again carries it. the cierre the backend just said
+  // it reversed is never shown, not even while the arqueo of before is read again
+  const delArqueo = elArqueo.estado === 'leido' ? elArqueo.arqueo.cierre_vigente : null
+  const vigente = delArqueo && delArqueo.cierre_id !== cierreRevertido ? delArqueo : null
 
   // what the backend says now: today's turno and the arqueo, read again
   const leerOtraVez = () => void queryClient.invalidateQueries({ queryKey: CLAVE_DE_LOS_TURNOS, refetchType: 'all' })
@@ -134,6 +138,7 @@ export function CierreCajaPage() {
         onReversado={(hecha) => {
           setActa(null)
           setReversado(hecha.turno_id)
+          setCierreRevertido(hecha.cierre_revertido)
           leerOtraVez()
         }}
         onChoque={leerOtraVez}
