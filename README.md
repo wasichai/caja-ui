@@ -28,7 +28,7 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   todas.
   - **Una hoja sin pantalla no se dibuja** (caja ADR-0044): una entrada de menú que no lleva a ninguna parte es un
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
-    lo dice.
+    lo dice. Hoy hay una: Caja tributaria.
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
@@ -53,6 +53,42 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
 
 El admin (`src/admin`) no cambia: sus pantallas salen de lo que caja-backend carga en Core. El enlace
 "Administración" del portal solo aparece para ADMIN.
+
+## Pantallas de Tesorería (`src/portal/cobro`)
+
+### Caja tributaria (`/caja-tributaria`)
+
+Cobra las órdenes pendientes que envían los sistemas de origen y emite el recibo. Se ofrece con lectura de
+`orden_de_cobro`, y con el mismo par se guarda su ruta.
+
+- **Lo elegido vive en la ruta**, como en caja-web: `/caja-tributaria?caja=C-01&documento=12345678`. Recargar o pasar
+  el enlace muestra lo mismo. Lo marcado no va en la URL: es de ese momento.
+- **La caja**: `GET /api/caja/cajas`, solo las activas. Una caja de la URL que está de baja, o que no existe, se dice
+  y no se elige.
+- **Las órdenes pendientes del pagador**: `GET /api/caja/ordenes-de-cobro?pagador_documento=…&estado=PENDIENTE`, con
+  concepto, detalle, referencia, sistema de origen, fecha de exigibilidad e importe (`Importe`, con su fecha), y una
+  casilla por fila. Una orden que no se puede marcar dice por qué: la que todavía no es exigible (hoy en Lima) y la de
+  otro sistema que el de lo marcado, porque un recibo se anula entero. Sin órdenes: «Este documento no tiene órdenes
+  pendientes».
+- **El total lo da el backend**: al cambiar lo marcado, `POST /api/caja/cobros/vista-previa` devuelve el total, que se
+  dibuja tal cual con `Importe`, y los `motivos` por los que no se puede cobrar, que se dicen como vienen. El cliente
+  no suma nada.
+- **Cobrar**: forma de pago (las cinco, con su `etiqueta`) y observación (de 5 a 500 caracteres). Se confirma con
+  `ConfirmDialog`, que lista las órdenes y el total de la vista previa, porque no se deshace. `POST /api/caja/cobros`
+  va con un `Idempotency-Key`: un UUID por intento, el mismo si se reenvía ese intento y otro si cambia lo que se manda
+  (`cobro/intento.ts`).
+  - **El botón «Cobrar» nunca está mudo**: si no se puede (sin CREATE de `recibo` o UPDATE de `orden_de_cobro`, sin
+    caja, sin nada marcado, sin el total, o con motivos del backend) dice por qué a su lado.
+  - Un 400 se dice bajo su campo, o encima del botón si el formulario no tiene ese campo. Un 403, 404 o 409, con su
+    `detail`.
+  - Un 401 guarda la forma de pago y la observación con `useEscritura`, con la clave `caja-tributaria.<caja>.<documento>`,
+    y al volver a entrar con la misma cuenta el formulario se rellena.
+- **El recibo emitido**: número, emitido en (hora de Lima), forma de pago, total y líneas, en `FieldGrid` con el
+  `kind` `importe`. Si fue el reenvío de un intento ya cobrado (200, `emitido: false`), lo dice. «Ver el recibo» abre
+  `GET /api/caja/recibos/{numero_impreso}/pdf` en `PdfDialog` (`blob` de `src/portal/api.ts`). Un 409 dice que el
+  original ya no se puede pedir y que hay que pedir un duplicado.
+
+Tests: `src/portal/cajaTributaria.test.tsx`, `src/portal/guarda.test.tsx` y `src/portal/pdf.test.tsx`.
 
 ## El kit de formularios (`src/kit`)
 
@@ -114,7 +150,7 @@ Backend y datos: ver el README de `caja-backend`.
 ## Comandos
 
 ```bash
-yarn test            # vitest: admin, login, árbol, límite de error, cuenta, temas, kit, cifras, borrador y guardas
+yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria y guardas
 yarn typecheck
 yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview
