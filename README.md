@@ -28,8 +28,8 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   todas.
   - **Una hoja sin pantalla no se dibuja** (caja ADR-0044): una entrada de menú que no lleva a ninguna parte es un
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
-    lo dice. Hoy hay cuatro: Caja tributaria, Caja de tasas y derechos administrativos, Duplicado de recibo, y Cierre y arqueo
-    de caja.
+    lo dice. Hoy están las seis: Caja tributaria, Caja de tasas y derechos administrativos, Duplicado de recibo, Cierre y
+    arqueo de caja, Avance de recaudación y Recaudación por área.
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
@@ -49,13 +49,13 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
 - Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `Alerta`, `BandaTitulo`, `KitDelPortal`) llevan
   arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14).
 - **Las etiquetas de los enums** de caja-backend (`forma_pago`, `estado_orden`, `estado_recibo`, `tipo_pago`,
-  `tipo_evento_pago`, `estado_evento` y `estado_del_turno`) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
+  `tipo_evento_pago`, `estado_evento`, `estado_del_turno` y el `origen` del avance) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
   conoce se escribe tal cual.
 
 El admin (`src/admin`) no cambia: sus pantallas salen de lo que caja-backend carga en Core. El enlace
 "Administración" del portal solo aparece para ADMIN.
 
-## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`, `src/portal/turno`, `src/portal/buzon`)
+## Pantallas de Tesorería (`src/portal/cobro`, `src/portal/tasas`, `src/portal/recibo`, `src/portal/turno`, `src/portal/buzon`, `src/portal/recaudacion`)
 
 Las dos cajas comparten sus piezas, que viven en `src/portal/cobro`:
 
@@ -324,6 +324,48 @@ Tests: `src/portal/conciliacion.test.tsx` (sin día espera y no muestra ningún 
 recargar, el origen caído y el no configurado celda por celda, la situación, la diferencia del backend, el día sin
 cobros, el 400 y el 403).
 
+### Avance de recaudación (`/avance-recaudacion`)
+
+Lo recaudado en un rango de días del turno, por sistema de origen. Se ofrece con lectura de `linea_recibo` (lo que ya
+decía el árbol), y con lo mismo se guarda su ruta. caja-backend pide además lectura de `recibo`: sin ella, su 403 se dice
+en el hueco de la recaudación.
+
+- **Los filtros viven en la ruta**: `/avance-recaudacion?desde=2026-10-01&hasta=2026-10-02&origen=rentas&caja=C-01&cajero=…`.
+  «Consultar» los escribe (los vacíos no van) y recargar o pasar el enlace pide lo mismo. Sin rango, el backend pone el
+  suyo (sin `hasta`, hoy; sin `desde`, el 1 de enero de ese año) y la pantalla dice el que contestó: no lo calcula.
+- **`GET /api/caja/recaudacion/avance`** (no pagina: es un agregado). Desde, hasta y a la fecha; una tabla «Por origen»
+  con el origen (`TASA` con su etiqueta, los demás por su nombre; uno que el backend no mandó lo dice), cobrado, anulado
+  y neto, y la fila del total, que es **la del backend**: el cliente no suma. Todas las cifras van a `a_la_fecha`, una
+  vez en el título de la tabla. Sin cobros: «No se cobró nada en el periodo.», con los totales en cero que manda el
+  backend (un cero de verdad).
+- **El turno en vivo de hoy**: con `caja` **y** `cajero`, el backend manda su turno de hoy, y la pantalla muestra su
+  estado, sus recibos y su arqueo en vivo con `TablaDeArqueo`: lo declarado, la diferencia y si cuadra dicen «sin
+  declarar», nunca 0. Su 404 (ese cajero no abrió turno hoy en esa caja) se dice con su `detail`.
+- Un 400 se dice bajo su filtro (`desde`, `hasta`); un 403 o un 404, en el hueco de la recaudación.
+
+Tests: `src/portal/avanceRecaudacion.test.tsx`.
+
+### Recaudación por área (`/recaudacion-area`)
+
+Lo recaudado en un rango por área, partida y concepto. Se ofrece con lectura de `linea_recibo` y de `area` (lo que ya
+decía el árbol), y con lo mismo se guarda su ruta. caja-backend pide además lectura de `recibo` y `tasa`: sin ellas, su
+403 se dice en el hueco de la recaudación.
+
+- **El área y el rango viven en la ruta**: `/recaudacion-area?area=A-113300&desde=2026-10-01&hasta=2026-10-02`. El área
+  se escribe por su código (el backend también acepta la etiqueta «COD — nombre»): no hay desplegable con áreas
+  inventadas.
+- **`GET /api/caja/recaudacion/por-area`** (no pagina). Desde, hasta, a la fecha, el neto y el **neto sin partida**; una
+  tabla «Por área y partida» con área (código y nombre), partida, concepto, cobrado, anulado y neto, y al pie el neto y
+  el neto sin partida, **los del backend**. El backend no manda un total de lo cobrado ni de lo anulado, y la pantalla
+  no lo inventa.
+- **Lo cobrado por órdenes no tiene área ni partida** (`area`, `area_nombre` y `partida` en null: el dato no existe).
+  Su fila lo dice en esas celdas («cobrado por órdenes: no tiene área»), con su sistema de origen como concepto, y la
+  hoja dice que **se cuenta aparte, en el neto sin partida, y no se reparte entre las áreas**. No se esconde ni se
+  rellena.
+- Un 400 se dice bajo su filtro; un 403, en el hueco de la recaudación.
+
+Tests: `src/portal/recaudacionArea.test.tsx`.
+
 ## El kit de formularios (`src/kit`)
 
 Es una **copia temporal y marcada** del kit de `srtm-ui@a1df33a`: `RecordForm`, `FieldGrid`, `EditableList`,
@@ -384,7 +426,7 @@ Backend y datos: ver el README de `caja-backend`.
 ## Comandos
 
 ```bash
-yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo, cierre y arqueo, pagos sin entregar y guardas
+yarn test            # vitest: admin, login, árbol, guarda de hoja, límite de error, cuenta, temas, kit, cifras, borrador, PDF, caja tributaria, caja de tasas, duplicado de recibo, cierre y arqueo, pagos sin entregar, conciliación, avance, recaudación por área y guardas
 yarn typecheck
 yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview

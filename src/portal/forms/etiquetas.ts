@@ -35,6 +35,10 @@ const POR_CAMPO: Record<string, Record<string, string>> = {
     ENTREGADO: 'Entregado',
     MUERTO: 'No se pudo entregar',
     EXPLICADO: 'Explicado'
+  },
+  // the source of what was collected (the avance): the orders' sistema_origen goes by its name; TASA is the window's own
+  origen: {
+    TASA: 'Tasas y derechos administrativos'
   }
 }
 

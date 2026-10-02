@@ -23,7 +23,8 @@ describe('etiqueta', () => {
     ['estado_evento', 'PENDIENTE', 'Pendiente de entrega'],
     ['estado_evento', 'ENTREGADO', 'Entregado'],
     ['estado_evento', 'MUERTO', 'No se pudo entregar'],
-    ['estado_evento', 'EXPLICADO', 'Explicado']
+    ['estado_evento', 'EXPLICADO', 'Explicado'],
+    ['origen', 'TASA', 'Tasas y derechos administrativos']
   ])('writes %s %s as «%s»', (campo, valor, esperada) => {
     expect(etiqueta(campo, valor)).toBe(esperada)
   })
