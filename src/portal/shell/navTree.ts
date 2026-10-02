@@ -81,6 +81,17 @@ export interface Oferta {
 const seOfrece = (hoja: HojaNav, can: Oferta['can']) =>
   !hoja.seOfreceCon || hoja.seOfreceCon.some((alternativa) => alternativa.every(({ objeto, accion }) => can(objeto, accion)))
 
+// how a pair reads when it is missing: "lectura de orden_de_cobro"
+const ACCIONES: Record<Accion, string> = { READ: 'lectura', CREATE: 'creación', UPDATE: 'modificación', DELETE: 'borrado' }
+
+// what the account lacks for any of the alternatives, as a phrase: within one, the pairs it lacks joined by "y";
+// several, by ", o". empty when it has every pair of one of them
+export function loQueFalta(alternativas: Par[][], can: Oferta['can']): string {
+  const faltas = alternativas.map((alternativa) => alternativa.filter(({ objeto, accion }) => !can(objeto, accion)))
+  if (faltas.some((falta) => falta.length === 0)) return ''
+  return faltas.map((falta) => falta.map(({ objeto, accion }) => `${ACCIONES[accion]} de ${objeto}`).join(' y ')).join(', o ')
+}
+
 // the tree a user sees: what is for admins only, only for them; a leaf of a module only with its screen and when the
 // account may open it; a group left empty goes too
 export function arbolPara(nodos: NodoNav[], oferta: Oferta): NodoNav[] {

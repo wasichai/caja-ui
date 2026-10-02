@@ -12,6 +12,7 @@ import { KitDelPortal } from './KitDelPortal'
 import { InicioPage } from './pages/InicioPage'
 import { PANTALLAS } from './pantallas'
 import { AppShell } from './shell/AppShell'
+import { GuardaDeHoja } from './shell/GuardaDeHoja'
 import { hojasDe, NAV_TREE } from './shell/navTree'
 import { WorkspaceTabsProvider } from './shell/WorkspaceTabs'
 
@@ -19,7 +20,8 @@ import { WorkspaceTabsProvider } from './shell/WorkspaceTabs'
 const retry = (count: number, error: unknown) => !(error instanceof ApiError && error.status >= 400 && error.status < 500) && count < 2
 
 // a data router: a page with changes not saved can hold a navigation (useBlocker). a leaf of the tree gets its route
-// with its screen, and only then (PANTALLAS): one with none is no page, as it is no menu entry
+// with its screen, and only then (PANTALLAS): one with none is no page, as it is no menu entry. the screen is kept by
+// the leaf's seOfreceCon (GuardaDeHoja), as the tree offers it
 const rutas = () =>
   createRoutesFromElements(
     <>
@@ -34,9 +36,21 @@ const rutas = () =>
         }
       >
         <Route index element={<InicioPage />} />
-        {hojasDe(NAV_TREE).flatMap(({ clave, to }) => {
-          const Pantalla = clave && PANTALLAS[clave]
-          return Pantalla ? [<Route key={to} path={to} element={<Pantalla />} />] : []
+        {hojasDe(NAV_TREE).flatMap((hoja) => {
+          const Pantalla = hoja.clave && PANTALLAS[hoja.clave]
+          return Pantalla
+            ? [
+                <Route
+                  key={hoja.to}
+                  path={hoja.to}
+                  element={
+                    <GuardaDeHoja hoja={hoja}>
+                      <Pantalla />
+                    </GuardaDeHoja>
+                  }
+                />
+              ]
+            : []
         })}
         <Route path="*" element={<EmptyState title="Esta página no existe" />} />
       </Route>

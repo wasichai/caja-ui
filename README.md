@@ -30,6 +30,9 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
     lo dice.
   - Un módulo que se queda sin hojas tampoco se dibuja.
+  - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
+    le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
+    pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre. Test: `src/portal/guarda.test.tsx`.
 - **Una hoja que revienta no tumba la raíz**: cada pantalla se dibuja dentro de un límite de error (`LimiteDeHoja`)
   que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja.
 - **Pestañas de trabajo** por pestaña del navegador (`sessionStorage['caja.tabs']`), y el estado del árbol
