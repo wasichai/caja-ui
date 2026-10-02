@@ -49,8 +49,12 @@ export function ListaDeRecibos() {
       return despues
     })
 
-  // a new search starts at its first page
-  const buscar = (nuevos: Filtros) => cambiar({ ...nuevos, page: null })
+  // a new search starts at its first page. the same filters on the first page are the same url, and so the same query:
+  // it is asked again, not left as it was read
+  const buscar = (nuevos: Filtros) => {
+    if (page === 0 && FILTROS.every((filtro) => nuevos[filtro] === filtros[filtro])) void lista.refetch()
+    else cambiar({ ...nuevos, page: null })
+  }
 
   // the 400 of a filter goes under it
   const errores: Partial<Record<Filtro, string>> = Object.fromEntries(

@@ -50,14 +50,20 @@ export function ConciliacionDelDia() {
   const fecha = params.get(PARAMETRO) ?? ''
   const conciliacion = useQuery({ queryKey: ['caja', 'conciliacion', fecha], queryFn: () => recaudacion.conciliacion(fecha), enabled: fecha !== '' })
 
-  // the day chosen goes to the url, beside what else is there (the turno)
-  const elegir = (dia: string) =>
+  // the day chosen goes to the url, beside what else is there (the turno). the same day again is the same query: it is
+  // asked again, not left as it was read
+  const elegir = (dia: string) => {
+    if (dia !== '' && dia === fecha) {
+      void conciliacion.refetch()
+      return
+    }
     setParams((antes) => {
       const despues = new URLSearchParams(antes)
       if (dia) despues.set(PARAMETRO, dia)
       else despues.delete(PARAMETRO)
       return despues
     })
+  }
 
   const errorDelDia = conciliacion.error instanceof ApiError ? conciliacion.error.violations.find((v) => v.field === PARAMETRO)?.message : undefined
 

@@ -25,9 +25,11 @@ export function CajaTributariaPage() {
     queryClient.removeQueries({ queryKey: ['caja', 'vista-previa'] })
   }
 
+  // the same document again is the same url, and so the same query: it is asked again, not left as it was read
   const buscar = (otro: string) => {
     setRecibo(null)
-    elegir('documento', otro)
+    if (otro !== '' && otro === documento) void queryClient.invalidateQueries({ queryKey: ['caja', 'ordenes', otro] })
+    else elegir('documento', otro)
   }
 
   return (

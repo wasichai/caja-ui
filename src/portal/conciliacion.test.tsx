@@ -162,6 +162,16 @@ describe('Conciliación del día: the day', () => {
     expect(await screen.findByRole('heading', { name: 'Arqueo del turno de la caja C-02' })).toBeInTheDocument()
   })
 
+  it('asks again when «Conciliar» is pressed with the same day', async () => {
+    start(`/cierre-caja?turno=${T2}&fecha=${AL}`)
+    await (await enElBloque()).findByRole('table', { name: 'Por sistema de origen' })
+    expect(llamadas()).toHaveLength(1)
+
+    await userEvent.click((await enElBloque()).getByRole('button', { name: 'Conciliar' }))
+    await waitFor(() => expect(llamadas().map((c) => c.path)).toEqual([`/caja/conciliacion?fecha=${AL}`, `/caja/conciliacion?fecha=${AL}`]))
+    expect(enLaRuta()).toBe(`/cierre-caja?turno=${T2}&fecha=${AL}`)
+  })
+
   it('keeps the day when a turno is chosen', async () => {
     start(`/cierre-caja?fecha=${AL}`)
     await userEvent.click(await screen.findByRole('button', { name: 'Arquear el turno de C-02' }))

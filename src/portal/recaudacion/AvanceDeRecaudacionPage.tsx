@@ -27,7 +27,7 @@ const CAMPOS: CampoDeFiltro<Filtro>[] = [
 ]
 
 export function AvanceDeRecaudacionPage() {
-  const [filtros, poner] = useFiltrosDeLaRuta(FILTROS_DEL_AVANCE)
+  const [filtros, poner] = useFiltrosDeLaRuta(FILTROS_DEL_AVANCE, () => void avance.refetch())
   const avance = useQuery({ queryKey: ['caja', 'recaudacion', 'avance', filtros], queryFn: () => recaudacion.avance(filtros) })
 
   return (

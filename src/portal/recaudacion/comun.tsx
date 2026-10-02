@@ -18,11 +18,16 @@ export function fechaComun(cifras: (Cifra | null)[]): string | undefined {
 }
 
 // the filters of the route (?desde=&hasta=…): a reload or a link passed on asks the same. setting them drops the empty
-// ones and leaves any other key of the url alone
-export function useFiltrosDeLaRuta<F extends string>(nombres: readonly F[]): [Filtros<F>, (nuevos: Filtros<F>) => void] {
+// ones and leaves any other key of the url alone. the same filters again are the same query: `repetir` asks it again
+// (the screen's refetch), instead of leaving it as it was read
+export function useFiltrosDeLaRuta<F extends string>(nombres: readonly F[], repetir: () => void): [Filtros<F>, (nuevos: Filtros<F>) => void] {
   const [params, setParams] = useSearchParams()
   const filtros = Object.fromEntries(nombres.map((nombre) => [nombre, params.get(nombre) ?? ''])) as Filtros<F>
-  const poner = (nuevos: Filtros<F>) =>
+  const poner = (nuevos: Filtros<F>) => {
+    if (nombres.every((nombre) => nuevos[nombre] === filtros[nombre])) {
+      repetir()
+      return
+    }
     setParams((antes) => {
       const despues = new URLSearchParams(antes)
       for (const nombre of nombres) {
@@ -31,6 +36,7 @@ export function useFiltrosDeLaRuta<F extends string>(nombres: readonly F[]): [Fi
       }
       return despues
     })
+  }
   return [filtros, poner]
 }
 

@@ -190,6 +190,17 @@ describe('Avance de recaudación: the range lives in the url', () => {
     expect(llamadas().map((c) => c.path)).toEqual([`/caja/recaudacion/avance?${filtros}`])
   })
 
+  it('asks again when «Consultar» is pressed with the same filters', async () => {
+    const filtros = 'desde=2026-10-01&hasta=2026-10-02'
+    start({ path: `/avance-recaudacion?${filtros}` })
+    await filas()
+    expect(llamadas()).toHaveLength(1)
+
+    await userEvent.click(main().getByRole('button', { name: 'Consultar' }))
+    await waitFor(() => expect(llamadas().map((c) => c.path)).toEqual([`/caja/recaudacion/avance?${filtros}`, `/caja/recaudacion/avance?${filtros}`]))
+    expect(enLaRuta()).toBe(`/avance-recaudacion?${filtros}`)
+  })
+
   it('says a 400 under its filter', async () => {
     start({ path: '/avance-recaudacion?desde=2026-10-05&hasta=2026-10-01' })
     const mensaje = 'el rango está al revés: desde 2026-10-05 hasta 2026-10-01'

@@ -287,6 +287,18 @@ describe('Caja tributaria: the pending orders', () => {
     expect(await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })).not.toBeChecked()
   })
 
+  it('asks the orders again when «Buscar» is pressed with the same document', async () => {
+    start({ path: EN_C01 })
+    await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })
+    expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(1)
+
+    // another window cobró them meanwhile: the same url, and the backend now says there are none
+    rutaDe('GET', '/caja/ordenes-de-cobro').body = { content: [], page: 0, size: 200, totalElements: 0, totalPages: 0 }
+    await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
+    expect(await main().findByText('Este documento no tiene órdenes pendientes')).toBeInTheDocument()
+    expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(2)
+  })
+
   it('leaves an order not yet due unmarkable, with why', async () => {
     start({ path: EN_C01 })
     await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2099-0001' })

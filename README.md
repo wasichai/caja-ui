@@ -408,6 +408,10 @@ Lo que caja-web cumplía en cada pantalla, como primitivas que cada pantalla usa
   al escribir con éxito, al cancelar el acto y al cerrar sesión. Tests: `src/portal/escritura/borrador.test.tsx`, y
   `src/garantias.test.tsx` para que ningún otro archivo guarde borradores.
 - **El kit no conoce el dominio.** Test: `src/kit/boundaries.test.tsx`.
+- **Volver a buscar pregunta otra vez.** «Buscar» (Caja tributaria y Duplicado de recibo), «Consultar» (Avance de
+  recaudación y Recaudación por área) y «Conciliar» con lo mismo que ya dice la ruta vuelven a pedirlo al backend: la
+  misma URL es la misma consulta, y sin esto el botón no haría nada. Tests: uno por pantalla («… pressed with the same
+  …»).
 
 ## Requisitos
 

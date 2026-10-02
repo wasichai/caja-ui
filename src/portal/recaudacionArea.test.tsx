@@ -207,6 +207,17 @@ describe('Recaudación por área: the área and the range live in the url', () =
     expect(llamadas().map((c) => c.path)).toEqual([`/caja/recaudacion/por-area?${filtros}`])
   })
 
+  it('asks again when «Consultar» is pressed with the same filters', async () => {
+    const filtros = 'area=A-113300&desde=2026-10-01'
+    start({ path: `/recaudacion-area?${filtros}` })
+    await filas()
+    expect(llamadas()).toHaveLength(1)
+
+    await userEvent.click(main().getByRole('button', { name: 'Consultar' }))
+    await waitFor(() => expect(llamadas().map((c) => c.path)).toEqual([`/caja/recaudacion/por-area?${filtros}`, `/caja/recaudacion/por-area?${filtros}`]))
+    expect(enLaRuta()).toBe(`/recaudacion-area?${filtros}`)
+  })
+
   it('says a 400 under its filter', async () => {
     start({ path: '/recaudacion-area?desde=ayer' })
     const mensaje = 'no es una fecha AAAA-MM-DD: ayer'

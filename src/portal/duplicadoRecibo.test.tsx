@@ -285,6 +285,21 @@ describe('Duplicado de recibo: the leaf and its list', () => {
     expect(await main().findByText('Ningún recibo coincide con la búsqueda.')).toBeInTheDocument()
   })
 
+  it('asks the list again when «Buscar» is pressed with the same filters', async () => {
+    start({ path: '/duplicado-recibo?documento=12345678' })
+    await tabla()
+    expect(llamadas('GET', '/caja/recibos')).toHaveLength(1)
+
+    rutaDe('GET', '/caja/recibos').body = { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 }
+    await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
+    expect(await main().findByText('Ningún recibo coincide con la búsqueda.')).toBeInTheDocument()
+    expect(llamadas('GET', '/caja/recibos').map((c) => c.path)).toEqual([
+      '/caja/recibos?documento=12345678&page=0&size=25',
+      '/caja/recibos?documento=12345678&page=0&size=25'
+    ])
+    expect(enLaRuta()).toBe('/duplicado-recibo?documento=12345678')
+  })
+
   it('keeps the filters and the recibo chosen in the route, and a reload shows the same', async () => {
     start()
     await tabla()

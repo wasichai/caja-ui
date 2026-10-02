@@ -31,7 +31,7 @@ const CON_AREA =
   'Con un área elegida solo cuentan las tasas de esa área: lo cobrado por órdenes no tiene área, así que queda fuera de esta consulta, y por eso el neto sin partida es cero.'
 
 export function RecaudacionPorAreaPage() {
-  const [filtros, poner] = useFiltrosDeLaRuta(FILTROS_POR_AREA)
+  const [filtros, poner] = useFiltrosDeLaRuta(FILTROS_POR_AREA, () => void porArea.refetch())
   const porArea = useQuery({ queryKey: ['caja', 'recaudacion', 'por-area', filtros], queryFn: () => recaudacion.porArea(filtros) })
 
   return (
