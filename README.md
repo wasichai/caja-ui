@@ -226,7 +226,9 @@ conciliación llegan con sus pantallas.
 - **Cerrar** (`turno/CerrarElTurno.tsx`): lo declarado por forma de pago, las cinco, **como texto**: sin signo, con
   punto y a lo sumo 2 decimales y 13 enteros, validado como texto y enviado tal cual se tecleó (recortado), nunca como
   `Number` ni con los `kind` `money` o `decimal` del kit. Lo que se deja en blanco no se envía, y el backend lo cierra
-  en cero: el formulario y la confirmación lo dicen. Observación de 5 a 500. Se confirma con `ConfirmDialog` y va
+  en cero: el formulario y la confirmación lo dicen, y un campo vacío dice «en blanco: cero», nunca «sin declarar». Por
+  eso **las formas de pago con movimiento en el arqueo en vivo piden un valor explícito**, aunque sea `0`: un EFECTIVO
+  olvidado no se cierra en silencio como `-neto`. Observación de 5 a 500. Se confirma con `ConfirmDialog` y va
   `POST /api/caja/turnos/cierre` con la caja y la fecha del turno.
   - **La diferencia no la calcula el cliente**: antes de cerrar se dice que la da el backend; después se muestra el
     acta que contestó (secuencia, registrado el, por quién, observación, si cuadra, lo cobrado con y sin evento, y su

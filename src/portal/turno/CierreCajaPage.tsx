@@ -94,6 +94,7 @@ export function CierreCajaPage() {
       <CerrarElTurno
         key={`cierre-${clave}`}
         turno={turno}
+        conMovimiento={elArqueo.estado === 'leido' ? elArqueo.arqueo.arqueo.lineas.map((linea) => linea.forma_pago) : []}
         impedido={impedimentoDeCerrar(can, elTurno, elArqueo)}
         onCerrado={(hecho) => {
           setActa(hecho)

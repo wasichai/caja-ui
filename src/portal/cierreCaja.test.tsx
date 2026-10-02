@@ -189,7 +189,11 @@ async function listoParaCerrar() {
   await waitFor(async () => expect(await botonCerrar()).toBeEnabled())
 }
 
-async function llenarYCerrar({ declarados = { Efectivo: '187.40' } as Record<string, string>, observacion = 'cierre del turno de la mañana' } = {}) {
+// the live arqueo (EN_VIVO) has movement in Efectivo and Tarjeta: both ask for an explicit value
+async function llenarYCerrar({
+  declarados = { Efectivo: '187.40', Tarjeta: '0' } as Record<string, string>,
+  observacion = 'cierre del turno de la mañana'
+} = {}) {
   await listoParaCerrar()
   for (const [forma, valor] of Object.entries(declarados)) await escribir(declarado(forma), valor)
   await escribir(elCierre().getByRole('textbox', { name: 'Observación' }), observacion)
@@ -393,13 +397,14 @@ describe('Cierre y arqueo de caja: the arqueo', () => {
 describe('Cierre y arqueo de caja: cerrar', () => {
   it('confirms first, sends what was declared as the exact strings typed, and shows the acta with the backend’s difference', async () => {
     start()
-    await llenarYCerrar({ declarados: { Efectivo: '187.40', Cheque: '20.00', Transferencia: '120.50' } })
+    await llenarYCerrar({ declarados: { Efectivo: '187.40', Cheque: '20.00', Transferencia: '120.50', Tarjeta: '0' } })
 
     const dialogo = await screen.findByRole('dialog', { name: 'Confirmar el cierre' })
     expect(texto(dialogo)).toContain('Se cierra el turno de la caja C-01 del 02/10/2026 con lo que usted contó:')
     expect(texto(dialogo)).toContain('Efectivo: 187.40')
     expect(texto(dialogo)).toContain('Transferencia: 120.50')
-    expect(texto(dialogo)).toContain('Sin declarar, el backend las cierra en cero: Depósito, Tarjeta.')
+    expect(texto(dialogo)).toContain('Tarjeta: 0')
+    expect(texto(dialogo)).toContain('Sin declarar, el backend las cierra en cero: Depósito.')
     expect(texto(dialogo)).toContain('La diferencia la calcula el backend al cerrar')
     expect(texto(dialogo)).toContain(
       'Un cierre no se modifica: si hay que rehacerlo, se reversa desde esta misma cuenta, con el permiso de reversión, y se cierra otra vez.'
@@ -416,7 +421,7 @@ describe('Cierre y arqueo de caja: cerrar', () => {
     expect(enviado.body).toEqual({
       caja: 'C-01',
       fecha: AL,
-      declarado: { EFECTIVO: '187.40', CHEQUE: '20.00', TRANSFERENCIA: '120.50' },
+      declarado: { EFECTIVO: '187.40', CHEQUE: '20.00', TARJETA: '0', TRANSFERENCIA: '120.50' },
       observacion: 'cierre del turno de la mañana'
     })
     for (const valor of Object.values((enviado.body as { declarado: Record<string, unknown> }).declarado)) expect(typeof valor).toBe('string')
@@ -447,13 +452,52 @@ describe('Cierre y arqueo de caja: cerrar', () => {
 
   it('sends no declarado that was not typed', async () => {
     start()
-    await llenarYCerrar({ declarados: {} })
+    await llenarYCerrar()
     expect(texto(await screen.findByRole('dialog', { name: 'Confirmar el cierre' }))).toContain(
-      'Sin declarar, el backend las cierra en cero: Efectivo, Cheque, Depósito, Tarjeta, Transferencia.'
+      'Sin declarar, el backend las cierra en cero: Cheque, Depósito, Transferencia.'
     )
     await confirmarElCierre()
     await main().findByText('El turno quedó cerrado.')
-    expect(llamadas('POST', '/caja/turnos/cierre')[0].body).toEqual({ caja: 'C-01', fecha: AL, declarado: {}, observacion: 'cierre del turno de la mañana' })
+    expect(llamadas('POST', '/caja/turnos/cierre')[0].body).toEqual({
+      caja: 'C-01',
+      fecha: AL,
+      declarado: { EFECTIVO: '187.40', TARJETA: '0' },
+      observacion: 'cierre del turno de la mañana'
+    })
+  })
+
+  it('says a blank declarado closes in zero, never «sin declarar», where nothing moved', async () => {
+    start()
+    await listoParaCerrar()
+    for (const forma of ['Cheque', 'Depósito', 'Transferencia']) {
+      expect(declarado(forma)).toHaveAttribute('placeholder', 'en blanco: cero')
+      expect(declarado(forma)).toHaveValue('')
+    }
+    for (const forma of ['Efectivo', 'Cheque', 'Depósito', 'Tarjeta', 'Transferencia'])
+      expect(declarado(forma).getAttribute('placeholder')).not.toMatch(/sin declarar/)
+    expect(texto(elCierre().getByRole('group', { name: 'Lo declarado' }))).toContain(
+      'Las formas de pago con movimiento en el arqueo piden lo que contó, aunque sea 0; las demás, en blanco, el backend las cierra en cero.'
+    )
+  })
+
+  it('asks an explicit value, even 0, for each forma de pago with movement in the live arqueo, and sends nothing', async () => {
+    start()
+    await llenarYCerrar({ declarados: { Efectivo: '', Tarjeta: '' } })
+    const mensaje = 'Este turno tuvo movimiento en esta forma de pago: escriba lo que contó, aunque sea 0.'
+    expect(declarado('Efectivo')).toHaveAttribute('placeholder', 'lo que contó, aunque sea 0')
+    await waitFor(() => expect(declarado('Efectivo')).toHaveAccessibleDescription(mensaje))
+    expect(declarado('Tarjeta')).toHaveAccessibleDescription(mensaje)
+    expect(declarado('Cheque')).not.toHaveAccessibleDescription(mensaje)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(llamadas('POST', '/caja/turnos/cierre')).toHaveLength(0)
+
+    // a 0 typed is an explicit value: it goes as typed
+    await escribir(declarado('Efectivo'), '0')
+    await escribir(declarado('Tarjeta'), '0.00')
+    await userEvent.click(await botonCerrar())
+    await confirmarElCierre()
+    await main().findByText('El turno quedó cerrado.')
+    expect(llamadas('POST', '/caja/turnos/cierre')[0].body).toMatchObject({ declarado: { EFECTIVO: '0', TARJETA: '0.00' } })
   })
 
   it.each([['120,50'], ['-5.00'], ['1.234'], ['12a'], ['12345678901234']])(
