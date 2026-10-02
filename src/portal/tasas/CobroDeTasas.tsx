@@ -50,7 +50,8 @@ const ROTULOS: Record<string, string> = {
 }
 const DE_CONCEPTO: Record<string, string> = { cantidad: 'Cantidad', codigo: 'Código' }
 
-// the payer as the recibo and the confirmation name it, or null when none was typed
+// the payer as the confirmation names it, before it is sent, or null when none was typed. the recibo issued names the
+// one the backend kept (recibo.pagador_*)
 function pagadorComoTexto(documento: string, nombre: string): string | null {
   if (documento && nombre) return `${nombre} (${documento})`
   return nombre || documento || null
@@ -63,8 +64,8 @@ export function CobroDeTasas({
 }: {
   caja: CajaDeLaRuta
   vigentes: UseQueryResult<TasaVigente[]>
-  // the recibo, and the payer it was cobrado to (the recibo the backend answers does not carry it)
-  onCobrado: (hecho: CobroHecho, pagador: string | null) => void
+  // the recibo, with the payer as the backend kept it
+  onCobrado: (hecho: CobroHecho) => void
 }) {
   const { can } = useAuth()
   const { borrador, errores, general, enviando, revisar, enviar } = useEnvioDelCobro({
@@ -153,7 +154,7 @@ export function CobroDeTasas({
     const tecleado = { forma_pago: forma, observacion, pagador_documento: documento, pagador_nombre: nombre, lineas: lineasComoTexto(lineas) }
     const hecho = await enviar(cuerpo, tecleado, (clave) => tasas.cobrar(cuerpo, clave))
     setConfirmando(false)
-    if (hecho) onCobrado(hecho, pagador)
+    if (hecho) onCobrado(hecho)
   }
 
   return (

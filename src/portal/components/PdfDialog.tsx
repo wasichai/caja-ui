@@ -1,4 +1,6 @@
 // copiado de srtm-ui@a1df33a (src/portal/components/PdfDialog.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// DIVERGE de srtm-ui: gana `load` (opcional), para abrir un PDF que la pantalla ya pidió (un duplicado, que escribe al
+// pedirse). hay que llevarlo a srtm-ui o a wasichai-ui#14 antes de unir las dos copias
 import { ApiError } from '@wasichai/core'
 import { PdfDialog as PdfDialogBase, type PdfFile } from '@wasichai/ui'
 import { errorMessage } from '../../kit/ui/errorMessage'

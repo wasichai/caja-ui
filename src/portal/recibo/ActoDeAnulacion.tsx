@@ -1,3 +1,4 @@
+import { ApiError } from '@wasichai/core'
 import { ConfirmDialog } from '@wasichai/ui'
 import { useState } from 'react'
 import { RecordForm } from '../../kit/forms/RecordForm'
@@ -65,13 +66,16 @@ export function ActoDeAnulacion({
   recibo,
   escritura,
   onCerrar,
-  onAnulada
+  onAnulada,
+  onChoque
 }: {
   recibo: ReciboEnFicha
   // the draft of this recibo's act (anulacion.<numero>), kept by the ficha: a draft opens the act
   escritura: ReturnType<typeof useEscritura>
   onCerrar: () => void
   onAnulada: (hecha: AnulacionHecha) => void
+  // a 409: the recibo is not what the ficha says any more (annulled meanwhile), so the ficha is read again
+  onChoque: () => void
 }) {
   const numero = recibo.numero_impreso
   const { borrador, escribir, cancelar } = escritura
@@ -90,7 +94,10 @@ export function ActoDeAnulacion({
     } catch (e) {
       // a 401: the draft is kept and the login says so; the act has nothing more to say
       if (e instanceof SesionCaducada) resolver()
-      else rechazar(e)
+      else {
+        rechazar(e)
+        if (e instanceof ApiError && e.status === 409) onChoque()
+      }
     } finally {
       setEnviando(false)
       setPorConfirmar(null)

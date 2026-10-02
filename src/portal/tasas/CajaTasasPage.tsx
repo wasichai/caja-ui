@@ -11,19 +11,15 @@ import { CobroDeTasas } from './CobroDeTasas'
 // backend previews, the cobro and the recibo in PDF. the caja lives in the route, as in «Caja tributaria»
 // (?caja=C-01); the lines do not: they are this cobro's, and only a 401 keeps them (as code and quantity)
 
-// the recibo's payer: the one the cobro was sent with (the recibo the backend answers does not carry it), or that none
-// was identified, as the PDF says
-const PAGADOR = { name: 'pagador', label: 'Pagador', span: 3 as const, placeholder: () => 'No se identificó al pagador' }
-
 export function CajaTasasPage() {
   const caja = useCajaDeLaRuta()
   const hoy = hoyEnLima()
   const vigentes = useQuery({ queryKey: ['caja', 'tasas', hoy], queryFn: () => tasas.vigentes(hoy) })
-  const [hecho, setHecho] = useState<{ cobro: CobroHecho; pagador: string | null } | null>(null)
+  const [hecho, setHecho] = useState<CobroHecho | null>(null)
   const queryClient = useQueryClient()
 
-  const cobrado = (cobro: CobroHecho, pagador: string | null) => {
-    setHecho({ cobro, pagador })
+  const cobrado = (cobro: CobroHecho) => {
+    setHecho(cobro)
     queryClient.removeQueries({ queryKey: ['caja', 'vista-previa-tasas'] })
   }
 
@@ -37,12 +33,8 @@ export function CajaTasasPage() {
       <ElegirCaja caja={caja} />
 
       {hecho ? (
-        <ReciboEmitido
-          cobro={hecho.cobro}
-          linea={LINEA_DE_TASA}
-          extra={{ fields: [PAGADOR], values: { pagador: hecho.pagador } }}
-          onNuevo={() => setHecho(null)}
-        />
+        // the payer is the recibo's (recibo.pagador_*), as the backend kept it
+        <ReciboEmitido cobro={hecho} linea={LINEA_DE_TASA} onNuevo={() => setHecho(null)} />
       ) : (
         // mounted again per caja, as the tributaria's cobro: its draft is the caja's (caja-tasas.<caja>), read once
         <CobroDeTasas key={caja.deLaRuta} caja={caja} vigentes={vigentes} onCobrado={cobrado} />

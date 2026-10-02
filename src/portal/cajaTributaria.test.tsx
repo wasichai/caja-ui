@@ -76,6 +76,10 @@ const RECIBO = {
     serie: '001',
     numero: 1,
     cajero: CAJERA.email,
+    // the payer as caja-backend kept it (PR #16): the orders'
+    pagador_documento: '12345678',
+    pagador_nombre: 'FLORES OTINIANO JUNIOR',
+    pagador_externo_id: 7,
     forma_pago: 'EFECTIVO',
     tipo_pago: 'NORMAL',
     emitido_en: '2026-10-02T10:15:30.123456-05:00',
@@ -514,6 +518,7 @@ describe('Caja tributaria: the recibo issued', () => {
     expect(valor('Emitido en')).toBe('02/10/2026 10:15 (hora de Lima)')
     expect(valor('Forma de pago')).toBe('Efectivo')
     expect(valor('Total')).toBe('S/ 0.10 al 02/10/2026')
+    expect(valor('Pagador')).toBe('FLORES OTINIANO JUNIOR (12345678)')
     expect(valor('Concepto')).toBe('IMPUESTO PREDIAL 2026 - CUOTA 1')
     expect(valor('Monto')).toBe('S/ 0.10 al 02/10/2026')
     // the orders are asked again: the one paid is no longer pending

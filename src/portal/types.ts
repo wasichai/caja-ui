@@ -88,6 +88,11 @@ export interface Recibo {
   serie: string
   numero: number
   cajero: string
+  // the payer as caja-backend kept it (the document trimmed and in capitals); all three null on an anonymous recibo of
+  // tasas
+  pagador_documento: string | null
+  pagador_nombre: string | null
+  pagador_externo_id: number | null
   forma_pago: string
   tipo_pago: string
   emitido_en: string
@@ -166,6 +171,7 @@ export interface ReciboEnFicha {
   emitido_en: string
   pagador_documento: string | null
   pagador_nombre: string | null
+  pagador_externo_id: number | null
   forma_pago: string
   tipo_pago: string
   total: Cifra

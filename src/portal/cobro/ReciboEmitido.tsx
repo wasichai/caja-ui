@@ -6,20 +6,28 @@ import type { FieldSpec, SectionSpec } from '../../kit/forms/spec'
 import { Alerta } from '../components/Alerta'
 import { PdfDialog } from '../components/PdfDialog'
 import { fechaYHoraEnLima } from '../fechas'
-import type { CobroHecho } from '../types'
+import type { CobroHecho, Recibo } from '../types'
 import { cobro } from './api'
 
 // the recibo a cobro issued, the same for «Caja tributaria» and «Caja de tasas»: its number, when in Lima, the forma de
-// pago, the total with its date and its lines, every amount by Importe (the ficha's kind importe). each screen says how
-// its lines read, and may add fields of its own. «Ver el recibo» opens the original in PDF; a 409 says it can no longer
-// be asked for (another cashier, another day) and that a duplicate is
+// pago, the total with its date, the payer as the recibo keeps it (recibo.pagador_*, never as it was typed) and its
+// lines, every amount by Importe (the ficha's kind importe). each screen says how its lines read. «Ver el recibo» opens
+// the original in PDF; a 409 says it can no longer be asked for (another cashier, another day) and that a duplicate is
 
 const RECIBO: FieldSpec[] = [
   { name: 'numero_impreso', label: 'Número' },
   { name: 'emitido_en', label: 'Emitido en', span: 3 },
   { name: 'forma_pago', label: 'Forma de pago', kind: 'enum' },
-  { name: 'total', label: 'Total', kind: 'importe', span: 3 }
+  { name: 'total', label: 'Total', kind: 'importe', span: 3 },
+  { name: 'pagador', label: 'Pagador', span: 3, placeholder: () => 'No se identificó al pagador' }
 ]
+
+// the payer as a recibo names them: «FLORES OTINIANO JUNIOR (12345678)», or null when none was identified (the PDF
+// says so too)
+export function pagadorDelRecibo({ pagador_nombre: nombre, pagador_documento: documento }: Pick<Recibo, 'pagador_nombre' | 'pagador_documento'>) {
+  if (nombre && documento) return `${nombre} (${documento})`
+  return nombre ?? documento ?? null
+}
 
 // a line of the recibo as a ficha's section, by its fields
 export const seccionDeLinea =
@@ -51,19 +59,16 @@ const ORIGINAL_YA_NO = 'El original de este recibo ya no se puede pedir: pida un
 export function ReciboEmitido({
   cobro: hecho,
   linea,
-  extra,
   onNuevo
 }: {
   cobro: CobroHecho
   // how each line reads (seccionDeLinea)
   linea: (indice: number) => SectionSpec
-  // fields of the screen's own after the recibo's, with their values
-  extra?: { fields: FieldSpec[]; values: object }
   onNuevo: () => void
 }) {
   const { recibo } = hecho
   const [viendo, setViendo] = useState(false)
-  const seccion: SectionSpec = { id: 'recibo', title: 'Recibo', fields: [...RECIBO, ...(extra?.fields ?? [])] }
+  const seccion: SectionSpec = { id: 'recibo', title: 'Recibo', fields: RECIBO }
   return (
     <section aria-labelledby="recibo-titulo" className="space-y-4">
       <h2 id="recibo-titulo" className="text-lg font-semibold text-ink">
@@ -74,7 +79,7 @@ export function ReciboEmitido({
       ) : (
         <Alerta tono="aviso">Este cobro ya se había registrado con este mismo intento: no se cobró otra vez.</Alerta>
       )}
-      <FieldGrid sections={[seccion]} values={{ ...extra?.values, ...recibo, emitido_en: fechaYHoraEnLima(recibo.emitido_en) }} />
+      <FieldGrid sections={[seccion]} values={{ ...recibo, emitido_en: fechaYHoraEnLima(recibo.emitido_en), pagador: pagadorDelRecibo(recibo) }} />
       {recibo.lineas.map((valores, indice) => (
         <FieldGrid key={indice} sections={[linea(indice)]} values={valores} />
       ))}

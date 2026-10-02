@@ -64,6 +64,10 @@ const RECIBO = {
     serie: '001',
     numero: 2,
     cajero: CAJERA.email,
+    // anonymous: the three keys of the payer in null, as caja-backend answers them (PR #16)
+    pagador_documento: null,
+    pagador_nombre: null,
+    pagador_externo_id: null,
     forma_pago: 'EFECTIVO',
     tipo_pago: 'TASA',
     emitido_en: '2026-10-02T10:20:00.123456-05:00',
@@ -529,13 +533,27 @@ describe('Caja de tasas: the recibo issued', () => {
     expect(valor('Monto')).toBe('S/ 0.30 al 02/10/2026')
   })
 
-  it('names the payer it was cobrado to', async () => {
+  it('names the payer as the recibo keeps it (recibo.pagador_*), not as it was typed', async () => {
     start()
+    // caja-backend trims the document and writes it in capitals: the recibo says what it kept
+    rutaDe('POST', '/caja/cobros/tasas').body = {
+      ...RECIBO,
+      recibo: { ...RECIBO.recibo, pagador_documento: 'CE-12345678', pagador_nombre: 'SANTOS RIVERA, ELENA', pagador_externo_id: 7 }
+    }
     await tresT001()
-    await llenarYCobrar({ documento: '12345678', nombre: 'SANTOS RIVERA, ELENA' })
+    await llenarYCobrar({ documento: 'ce-12345678', nombre: 'SANTOS RIVERA, ELENA' })
     await confirmar()
     await main().findByRole('heading', { name: 'Recibo 001-0000002' })
-    expect(valor('Pagador')).toBe('SANTOS RIVERA, ELENA (12345678)')
+    expect(valor('Pagador')).toBe('SANTOS RIVERA, ELENA (CE-12345678)')
+  })
+
+  it('says no payer was identified when the recibo keeps none, whatever was typed', async () => {
+    start()
+    await tresT001()
+    await llenarYCobrar({ documento: '12345678' })
+    await confirmar()
+    await main().findByRole('heading', { name: 'Recibo 001-0000002' })
+    expect(valor('Pagador')).toBe('No se identificó al pagador')
   })
 
   it('opens its PDF with PdfDialog', async () => {

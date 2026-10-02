@@ -94,8 +94,9 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
     `detail`.
   - Un 401 guarda la forma de pago y la observación con `useEscritura`, con la clave `caja-tributaria.<caja>.<documento>`,
     y al volver a entrar con la misma cuenta el formulario se rellena.
-- **El recibo emitido**: número, emitido en (hora de Lima), forma de pago, total y líneas, en `FieldGrid` con el
-  `kind` `importe`. Si fue el reenvío de un intento ya cobrado (200, `emitido: false`), lo dice. «Ver el recibo» abre
+- **El recibo emitido**: número, emitido en (hora de Lima), forma de pago, total, pagador y líneas, en `FieldGrid` con
+  el `kind` `importe`. El pagador es el que guardó el backend (`recibo.pagador_*`: el documento recortado y en
+  mayúsculas), nunca el tecleado; sin pagador dice «No se identificó al pagador», como el PDF. Si fue el reenvío de un intento ya cobrado (200, `emitido: false`), lo dice. «Ver el recibo» abre
   `GET /api/caja/recibos/{numero_impreso}/pdf` en `PdfDialog` (`blob` de `src/portal/api.ts`). Un 409 dice que el
   original ya no se puede pedir y que hay que pedir un duplicado.
 
@@ -136,9 +137,9 @@ con el mismo par se guarda su ruta. La caja vive en la ruta como en la tributari
     precio ni un monto), con la clave `caja-tasas.<caja>`; al volver a entrar con la misma cuenta, todo se rellena. El
     cobro se vuelve a montar al cambiar de caja (`key`), como el tributario: el borrador que lee es el de la caja
     elegida, no el de la anterior.
-- **El recibo emitido**, con las piezas de la tributaria: número, emitido en, forma de pago, total, el pagador con el
-  que se cobró (el recibo que contesta el backend no lo trae; sin pagador dice «No se identificó al pagador», como el
-  PDF) y cada línea con concepto, código, cantidad, precio unitario y monto. «Ver el recibo» abre su PDF.
+- **El recibo emitido**, con las piezas de la tributaria: número, emitido en, forma de pago, total, el pagador tal como
+  lo guardó el backend (`recibo.pagador_*`; un recibo anónimo dice «No se identificó al pagador», como el PDF) y cada
+  línea con concepto, código, cantidad, precio unitario y monto. «Ver el recibo» abre su PDF.
 
 Tests: `src/portal/cajaTasas.test.tsx`.
 
@@ -164,7 +165,7 @@ guarda su ruta.
 - **Duplicado en PDF** (solo PDF): pedir un duplicado **escribe**, porque registra la reimpresión. Por eso nunca se pide
   al abrir la ficha: el botón abre un formulario que pide la observación (de 5 a 500), y solo entonces va
   `POST /api/caja/recibos/{numero}/duplicados` (`blob`, con el cuerpo en JSON). El PDF que contestó se abre en
-  `PdfDialog` sin volver a pedirlo, y la ficha se vuelve a leer (sus duplicados). Un 409 dice que el recibo ya no se
+  `PdfDialog` sin volver a pedirlo (su `load` opcional, que diverge de la copia de srtm-ui y lo anota en su cabecera), y la ficha se vuelve a leer (sus duplicados). Un 409 dice que el recibo ya no se
   dibuja igual que en su reimpresión anterior y que no se entregó ni se registró nada; un 400, bajo la observación; un
   403, con su `detail`. Un 401 guarda la observación con la clave `duplicado.<numero>`.
 - **Anular** es un acto con `RecordForm`: motivo (obligatorio, hasta 80: el sustento del acto, que se imprime en el
@@ -175,7 +176,8 @@ guarda su ruta.
   - Con éxito se dice «El recibo … quedó anulado.», y la ficha y la lista se vuelven a leer: el estado y la anulación son
     los que contesta el backend. No se calcula nada.
   - Un 400 se dice bajo su campo. El 403 (de otro cajero), el 409 (ya anulado) y el 422 (fuera del día), con su
-    `detail`.
+    `detail`. Tras un 409 la ficha se vuelve a leer: si otro lo anuló entretanto, «Anular» deja de estar pulsable y dice
+    por qué.
   - Un 401 guarda los cuatro campos con `useEscritura`, con la clave **`anulacion.<numero>`**: al volver a entrar con la
     misma cuenta, el acto de **ese** recibo se abre relleno, y el de otro recibo no lo ve. Cancelar el acto lo olvida.
 - **Ningún botón mudo.** «Anular» y «Duplicado en PDF» dicen a su lado por qué no pueden, y gana el primer motivo, en el

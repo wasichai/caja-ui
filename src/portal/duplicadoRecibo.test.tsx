@@ -107,6 +107,9 @@ const FICHA_3 = ficha('001-0000003', {
   ]
 })
 
+// 001-0000001 once another clerk annulled it
+const FICHA_2_COMO_1 = { ...FICHA_1, estado: 'ANULADO', anulacion: ANULACION }
+
 const ACTA = {
   numero_impreso: '001-0000001',
   estado: 'ANULADO',
@@ -602,6 +605,20 @@ describe('Duplicado de recibo: anular', () => {
     await confirmarLaAnulacion()
     expect(await elActo().findByRole('alert')).toHaveTextContent(detail)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('reads the ficha again on a 409, so «Anular» says why instead of staying pressable on an old ficha', async () => {
+    await enLaFicha()
+    const detail = 'El recibo 001-0000001 ya se anuló el 2026-10-02: las órdenes que cobró ya volvieron a PENDIENTE'
+    Object.assign(rutaDe('POST', '/caja/recibos/001-0000001/anulacion'), { status: 409, body: { title: 'Conflict', status: 409, detail } })
+    await llenarLaAnulacion()
+    // another clerk annulled it meanwhile: the backend says so when the ficha is read again
+    rutaDe('GET', '/caja/recibos/001-0000001').body = FICHA_2_COMO_1
+    await confirmarLaAnulacion()
+    await waitFor(() => expect(llamadas('GET', '/caja/recibos/001-0000001')).toHaveLength(2))
+    await waitFor(() => expect(valor('Estado')).toBe('Anulado'))
+    expect(await botonAnular()).toBeDisabled()
+    expect(await botonAnular()).toHaveAccessibleDescription('Este recibo ya se anuló el 02/10/2026: un recibo no se anula dos veces.')
   })
 
   it('keeps the draft of a 401 by the recibo’s number, and gives it back to that recibo and not another', async () => {

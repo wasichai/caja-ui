@@ -6,7 +6,7 @@ import { useState, type ReactNode } from 'react'
 import { FieldGrid } from '../../kit/forms/FieldGrid'
 import type { FieldSpec, SectionSpec } from '../../kit/forms/spec'
 import { errorMessage } from '../../kit/ui/errorMessage'
-import { LINEA_DE_ORDEN, LINEA_DE_TASA } from '../cobro/ReciboEmitido'
+import { LINEA_DE_ORDEN, LINEA_DE_TASA, pagadorDelRecibo } from '../cobro/ReciboEmitido'
 import { Alerta } from '../components/Alerta'
 import { PdfDialog } from '../components/PdfDialog'
 import { useEscritura } from '../escritura/useEscritura'
@@ -48,12 +48,6 @@ const ANULACION: SectionSpec = {
     { name: 'documento_autorizacion', label: 'N.° de memorando', span: 3, placeholder: NO_CONSTA },
     { name: 'usuario', label: 'Anulado por', span: 3 }
   ]
-}
-
-// the payer as the ficha names them: «FLORES OTINIANO JUNIOR (12345678)», or null when none was identified
-function pagadorDe({ pagador_nombre: nombre, pagador_documento: documento }: ReciboEnFicha): string | null {
-  if (nombre && documento) return `${nombre} (${documento})`
-  return nombre ?? documento ?? null
 }
 
 // the account as wasichai says it: its permissions, whether it is an admin, its email and its roles
@@ -141,6 +135,7 @@ function FichaDelRecibo({ numero, cuenta }: { numero: string; cuenta: LaCuenta }
             setAnulada(true)
             leerOtraVez()
           }}
+          onChoque={leerOtraVez}
         />
       )}
       {archivo && (
@@ -173,7 +168,7 @@ function Ficha({ recibo }: { recibo: ReciboEnFicha }) {
     ...recibo,
     estado: etiqueta('estado_recibo', recibo.estado),
     emitido_en: fechaYHoraEnLima(recibo.emitido_en),
-    pagador: pagadorDe(recibo)
+    pagador: pagadorDelRecibo(recibo)
   }
   return (
     <div className="space-y-4">
