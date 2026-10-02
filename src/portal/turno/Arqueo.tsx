@@ -11,9 +11,34 @@ import type { Arqueo, ArqueoDelTurno, PagoSinEntregar } from '../types'
 
 export const SIN_DECLARAR = 'sin declarar'
 
+// why the live arqueo has no declared figures, by the state of its turno. the backend's live GET gives them in null for
+// every turno, closed included: an open one has not been counted yet; a closed one was, and its acta kept it
+export interface PorQueSinDeclarar {
+  // in the cells of declarado and diferencia
+  cifra: string
+  // whether it squares
+  cuadra: string
+  // the line above the table
+  explicacion: string
+}
+
+export function porQueSinDeclarar(estadoDelTurno: string): PorQueSinDeclarar {
+  return estadoDelTurno === 'CERRADO'
+    ? {
+        cifra: 'el arqueo en vivo no guarda lo declarado: lo guardó el cierre',
+        cuadra: 'el arqueo en vivo no lo guarda: lo dice el acta del cierre',
+        explicacion: 'Este turno está cerrado: el arqueo en vivo no guarda lo declarado ni la diferencia, que quedaron en el acta del cierre.'
+      }
+    : {
+        cifra: SIN_DECLARAR,
+        cuadra: `${SIN_DECLARAR}: el backend lo dice al cerrar`,
+        explicacion: 'Lo declarado y la diferencia los da el backend al cerrar, con lo que usted contó.'
+      }
+}
+
 // a declared figure, or why there is none
-function Declarable({ cifra, fecha }: { cifra: Cifra | null; fecha: string | undefined }) {
-  return cifra ? <Importe cifra={cifra} fechaDeLaTabla={fecha} /> : <SinDato motivo={SIN_DECLARAR} />
+function Declarable({ cifra, fecha, motivo }: { cifra: Cifra | null; fecha: string | undefined; motivo: string }) {
+  return cifra ? <Importe cifra={cifra} fechaDeLaTabla={fecha} /> : <SinDato motivo={motivo} />
 }
 
 // the date of the table's figures, when they all share it: it goes once, in the caption
@@ -30,7 +55,8 @@ function fechaComun(arqueo: Arqueo): string | undefined {
   return fechas.size === 1 ? cifras[0].actualizado_a : undefined
 }
 
-export function TablaDeArqueo({ arqueo, nombre }: { arqueo: Arqueo; nombre: string }) {
+// `sinDeclarar`: why a declared figure is missing (porQueSinDeclarar)
+export function TablaDeArqueo({ arqueo, nombre, sinDeclarar }: { arqueo: Arqueo; nombre: string; sinDeclarar: string }) {
   const fecha = fechaComun(arqueo)
   const derecha = 'text-right'
   return (
@@ -72,10 +98,10 @@ export function TablaDeArqueo({ arqueo, nombre }: { arqueo: Arqueo; nombre: stri
                   <Importe cifra={linea.neto} fechaDeLaTabla={fecha} />
                 </Td>
                 <Td className={derecha}>
-                  <Declarable cifra={linea.declarado} fecha={fecha} />
+                  <Declarable cifra={linea.declarado} fecha={fecha} motivo={sinDeclarar} />
                 </Td>
                 <Td className={derecha}>
-                  <Declarable cifra={linea.diferencia} fecha={fecha} />
+                  <Declarable cifra={linea.diferencia} fecha={fecha} motivo={sinDeclarar} />
                 </Td>
               </tr>
             ))
@@ -94,10 +120,10 @@ export function TablaDeArqueo({ arqueo, nombre }: { arqueo: Arqueo; nombre: stri
               <Importe cifra={arqueo.neto} fechaDeLaTabla={fecha} />
             </Td>
             <Td className={derecha}>
-              <Declarable cifra={arqueo.total_declarado} fecha={fecha} />
+              <Declarable cifra={arqueo.total_declarado} fecha={fecha} motivo={sinDeclarar} />
             </Td>
             <Td className={derecha}>
-              <Declarable cifra={arqueo.diferencia} fecha={fecha} />
+              <Declarable cifra={arqueo.diferencia} fecha={fecha} motivo={sinDeclarar} />
             </Td>
           </tr>
         </tfoot>
@@ -115,9 +141,9 @@ export function Dato({ rotulo, children }: { rotulo: string; children: ReactNode
   )
 }
 
-// whether what was declared matches the neto, as the backend says it: live, nobody has counted
-export function Cuadra({ cuadra }: { cuadra: boolean | null }) {
-  if (cuadra === null) return <SinDato motivo={`${SIN_DECLARAR}: el backend lo dice al cerrar`} />
+// whether what was declared matches the neto, as the backend says it; `motivo`, why the backend did not say it
+export function Cuadra({ cuadra, motivo }: { cuadra: boolean | null; motivo: string }) {
+  if (cuadra === null) return <SinDato motivo={motivo} />
   return cuadra ? <>Sí: lo declarado coincide con el neto.</> : <>No: el descuadre quedó registrado en el acta.</>
 }
 
@@ -125,6 +151,7 @@ export function Cuadra({ cuadra }: { cuadra: boolean | null }) {
 // source system), the state of the turno and whether it squares
 export function ResumenDelArqueo({ delTurno }: { delTurno: ArqueoDelTurno }) {
   const { arqueo } = delTurno
+  const porQue = porQueSinDeclarar(delTurno.estado_del_turno)
   return (
     <dl data-testid="resumen-del-arqueo" className="grid gap-1 sm:grid-cols-2">
       <Dato rotulo="Recibos emitidos">{arqueo.recibos_emitidos}</Dato>
@@ -137,7 +164,7 @@ export function ResumenDelArqueo({ delTurno }: { delTurno: ArqueoDelTurno }) {
       </Dato>
       <Dato rotulo="Estado del turno">{etiqueta('estado_del_turno', delTurno.estado_del_turno)}</Dato>
       <Dato rotulo="¿Cuadra?">
-        <Cuadra cuadra={arqueo.cuadra} />
+        <Cuadra cuadra={arqueo.cuadra} motivo={porQue.cuadra} />
       </Dato>
     </dl>
   )

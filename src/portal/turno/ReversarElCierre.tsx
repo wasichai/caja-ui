@@ -100,7 +100,8 @@ export function ReversarElCierre({
         Reversar el cierre
       </h2>
       <p className="text-sm text-ink-muted">
-        Reversar no borra el cierre: lo deja sin efecto y el turno vuelve a abrirse, para seguir cobrando en él. Lo hace un supervisor de caja.
+        Reversar no borra el cierre: lo deja sin efecto y el turno vuelve a abrirse, para seguir cobrando en él. Solo se reversa el cierre del propio turno,
+        desde la cuenta del cajero que lo cerró, y hace falta el permiso de reversión.
       </p>
       {borrador && !impedido && turno && <AvisoDeBorrador />}
       {!impedido && turno && (

@@ -15,7 +15,8 @@ import type { ElTurno } from './impedimentos'
 const SITUACIONES: Record<string, string> = {
   SIN_ABRIR: 'Hoy todavía no abrió ningún turno: el turno se abre con el primer cobro del día. No hay nada que arquear ni que cerrar.',
   ABIERTO: 'Tiene un turno abierto: al terminar el día, cuente el cajón y ciérrelo aquí.',
-  CERRADO: 'Su turno de hoy está cerrado. Para seguir cobrando no se abre otro: un supervisor de caja reversa el cierre.',
+  CERRADO:
+    'Su turno de hoy está cerrado. Para seguir cobrando no se abre otro: se reversa su cierre. Un cierre solo se reversa desde la cuenta del cajero del turno, con el permiso de reversión.',
   VARIOS_ABIERTOS: 'Tiene turnos abiertos en más de una caja: elija cuál va a arquear y cerrar.'
 }
 

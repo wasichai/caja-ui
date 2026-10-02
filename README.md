@@ -217,8 +217,10 @@ conciliación llegan con sus pantallas.
   muestra el mismo.
 - **El arqueo lo calcula el backend**: `GET /api/caja/turnos/{turno_id}/arqueo`. Una tabla por forma de pago (con su
   `etiqueta`) con cobrado, anulado, neto, declarado y diferencia, y la fila del total; cada cifra es un `Importe`, con
-  la fecha una vez en el título de la tabla si todas la comparten. En vivo nadie ha contado: lo declarado, la diferencia
-  y si cuadra dicen **«sin declarar»** (`SinDato`), nunca 0. Además: los recibos emitidos y anulados, lo cobrado con
+  la fecha una vez en el título de la tabla si todas la comparten. El arqueo en vivo trae lo declarado, la diferencia
+  y si cuadra en null para cualquier turno, y lo que se dice depende de su estado, nunca un 0: con el turno abierto
+  nadie ha contado, y dicen **«sin declarar»** (`SinDato`), que el backend los da al cerrar; con el turno cerrado, que el
+  arqueo en vivo no guarda lo declarado, que quedó en el acta del cierre (`porQueSinDeclarar` en `turno/Arqueo.tsx`). Además: los recibos emitidos y anulados, lo cobrado con
   evento y sin evento, el estado del turno y, si los hay, los **pagos sin entregar** (`lo_que_impide_cerrar`) uno a
   uno, con su `pago_id`, su tipo y su estado, hasta que llegue su pantalla.
 - **Cerrar** (`turno/CerrarElTurno.tsx`): lo declarado por forma de pago, las cinco, **como texto**: sin signo, con
@@ -236,7 +238,9 @@ conciliación llegan con sus pantallas.
   - Un 401 guarda lo declarado y la observación con `useEscritura`, con la clave **`cierre.<turno_id>`**: al volver a
     entrar con la misma cuenta, el cierre de **ese** turno se rellena, y el de otro turno no lo ve.
 - **Reversar** (`turno/ReversarElCierre.tsx`): motivo (obligatorio, hasta 80) y observación (de 5 a 500), confirmación y
-  `POST /api/caja/turnos/reversion`. El cierre no se borra: se agrega la reversión y el turno se vuelve a abrir. Que
+  `POST /api/caja/turnos/reversion`. **Solo se reversa el cierre del propio turno**, desde la cuenta del cajero que lo
+  cerró y con creación de `reversion_cierre`: el backend da 403 a la reversión del turno de otro, también a un
+  supervisor, así que la pantalla nunca remite a otra cuenta. El cierre no se borra: se agrega la reversión y el turno se vuelve a abrir. Que
   vuelva a `ABIERTO` se ve porque el turno se relee; si el backend dijera otra cosa, la pantalla diría lo que dice el
   backend. Errores como en el cierre; un 401 guarda el borrador con la clave `reversion.<turno_id>`.
 - **Ningún botón mudo** (`turno/impedimentos.ts`, `components/BotonConMotivo.tsx`). Gana el primer motivo, en el orden
@@ -244,7 +248,8 @@ conciliación llegan con sus pantallas.
   - «Cerrar el turno»: sin creación de `cierre_turno` y `cierre_turno_linea`; el turno del día no se pudo leer; hoy no
     hay turno; no se eligió ninguno; el backend no mandó su caja; el arqueo no se pudo leer; ya está cerrado; hay pagos
     sin entregar; el backend dice que no se puede cerrar (`puede_cerrar`) sin otro motivo.
-  - «Reversar el cierre»: sin creación de `reversion_cierre` (un CAJERO; lo hace un supervisor de caja); el turno del
+  - «Reversar el cierre»: sin creación de `reversion_cierre` (un CAJERO: el cierre solo se reversa desde la cuenta del
+    cajero del turno, y otra cuenta no puede hacerlo por él); el turno del
     día no se pudo leer; hoy no hay turno; no se eligió ninguno; el backend no mandó su caja; el turno está abierto.
 
 Tests: `src/portal/cierreCaja.test.tsx` (una prueba por situación y una por motivo de cada botón impedido).

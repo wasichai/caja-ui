@@ -9,7 +9,7 @@ import { Alerta } from '../components/Alerta'
 import { fechaYHoraEnLima } from '../fechas'
 import type { CierreHecho, TurnoDelDia as ElDelDia } from '../types'
 import { CLAVE_DE_LOS_TURNOS, turnos } from './api'
-import { Cuadra, Dato, PagosSinEntregar, ResumenDelArqueo, TablaDeArqueo } from './Arqueo'
+import { Cuadra, Dato, PagosSinEntregar, porQueSinDeclarar, ResumenDelArqueo, TablaDeArqueo, SIN_DECLARAR } from './Arqueo'
 import { CerrarElTurno } from './CerrarElTurno'
 import { impedimentoDeCerrar, impedimentoDeReversar, type ElArqueo, type ElTurno } from './impedimentos'
 import { ReversarElCierre } from './ReversarElCierre'
@@ -80,8 +80,8 @@ export function CierreCajaPage() {
             <Alerta tono="error">No se pudo leer el arqueo: {errorMessage(arqueo.error, 'el backend no contestó')}</Alerta>
           ) : (
             <>
-              <p className="text-sm text-ink-muted">Lo declarado y la diferencia los da el backend al cerrar, con lo que usted contó.</p>
-              <TablaDeArqueo arqueo={arqueo.data.arqueo} nombre="Arqueo" />
+              <p className="text-sm text-ink-muted">{porQueSinDeclarar(arqueo.data.estado_del_turno).explicacion}</p>
+              <TablaDeArqueo arqueo={arqueo.data.arqueo} nombre="Arqueo" sinDeclarar={porQueSinDeclarar(arqueo.data.estado_del_turno).cifra} />
               <ResumenDelArqueo delTurno={arqueo.data} />
               <PagosSinEntregar pagos={arqueo.data.lo_que_impide_cerrar} />
             </>
@@ -139,10 +139,10 @@ function ActaDelCierre({ acta }: { acta: CierreHecho }) {
           <Importe cifra={acta.cobrado_sin_evento} />
         </Dato>
         <Dato rotulo="¿Cuadra?">
-          <Cuadra cuadra={acta.arqueo.cuadra} />
+          <Cuadra cuadra={acta.arqueo.cuadra} motivo={SIN_DECLARAR} />
         </Dato>
       </dl>
-      <TablaDeArqueo arqueo={acta.arqueo} nombre="Arqueo del cierre" />
+      <TablaDeArqueo arqueo={acta.arqueo} nombre="Arqueo del cierre" sinDeclarar={SIN_DECLARAR} />
     </section>
   )
 }

@@ -246,7 +246,7 @@ describe('Cierre y arqueo de caja: today’s turno', () => {
     [
       'CERRADO',
       delDia('CERRADO', [{ ...EN_C01, estado_del_turno: 'CERRADO' }]),
-      'Su turno de hoy está cerrado. Para seguir cobrando no se abre otro: un supervisor de caja reversa el cierre.'
+      'Su turno de hoy está cerrado. Para seguir cobrando no se abre otro: se reversa su cierre. Un cierre solo se reversa desde la cuenta del cajero del turno, con el permiso de reversión.'
     ],
     ['VARIOS_ABIERTOS', delDia('VARIOS_ABIERTOS', [EN_C01, EN_C02]), 'Tiene turnos abiertos en más de una caja: elija cuál va a arquear y cerrar.']
   ])('says %s in words', async (_situacion, respuesta, frase) => {
@@ -335,6 +335,24 @@ describe('Cierre y arqueo de caja: the arqueo', () => {
     expect(resumen).toContain('Cobrado sin evento: S/ 37.60 al 02/10/2026')
     expect(resumen).toContain('Estado del turno: Abierto')
     expect(resumen).toContain('¿Cuadra?: — sin declarar: el backend lo dice al cerrar')
+    expect(main().getByText('Lo declarado y la diferencia los da el backend al cerrar, con lo que usted contó.')).toBeInTheDocument()
+  })
+
+  it('on a closed turno, says the live arqueo does not keep what was declared — the cierre did — and promises nothing «al cerrar»', async () => {
+    cerrado()
+    const enVivo = 'el arqueo en vivo no guarda lo declarado: lo guardó el cierre'
+    expect(await filas()).toEqual([
+      ['Forma de pago', 'Cobrado', 'Anulado', 'Neto', 'Declarado', 'Diferencia'],
+      ['Efectivo', 'S/ 187.40', 'S/ 0.00', 'S/ 187.40', `— ${enVivo}`, `— ${enVivo}`],
+      ['Tarjeta', 'S/ 80.25', 'S/ 80.25', 'S/ 0.00', `— ${enVivo}`, `— ${enVivo}`],
+      ['Total', 'S/ 268.35', 'S/ 80.25', 'S/ 188.10', `— ${enVivo}`, `— ${enVivo}`]
+    ])
+    const seccion = texto(screen.getByRole('region', { name: 'Arqueo del turno de la caja C-01' }))
+    expect(seccion).toContain('Este turno está cerrado: el arqueo en vivo no guarda lo declarado ni la diferencia, que quedaron en el acta del cierre.')
+    expect(texto(main().getByTestId('resumen-del-arqueo'))).toContain('¿Cuadra?: — el arqueo en vivo no lo guarda: lo dice el acta del cierre')
+    expect(seccion).not.toMatch(/al cerrar/)
+    expect(seccion).not.toMatch(/sin declarar/)
+    expect(texto(screen.getByRole('main'))).not.toMatch(/supervisor/i)
   })
 
   it('lists what keeps it from closing: each payment with its id, its kind and its state', async () => {
@@ -383,6 +401,10 @@ describe('Cierre y arqueo de caja: cerrar', () => {
     expect(texto(dialogo)).toContain('Transferencia: 120.50')
     expect(texto(dialogo)).toContain('Sin declarar, el backend las cierra en cero: Depósito, Tarjeta.')
     expect(texto(dialogo)).toContain('La diferencia la calcula el backend al cerrar')
+    expect(texto(dialogo)).toContain(
+      'Un cierre no se modifica: si hay que rehacerlo, se reversa desde esta misma cuenta, con el permiso de reversión, y se cierra otra vez.'
+    )
+    expect(texto(dialogo)).not.toMatch(/supervisor/i)
     expect(llamadas('POST', '/caja/turnos/cierre')).toHaveLength(0)
 
     rutaDe('GET', '/caja/turnos/del-dia').body = delDia('CERRADO', [{ ...EN_C01, estado_del_turno: 'CERRADO' }])
@@ -415,9 +437,11 @@ describe('Cierre y arqueo de caja: cerrar', () => {
     // the state is the one read again, never set here
     await waitFor(() => expect(llamadas('GET', '/caja/turnos/del-dia')).toHaveLength(2))
     await waitFor(() => expect(llamadas('GET', `/caja/turnos/${T1}/arqueo`)).toHaveLength(2))
-    expect(await situacion()).toBe('Su turno de hoy está cerrado. Para seguir cobrando no se abre otro: un supervisor de caja reversa el cierre.')
+    expect(await situacion()).toBe(
+      'Su turno de hoy está cerrado. Para seguir cobrando no se abre otro: se reversa su cierre. Un cierre solo se reversa desde la cuenta del cajero del turno, con el permiso de reversión.'
+    )
     expect(await botonCerrar()).toHaveAccessibleDescription(
-      'Este turno ya está cerrado: un cierre no se modifica. Si hay que rehacerlo, un supervisor de caja lo reversa.'
+      'Este turno ya está cerrado: un cierre no se modifica. Para rehacerlo, se reversa (más abajo) y se cierra otra vez.'
     )
   })
 
@@ -560,6 +584,10 @@ describe('Cierre y arqueo de caja: reversar', () => {
     const dialogo = await screen.findByRole('dialog', { name: 'Confirmar la reversión' })
     expect(texto(dialogo)).toContain('Se reversa el cierre del turno de la caja C-01 del 02/10/2026.')
     expect(texto(dialogo)).toContain('Motivo: ARQUEO MAL CONTADO')
+    // the section, behind the modal dialog
+    expect(texto(screen.getByRole('region', { name: 'Reversar el cierre', hidden: true }))).toContain(
+      'Solo se reversa el cierre del propio turno, desde la cuenta del cajero que lo cerró, y hace falta el permiso de reversión.'
+    )
     expect(llamadas('POST', '/caja/turnos/reversion')).toHaveLength(0)
 
     rutaDe('GET', '/caja/turnos/del-dia').body = delDia('ABIERTO', [EN_C01])
@@ -685,7 +713,7 @@ describe('Cierre y arqueo de caja: no mute button, each impediment says why', ()
     await tablaDeArqueo()
     expect(await botonCerrar()).toBeDisabled()
     expect(await botonCerrar()).toHaveAccessibleDescription(
-      'Este turno ya está cerrado: un cierre no se modifica. Si hay que rehacerlo, un supervisor de caja lo reversa.'
+      'Este turno ya está cerrado: un cierre no se modifica. Para rehacerlo, se reversa (más abajo) y se cierra otra vez.'
     )
   })
 
@@ -726,7 +754,7 @@ describe('Cierre y arqueo de caja: no mute button, each impediment says why', ()
     await tablaDeArqueo()
     expect(await botonReversar()).toBeDisabled()
     expect(await botonReversar()).toHaveAccessibleDescription(
-      'Su cuenta no puede reversar un cierre: le falta creación de reversion_cierre. Lo hace un supervisor de caja.'
+      'Su cuenta no puede reversar un cierre: le falta creación de reversion_cierre. Un cierre solo se reversa desde la cuenta del cajero del turno: otra cuenta no puede reversarlo por usted, aunque tenga ese permiso.'
     )
   })
 

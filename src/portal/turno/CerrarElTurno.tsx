@@ -197,8 +197,8 @@ export function CerrarElTurno({
                 </span>
               )}
               <span className="mt-2 block">
-                La diferencia la calcula el backend al cerrar, y se ve en el acta. Un cierre no se modifica: si hay que rehacerlo, un supervisor de caja lo
-                reversa.
+                La diferencia la calcula el backend al cerrar, y se ve en el acta. Un cierre no se modifica: si hay que rehacerlo, se reversa desde esta misma
+                cuenta, con el permiso de reversión, y se cierra otra vez.
               </span>
             </>
           }
