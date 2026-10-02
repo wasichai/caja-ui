@@ -8,6 +8,7 @@ import { Importe } from '../cifras/Importe'
 import { PagosSinEntregar as BloqueDePagosSinEntregar } from '../buzon/PagosSinEntregar'
 import { Alerta } from '../components/Alerta'
 import { fechaYHoraEnLima } from '../fechas'
+import { ConciliacionDelDia } from '../recaudacion/ConciliacionDelDia'
 import type { CierreHecho, CierreVigente, TurnoDelDia as ElDelDia } from '../types'
 import { CLAVE_DE_LOS_TURNOS, turnos } from './api'
 import { Cuadra, Dato, PagosSinEntregar, porQueSinDeclarar, ResumenDelArqueo, TablaDeArqueo, SIN_DECLARAR } from './Arqueo'
@@ -20,7 +21,8 @@ import { TurnoDelDia } from './TurnoDelDia'
 // chosen (in the route, ?turno=, when there is more than one), the cierre with what was counted, and its reversal.
 // every figure is the backend's, and so is every state: after a write, the turno and its arqueo are read again, never
 // changed here. below the arqueo, the payments not delivered (MUERTO) and their explanation, which lets the turno close
-// (buzon/PagosSinEntregar.tsx). the reconciliation comes in its own screen
+// (buzon/PagosSinEntregar.tsx). last, the reconciliation of a day chosen in the route (?fecha=,
+// recaudacion/ConciliacionDelDia.tsx)
 
 // the turno of the route, or the only one of the day; with several and none in the route, none
 function elTurnoDe(delDia: { isPending: boolean; isError: boolean; error: unknown; data?: ElDelDia }, pedido: string | null): ElTurno {
@@ -63,7 +65,13 @@ export function CierreCajaPage() {
   // what the backend says now: today's turno and the arqueo, read again
   const leerOtraVez = () => void queryClient.invalidateQueries({ queryKey: CLAVE_DE_LOS_TURNOS, refetchType: 'all' })
 
-  const elegir = (turnoId: string) => setParams({ turno: turnoId })
+  // the turno chosen goes to the url, beside the day of the reconciliation
+  const elegir = (turnoId: string) =>
+    setParams((antes) => {
+      const despues = new URLSearchParams(antes)
+      despues.set('turno', turnoId)
+      return despues
+    })
   const clave = turno?.turno_id ?? 'ninguno'
 
   return (
@@ -130,6 +138,8 @@ export function CierreCajaPage() {
         }}
         onChoque={leerOtraVez}
       />
+
+      <ConciliacionDelDia />
     </div>
   )
 }

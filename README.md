@@ -206,7 +206,7 @@ Tests: `src/portal/duplicadoRecibo.test.tsx` (una prueba por fila de la tabla y 
 
 El turno del día del cajero, su arqueo por forma de pago, el cierre con lo que contó y su reversión. Se ofrece con
 lectura de `turno` (lo que ya decía el árbol), y con lo mismo se guarda su ruta. Debajo del arqueo, el bloque **«Pagos
-sin entregar»** y su explicación (más abajo). La conciliación llega con su pantalla.
+sin entregar»** y su explicación (más abajo), y al final la **«Conciliación del día»** (más abajo).
 
 - **El turno del día**: `GET /api/caja/turnos/del-dia` (el cajero de la sesión, hoy en Lima; no abre ningún turno). La
   situación se dice en palabras: `SIN_ABRIR` (el turno se abre con el primer cobro), `ABIERTO`, `CERRADO` (para seguir
@@ -297,6 +297,32 @@ el turno cierra. Es el bloque «Pagos pendientes de entrega» de caja-web, dentr
 Tests: `src/portal/pagosSinEntregar.test.tsx` (la lista con su turno, los del turno que va a cerrar primero, sin pagos,
 el 403, explicar y releer, el estado que no se cambia aquí, cada error, el 409 que sobrevive a la relectura, la
 explicación de más de 500 que no se corta, el borrador por pago, una prueba por motivo de «Explicar» y el enlace desde el 409 del cierre).
+
+#### Conciliación del día (en la hoja `cierre-caja`, `src/portal/recaudacion`)
+
+Lo cobrado en ventanilla contra lo que cada sistema de origen dice haber aplicado, un día. Son los bloques
+«Conciliación del día» y «El cuadre del día» de caja-web, al final de «Cierre y arqueo de caja».
+
+- **El día lo elige quien concilia y vive en la ruta**: `/cierre-caja?turno=…&fecha=2026-10-02`. El selector de día y
+  «Conciliar» escriben `?fecha=` sin tocar el turno elegido (y elegir un turno no borra el día). Recargar o pasar el
+  enlace muestra la misma conciliación. **No hay «hoy» por omisión**: sin día, el bloque dice «Elija arriba el día que
+  quiere conciliar y aquí saldrá su cuadre.», no pide nada y no muestra ninguna cifra (**ni un cero antes de tiempo**).
+- **`GET /api/caja/conciliacion?fecha=`**. El cuadre del día: el día conciliado, el día en que se leyó (`a_la_fecha`) y
+  si cuadra (todas las líneas), como lo dice el backend. Una tabla «Por sistema de origen» con registrados, anulados,
+  en tránsito, sin entregar (`muertos`), explicados, cobrado, anulado y neto (del buzón y los recibos), recibidos,
+  aplicados y rechazados en el origen, importe aplicado y diferencia (del origen), si cuadra y la situación. Las cifras
+  van a la fecha conciliada, una vez en el título de la tabla. **La diferencia es la del backend**: el cliente no resta.
+- **Un origen que no contestó, que no se pudo leer o que no está configurado** trae sus cinco cifras en null: cada una
+  de esas celdas dice `por_que_no_se_sabe` con `SinDato`, **nunca 0**, y la situación dice «No se sabe: …». Una línea
+  que no cuadra dice por qué con lo que manda el backend (en tránsito, sin entregar, rechazados, con diferencia).
+- Un día sin cobros: «Ese día no tiene ningún cobro registrado.», y el día cuadra.
+- **Una fecha mal escrita es el 400 que es**: su `errors[].message` se dice bajo el selector y el bloque dice que el
+  backend no aceptó ese día. Un 403 (sin lectura de `pago_evento` o `recibo`) se dice en el hueco del bloque, y la hoja
+  sigue.
+
+Tests: `src/portal/conciliacion.test.tsx` (sin día espera y no muestra ningún cero, el día en la ruta junto al turno y al
+recargar, el origen caído y el no configurado celda por celda, la situación, la diferencia del backend, el día sin
+cobros, el 400 y el 403).
 
 ## El kit de formularios (`src/kit`)
 

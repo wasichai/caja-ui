@@ -359,3 +359,90 @@ export interface PeticionDeExplicacion {
   explicacion: string
   observacion: string
 }
+
+// --- what was collected and the reconciliation of a day (/api/caja/recaudacion/**, /api/caja/conciliacion) ---
+// aggregates, never paged: every total is the backend's, as of a_la_fecha (the day it was read)
+
+// a row of the avance: by source system (the orders' sistema_origen, or TASA). origen is null only on a recibo of orders
+// with no line of its cobro: the datum does not exist
+export interface FilaDeOrigen {
+  origen: string | null
+  cobrado: Cifra
+  anulado: Cifra
+  neto: Cifra
+}
+
+// the turno of today of the caja and the cajero asked for, with its live arqueo (declarado, diferencia and cuadra null)
+export interface TurnoDelAvance {
+  turno_id: string
+  caja: string
+  cajero: string
+  fecha: string
+  estado_del_turno: string
+  arqueo: Arqueo
+}
+
+// GET /api/caja/recaudacion/avance?desde=&hasta=&origen=&caja=&cajero=: desde and hasta are the range the backend took
+// (its defaults when none was asked for). turno, only with caja and cajero
+export interface AvanceDeRecaudacion {
+  desde: string
+  hasta: string
+  a_la_fecha: string
+  filas: FilaDeOrigen[]
+  cobrado: Cifra
+  anulado: Cifra
+  neto: Cifra
+  turno: TurnoDelAvance | null
+}
+
+// a row of the recaudación por área: one per (área, partida, concepto). what was charged by orders has no área nor
+// partida (null: the datum does not exist), and its concepto is its source system; a tasa's concepto is its code
+export interface FilaDePartida {
+  area: string | null
+  area_nombre: string | null
+  partida: string | null
+  concepto: string | null
+  cobrado: Cifra
+  anulado: Cifra
+  neto: Cifra
+}
+
+// GET /api/caja/recaudacion/por-area?area=&desde=&hasta=: neto_sin_partida is what was charged by orders, said apart
+export interface RecaudacionPorArea {
+  desde: string
+  hasta: string
+  a_la_fecha: string
+  filas: FilaDePartida[]
+  neto: Cifra
+  neto_sin_partida: Cifra
+}
+
+// a line of the reconciliation, per destination system: the buzón's counts and the recibos' figures, and what the
+// source system says (recibidos, aplicados, rechazados, importe_aplicado) with the diferencia. when the source did not
+// answer, could not be read or is not configured, those five are null, never 0, and por_que_no_se_sabe says why
+export interface LineaDeConciliacion {
+  sistema_destino: string
+  registrados: number
+  anulados: number
+  en_transito: number
+  muertos: number
+  explicados: number
+  cobrado: Cifra
+  anulado: Cifra
+  neto: Cifra
+  recibidos: number | null
+  aplicados: number | null
+  rechazados: number | null
+  importe_aplicado: Cifra | null
+  diferencia: Cifra | null
+  por_que_no_se_sabe: string | null
+  cuadra: boolean
+}
+
+// GET /api/caja/conciliacion?fecha=: the day reconciled, the day it was read, whether every line squares, and the lines
+export interface ConciliacionDelDia {
+  fecha: string
+  a_la_fecha: string
+  cuadra: boolean
+  lineas: LineaDeConciliacion[]
+}
