@@ -121,7 +121,9 @@ con el mismo par se guarda su ruta. La caja vive en la ruta como en la tributari
 - **El precio, los montos y el total son del backend.** El precio unitario es el de `GET /tasas`; el monto de cada
   línea y el total, los de `POST /api/caja/cobros/tasas/vista-previa`, que se vuelve a pedir al cambiar las líneas o
   una cantidad. El cliente no multiplica ni suma. Una tasa sin tarifa vigente o con tarifa en cero aparece en los
-  `motivos`, su monto dice que el backend no la cobra, y el cobro queda impedido.
+  `motivos`, su monto dice que el backend no la cobra, y el cobro queda impedido. Mientras una cantidad es inválida no
+  se pide la vista previa, y el total no desaparece: lo sustituye `SinDato` con «Corrija las cantidades para ver el
+  total».
 - **Cobrar**: forma de pago, pagador opcional (documento y nombre: si no se escribe, no se manda) y observación. Se
   confirma con `ConfirmDialog`, con las líneas y el total de la vista previa y el pagador («no se identificó» si no
   hay). `POST /api/caja/cobros/tasas` va con su `Idempotency-Key`, la misma en el reintento.
@@ -130,7 +132,9 @@ con el mismo par se guarda su ruta. La caja vive en la ruta como en la tributari
   - Un 400 se dice bajo su campo, o encima del botón (el de una línea, con su código: «Cantidad de T-001: …»). Un 403,
     el 404 de una tasa sin tarifa vigente y el 409 de una tarifa en cero, con su `detail`.
   - Un 401 guarda la forma de pago, el pagador, la observación y **las líneas como código y cantidad** (nunca un
-    precio ni un monto), con la clave `caja-tasas.<caja>`; al volver a entrar con la misma cuenta, todo se rellena.
+    precio ni un monto), con la clave `caja-tasas.<caja>`; al volver a entrar con la misma cuenta, todo se rellena. El
+    cobro se vuelve a montar al cambiar de caja (`key`), como el tributario: el borrador que lee es el de la caja
+    elegida, no el de la anterior.
 - **El recibo emitido**, con las piezas de la tributaria: número, emitido en, forma de pago, total, el pagador con el
   que se cobró (el recibo que contesta el backend no lo trae; sin pagador dice «No se identificó al pagador», como el
   PDF) y cada línea con concepto, código, cantidad, precio unitario y monto. «Ver el recibo» abre su PDF.

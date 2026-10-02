@@ -2,7 +2,7 @@ import { Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
 import type { ReactNode } from 'react'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
-import { Importe } from '../cifras/Importe'
+import { Importe, SinDato } from '../cifras/Importe'
 import { Alerta } from '../components/Alerta'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type VistaPrevia } from '../types'
@@ -82,6 +82,18 @@ export function impedimentoDeLaVistaPrevia(fallo: boolean, previa: VistaPrevia |
   if (!previa) return 'Esperando el total del backend.'
   if (!previa.cobrable) return 'El backend dice que no se puede cobrar: vea los motivos de arriba.'
   return null
+}
+
+// a total that is not asked for (what is chosen cannot be sent yet): it says why in its place, never vanishes
+export function TotalSinPedir({ motivo }: { motivo: string }) {
+  return (
+    <p className="text-sm text-ink">
+      Total a cobrar:{' '}
+      <span data-ui="total-a-cobrar">
+        <SinDato motivo={motivo} />
+      </span>
+    </p>
+  )
 }
 
 // the total of what is chosen, as the backend previews it, and what keeps it from being cobrable, said as it comes.

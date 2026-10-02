@@ -53,7 +53,8 @@ export function CajaTasasPage() {
           onNuevo={() => setHecho(null)}
         />
       ) : (
-        <CobroDeTasas caja={caja} vigentes={vigentes} onCobrado={cobrado} />
+        // mounted again per caja, as the tributaria's cobro: its draft is the caja's (caja-tasas.<caja>), read once
+        <CobroDeTasas key={caja.deLaRuta} caja={caja} vigentes={vigentes} onCobrado={cobrado} />
       )}
     </div>
   )

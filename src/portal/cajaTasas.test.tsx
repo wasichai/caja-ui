@@ -4,6 +4,7 @@ import type { AuthUser, CallerPermissions } from '@wasichai/core'
 import { mockFetch, type FetchMock, type MockRoute } from '@wasichai/testing'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { abrirSesion, CAJERA, rutasDeSesion } from '../test/portal'
+import { guardarBorrador } from './escritura/borrador'
 import { hoyEnLima } from './fechas'
 import { PortalApp } from './PortalApp'
 
@@ -311,6 +312,15 @@ describe('Caja de tasas: every amount is the backend’s', () => {
     for (const { body } of previas()) expect(body).toEqual({ conceptos: [{ codigo: 'T-001', cantidad: 1 }] })
   })
 
+  it('says the total is missing while a quantity is invalid, instead of dropping it in silence', async () => {
+    start()
+    await agregar('T-001')
+    await waitFor(async () => expect(texto(await totalACobrar())).toBe('S/ 0.10 al 02/10/2026'))
+    await cambiarCantidad('T-001', '0')
+    expect(texto(await totalACobrar())).toBe('— Corrija las cantidades para ver el total.')
+    expect(texto(screen.getByRole('main'))).toContain('Total a cobrar: — Corrija las cantidades para ver el total.')
+  })
+
   it('a tarifa in zero keeps the cobro from going, with its reason', async () => {
     start()
     const motivo =
@@ -463,6 +473,22 @@ describe('Caja de tasas: cobrar', () => {
     expect(main().getByRole('textbox', { name: 'Observación' })).toHaveValue('cheque del banco')
     expect(main().getByText('Se recuperó lo que escribiste antes de que caducara la sesión.')).toBeInTheDocument()
     expect(window.location.pathname + window.location.search).toBe(EN_C01)
+  })
+
+  it('takes the draft of the caja chosen: the cobro is mounted again when the caja changes', async () => {
+    guardarBorrador('caja-tasas.C-01', CAJERA.id, {
+      forma_pago: 'CHEQUE',
+      observacion: 'cheque del banco',
+      lineas: JSON.stringify([['T-002', '2']])
+    })
+    start({ path: '/caja-tasas' })
+    await main().findByRole('option', { name: 'C-01 — VENTANILLA 1' })
+    expect(main().getByRole('textbox', { name: 'Observación' })).toHaveValue('')
+    await userEvent.selectOptions(main().getByRole('combobox', { name: 'Caja' }), 'C-01 — VENTANILLA 1')
+    expect(await main().findByRole('textbox', { name: 'Cantidad de T-002' })).toHaveValue('2')
+    expect(main().getByRole('combobox', { name: 'Forma de pago' })).toHaveValue('CHEQUE')
+    expect(main().getByRole('textbox', { name: 'Observación' })).toHaveValue('cheque del banco')
+    expect(main().getByText('Se recuperó lo que escribiste antes de que caducara la sesión.')).toBeInTheDocument()
   })
 
   it('leaves the button impeded, with why, without CREATE on recibo', async () => {

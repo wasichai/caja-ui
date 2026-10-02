@@ -13,7 +13,8 @@ import {
   ErrorDelCampo,
   impedimentoDeLaVistaPrevia,
   PieDelCobro,
-  TotalDeLaVistaPrevia
+  TotalDeLaVistaPrevia,
+  TotalSinPedir
 } from '../cobro/Formulario'
 import { AvisoDeBorrador } from '../escritura/useEscritura'
 import { loQueFalta, type Par } from '../shell/navTree'
@@ -167,13 +168,15 @@ export function CobroDeTasas({
         </h2>
         {borrador && <AvisoDeBorrador />}
 
-        {conceptos && (
+        {conceptos ? (
           <TotalDeLaVistaPrevia
             cargando={vista.isPending}
             error={vista.isError ? vista.error : null}
             previa={previa}
             sinTotal="Ninguna de las tasas se puede cobrar: vea los motivos."
           />
+        ) : (
+          invalidas && <TotalSinPedir motivo="Corrija las cantidades para ver el total." />
         )}
 
         <form onSubmit={pedir} noValidate className="max-w-xl space-y-4">
