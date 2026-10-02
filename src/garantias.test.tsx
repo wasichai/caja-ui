@@ -75,3 +75,20 @@ describe('the drafts of the acts', () => {
     expect(borradores).toEqual(['portal/escritura/borrador.ts'])
   })
 })
+
+// --- an amount a clerk types goes as text: never the kit's money or decimal kinds ---
+
+// RecordForm sends a money or decimal field as a Number (fromForm), which rounds what was typed and lets the client
+// stand for an amount: a screen of the portal sends amounts as the backend's decimal string, with its own check, and a
+// ficha draws them with Importe (KitDelPortal's kind importe)
+const KIND_NUMERICO = /\bkind\s*:\s*['"`](money|decimal)['"`]/g
+
+describe('the amounts of the portal', () => {
+  it("never use the kit's money or decimal kinds in src/portal", () => {
+    const usan = sources(join(SRC, 'portal')).flatMap((file) => {
+      const halladas = readFileSync(file, 'utf8').match(KIND_NUMERICO)
+      return halladas ? [`${ruta(file)}: ${halladas.join(', ')}`] : []
+    })
+    expect(usan).toEqual([])
+  })
+})
