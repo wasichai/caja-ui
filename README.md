@@ -69,6 +69,12 @@ Lo que caja-web cumplía en cada pantalla, como primitivas que cada pantalla usa
   `{ importe, actualizado_a }` del backend, formatea en soles pasándole a `Intl` la cadena (nunca un `Number`: no se
   pierde un céntimo) y dice «al DD/MM/AAAA». En una tabla, la fecha va una vez en la cabecera (`FechaDeLasCifras`).
   Test: `src/portal/cifras/Importe.test.tsx`.
+  - **En una ficha** (`FieldGrid`), un importe va con `kind: 'importe'`: `KitDelPortal` se lo da al kit por sus
+    `displayKinds` (`src/portal/forms/importe.tsx`) y lo dibuja `Importe`, con su fecha y, si falta, con el motivo
+    (el `placeholder` en función del campo, o el genérico). Test: `src/portal/kit.test.tsx`.
+  - **Los `kind: 'money'` y `kind: 'decimal'` del kit no se usan en `src/portal`**: `RecordForm` los envía como
+    `Number`, que redondea lo tecleado. Un importe que se escribe va como texto, con su propia validación. Test:
+    `src/garantias.test.tsx`.
 - **Un dato que falta dice por qué, nunca un 0.** `SinDato` dibuja «—» y el motivo. `Importe` con `importe: null`
   exige el motivo por los tipos (lo comprueba un `@ts-expect-error` en el test) y nunca dibuja `0` ni `S/ 0.00`. Un nulo
   que llega sin motivo (el backend mandó `null` donde los tipos prometían un importe) dice «El backend no mandó el

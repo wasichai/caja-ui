@@ -29,7 +29,9 @@ export function FieldGrid({ sections, values }: { sections: SectionSpec[]; value
               {shown.map((field) => (
                 <div key={field.name} className={cn(SPAN[field.span ?? 2])}>
                   <dt className="text-xs text-ink-muted">{field.label}</dt>
-                  <dd className="mt-0.5 text-sm break-words text-ink">{display(field, record[field.name], asForm, kit)}</dd>
+                  <dd className="mt-0.5 text-sm break-words text-ink">
+                    <Value field={field} value={record[field.name]} values={asForm} kit={kit} />
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -38,6 +40,12 @@ export function FieldGrid({ sections, values }: { sections: SectionSpec[]; value
       })}
     </div>
   )
+}
+
+// an app's own kind (displayKinds) is drawn by the app; the rest, as text
+function Value({ field, value, values, kit }: { field: FieldSpec; value: unknown; values: FormValues; kit: KitConfig }) {
+  const Display = field.kind && Object.hasOwn(kit.displayKinds, field.kind) ? kit.displayKinds[field.kind] : undefined
+  return Display ? <Display field={field} value={value} values={values} /> : display(field, value, values, kit)
 }
 
 function display(field: FieldSpec, value: unknown, values: FormValues, { texts, enumLabel }: KitConfig): string {

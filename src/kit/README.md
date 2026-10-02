@@ -25,7 +25,8 @@ propio del test y `boundaries.test.tsx` tiene el vocabulario de caja).
    cabecera es la única línea que puede nombrar srtm-ui.
 3. **La cabecera.** Todo archivo que no es un test la lleva en la primera línea, con su propia ruta.
 4. Lo que el kit sabe de caja le llega por `KitProvider`: el portal lo monta en `src/portal/KitDelPortal.tsx` con las
-   etiquetas de los enums (`src/portal/forms/etiquetas.ts`) y su `Alerta` de error.
+   etiquetas de los enums (`src/portal/forms/etiquetas.ts`), su `Alerta` de error y el `kind` de ficha `importe`
+   (`displayKinds`, `src/portal/forms/importe.tsx`), que dibuja el importe con `Importe`.
 
 ## Qué se copió y para qué lo usa caja-ui
 
@@ -39,6 +40,12 @@ propio del test y `boundaries.test.tsx` tiene el vocabulario de caja).
 
 Con ellas vienen `KitProvider`, `texts.ts` y `format.ts`, y lo que `RecordForm` importa: `spec.ts`, `kinds.tsx`,
 `fieldId.ts`, `styles.ts`, `NativeSelect.tsx`, `group.ts`, `locked.ts`, `geometry.ts` y `SuggestInput.tsx`.
+
+## Cambios sobre la copia
+
+- **`displayKinds`** (`KitProvider`, `FieldGrid`): una app le da al kit cómo dibuja en una ficha sus propios `kind`, por
+  nombre, para un valor que el kit no sabe formatear (un objeto, una cifra con su fecha). Sin ellos, `FieldGrid`
+  dibuja como antes. Test: `src/kit/forms/FieldGrid.test.tsx`. Hay que llevarlo a srtm-ui (o a wasichai-ui#14).
 
 ## Para no divergir
 
