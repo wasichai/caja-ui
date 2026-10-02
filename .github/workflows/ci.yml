@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    # a hung yarn install or vite build must not burn the default 6 h
+    timeout-minutes: 20
+    # @wasichai/* are private packages of wasichai-ui: the workflow token cannot read them, a read:packages PAT can
+    # (repo secret PACKAGES_TOKEN; dependabot has its own copy). job level, not only on the install step:
+    # setup-node writes an .npmrc that reads ${NODE_AUTH_TOKEN} and, with cache: yarn, runs yarn right away
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '26'
+          cache: yarn
+          registry-url: https://npm.pkg.github.com
+          scope: '@wasichai'
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test
+      - run: yarn build

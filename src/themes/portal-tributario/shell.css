@@ -1,0 +1,13 @@
+/* copiado de srtm-ui@a1df33a (src/themes/portal-tributario/shell.css): sube a wasichai-ui en la fase 2 (wasichai-ui#14) */
+/* portal-tributario: the brand bar's session menu, with what the prototype gives it and no token has. the component
+   (src/portal/shell/MenuSesion.tsx) draws it with tokens (border-border, shadow-lg, bg-surface-muted) and marks the
+   parts with data-ui; this only refines them. unlayered, so it beats the utilities */
+[data-theme='portal-tributario'] [data-ui='menu-sesion-panel'] {
+    border-color: #c8d4de;
+    box-shadow: 0 6px 22px rgb(13 95 168 / 22%);
+}
+
+[data-theme='portal-tributario'] [data-ui='menu-sesion-cabecera'] {
+    border-color: #c8d4de;
+    background-color: #f6f9fc;
+}
