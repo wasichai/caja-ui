@@ -1,4 +1,6 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/Breadcrumbs.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en que el rastro sale del árbol que se le ofrece a la cuenta (rastro, useArbol), no de
+// una tabla fija de rutas de srtm con su raíz. el dibujo es el de srtm
 import { ChevronRight } from 'lucide-react'
 import { useLocation } from 'react-router'
 import { rastro, useArbol } from './navTree'

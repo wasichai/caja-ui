@@ -1,4 +1,8 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/AppShell.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en que no hay búsqueda global ni entidad fija: el lateral clásico dibuja el árbol que
+// se le ofrece a la cuenta (useArbol), la cabecera dice appName y la cuenta que contesta wasichai (useCuenta), y cada
+// hoja va dentro de LimiteDeHoja. la estructura (cabecera, lateral, pestañas sobre el contenido, PortalShell con el
+// tema portal-tributario) es la de srtm
 import { useWasichaiConfig } from '@wasichai/core'
 import { cn } from '@wasichai/ui'
 import { FileText, Home, Landmark, LogOut, Menu, Settings, type LucideIcon } from 'lucide-react'

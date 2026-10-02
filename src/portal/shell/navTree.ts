@@ -1,4 +1,8 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/navTree.ts): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en el árbol (Tesorería con las seis hojas de caja, no los grupos de srtm) y en lo que
+// srtm no tiene: la clave de la pantalla de cada hoja (PANTALLAS), su seOfreceCon por permisos (Par, loQueFalta, la
+// Oferta de arbolPara, useArbol), conSujeto y el rastro de las migas. esGrupo, hojaActiva y la forma de NodoNav son
+// las de srtm
 import { useAuth } from '@wasichai/core'
 import { Settings, type LucideIcon } from 'lucide-react'
 import { useMemo } from 'react'

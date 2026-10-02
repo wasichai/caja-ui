@@ -1,4 +1,6 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/comun.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en que se quitaron ENTIDAD, NAV y GlobalSearch (y `busqueda` de PiezasShell), y se
+// agregó rotuloDeCuenta, que escribe la cuenta de useCuenta. initials, LateralProps y PiezasShell son los de srtm
 import type { ComponentType } from 'react'
 import type { Cuenta } from '../queries'
 

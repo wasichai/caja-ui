@@ -1,4 +1,8 @@
 // copiado de srtm-ui@a1df33a (src/portal/api.ts): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en casi todo lo que no es el cliente. se quitaron RentasError (titulares, faltan) y la
+// API de srtm (rentas.*, hijos, query); el prefijo es 'caja'; blob se exporta, lanza el ApiError de core y acepta un
+// cuerpo (POST en JSON, para el duplicado que se registra al pedirse). las llamadas de caja viven en cada pantalla
+// (cobro/api.ts, tasas/api.ts…). al unir las copias en wasichai-ui#14, solo `client` y `blob` son comunes
 import { ApiError, createApiClient, type ApiClient, type FieldViolation } from '@wasichai/core'
 
 // same base url and storage prefix as the admin: the token one signs in with is the other's too

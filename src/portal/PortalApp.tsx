@@ -1,4 +1,7 @@
 // copiado de srtm-ui@a1df33a (src/portal/PortalApp.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en las rutas: no se enumeran, salen de las hojas del árbol con pantalla (PANTALLAS),
+// cada una dentro de GuardaDeHoja y con /:sujeto? si es conSujeto; y en la configuración (prefijo 'caja', appName,
+// CAJA_THEMES). el QueryClient, los proveedores de core, el i18n y KitDelPortal son los de srtm
 import { QueryClient } from '@tanstack/react-query'
 import { ApiError, createRegistry, createWasichaiI18n, EmptyState, resolveConfig, WasichaiProviders } from '@wasichai/core'
 import { useState } from 'react'

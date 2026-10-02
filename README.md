@@ -36,8 +36,13 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
     pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre. Test: `src/portal/guarda.test.tsx`.
 - **Una hoja que revienta no tumba la raíz**: cada pantalla se dibuja dentro de un límite de error (`LimiteDeHoja`)
   que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja.
-- **Pestañas de trabajo** por pestaña del navegador (`sessionStorage['caja.tabs']`), y el estado del árbol
-  (`sessionStorage['caja.nav']`).
+- **El estado del árbol** se guarda por pestaña del navegador (`sessionStorage['caja.nav']`).
+- **Pestañas de trabajo: todavía no.** La barra de pestañas (`TabBar` y `WorkspaceTabs`, copiadas de srtm-ui) está
+  montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), así que solo muestra «Inicio».
+  `sessionStorage['caja.tabs']` no guarda ninguna, y cerrar sesión lo borra.
+- **Hueco conocido: salir de una hoja con un acto a medio teclear lo pierde sin avisar.** Ninguna pantalla monta
+  `useUnsavedChanges` del kit: lo tecleado en una anulación, un cierre, una reversión, una explicación o un cobro se
+  pierde al ir a otra hoja (o a otro recibo, turno o pago). Solo un 401 lo guarda (`useEscritura`, más abajo).
 - **Tema**: sistema, claro, oscuro o _Portal tributario_, en el menú de tema de la cabecera.
   - El tema es de `@wasichai/*`: `PORTAL_TRIBUTARIO_THEME` de `@wasichai/core` y la hoja
     `@wasichai/ui/themes/portal-tributario.css`. caja-ui añade los parciales de sus piezas
@@ -47,7 +52,10 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   - La elección se guarda en `caja.theme` y, con un backend que tenga `PUT /auth/me/preferences`, también para el
     usuario. `index.html` aplica el tema antes de cargar la app, para que no parpadee.
 - Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `Alerta`, `BandaTitulo`, `KitDelPortal`) llevan
-  arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14).
+  arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14). Las que se reescribieron
+  dicen además en qué divergen («adaptado: diverge de srtm-ui en …»: `api.ts`, `shell/navTree.ts`, `PortalApp.tsx`,
+  `shell/AppShell.tsx`, `shell/comun.tsx` y `shell/Breadcrumbs.tsx`; `PdfDialog.tsx` con su «DIVERGE»), para no
+  tomarlas por la copia de srtm al unir las dos.
 - **Las etiquetas de los enums** de caja-backend (`forma_pago`, `estado_orden`, `estado_recibo`, `tipo_pago`,
   `tipo_evento_pago`, `estado_evento`, `estado_del_turno` y el `origen` del avance) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
   conoce se escribe tal cual.
@@ -388,8 +396,11 @@ Tests: `src/portal/recaudacionArea.test.tsx`.
 ## El kit de formularios (`src/kit`)
 
 Es una **copia temporal y marcada** del kit de `srtm-ui@a1df33a`: `RecordForm`, `FieldGrid`, `EditableList`,
-`useUnsavedChanges`, `errorMessage` y lo que los configura (`KitProvider`). Cada archivo lleva la cabecera de la copia,
-y la copia es el segundo usuario que el kit necesita para subir a wasichai-ui en la fase 2 (wasichai-ui#14). Vive tras
+`useUnsavedChanges`, `errorMessage` y lo que los configura (`KitProvider`). Cada archivo lleva la cabecera de la copia.
+caja-ui es el segundo usuario que el kit necesita para subir a wasichai-ui en la fase 2 (wasichai-ui#14), **pero solo
+de lo que usa**: `RecordForm` (la anulación), `FieldGrid` (el recibo emitido y el elegido, con `displayKinds`),
+`NativeSelect`, `errorMessage`, `format.ts` y `KitProvider`. `EditableList` y `useUnsavedChanges` se copiaron y no
+los usa ninguna pantalla: no cuentan como segundo usuario. Vive tras
 una frontera que comprueba `src/kit/boundaries.test.tsx`: solo importa el propio kit y los paquetes de los que ya
 dependen los de wasichai-ui, no habla el vocabulario de caja ni el de srtm, y cada archivo lleva su cabecera. El
 portal le da sus etiquetas y su caja de error con `KitDelPortal`. Las reglas, qué pieza usa cada pantalla y cómo no

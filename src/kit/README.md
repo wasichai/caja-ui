@@ -3,7 +3,9 @@
 Es la copia del kit de formularios de `srtm-ui`, tomada en **`a1df33a`** (`src/kit`): el motor de formularios, la ficha
 de solo lectura, la lista editable, el aviso de cambios sin guardar, el mensaje de error y los textos y el proveedor que
 los configuran. No se subió antes a wasichai-ui: esta copia es el «segundo usuario concreto» que pide el README del kit
-de srtm-ui para subirlo en la fase 2 ([wasichai-ui#14](https://github.com/wasichai/wasichai-ui/issues/14)).
+de srtm-ui para subirlo en la fase 2 ([wasichai-ui#14](https://github.com/wasichai/wasichai-ui/issues/14)), **solo de
+las piezas que caja-ui usa** (la tabla de abajo). La lista editable y el aviso de cambios sin guardar se copiaron y no
+tienen usuario aquí.
 
 Cada archivo que no es un test empieza con la cabecera
 
@@ -30,13 +32,15 @@ propio del test y `boundaries.test.tsx` tiene el vocabulario de caja).
 
 ## Qué se copió y para qué lo usa caja-ui
 
-| Pieza               | Pantallas                       |
-| ------------------- | ------------------------------- |
-| `RecordForm`        | anulación, cierre y explicación |
-| `FieldGrid`         | el recibo elegido               |
-| `EditableList`      | las líneas de tasas             |
-| `useUnsavedChanges` | los actos                       |
-| `errorMessage`      | todas                           |
+| Pieza                      | Dónde la usa caja-ui                                                                                                                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RecordForm`               | solo la anulación de «Duplicado de recibo» (`recibo/ActoDeAnulacion.tsx`). El cierre, la reversión, la explicación, el duplicado y los cobros son formularios propios              |
+| `FieldGrid`                | el recibo emitido de las dos cajas (`cobro/ReciboEmitido.tsx`) y el recibo elegido de «Duplicado de recibo» (`recibo/ReciboElegido.tsx`), con el `kind` `importe` (`displayKinds`) |
+| `NativeSelect`             | la caja, la forma de pago y el estado de la lista de recibos                                                                                                                       |
+| `errorMessage`             | todas                                                                                                                                                                              |
+| `format.ts` (`formatDate`) | las fechas que se dibujan, en casi todas las pantallas (cobro, recibos, turno, pagos, recaudación y conciliación)                                                                  |
+| `EditableList`             | **ninguna**. Se pensó para las líneas de tasas, que son una tabla propia (por qué, en el README raíz). Queda en la copia, con su test, sin usuario                                 |
+| `useUnsavedChanges`        | **ninguna**. Ninguna pantalla lo monta: salir de una hoja con un acto a medio teclear lo pierde (hueco conocido, en el README raíz)                                                |
 
 Con ellas vienen `KitProvider`, `texts.ts` y `format.ts`, y lo que `RecordForm` importa: `spec.ts`, `kinds.tsx`,
 `fieldId.ts`, `styles.ts`, `NativeSelect.tsx`, `group.ts`, `locked.ts`, `geometry.ts` y `SuggestInput.tsx`.
