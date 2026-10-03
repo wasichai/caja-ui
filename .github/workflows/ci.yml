@@ -19,7 +19,7 @@ jobs:
     # a hung yarn install or vite build must not burn the default 6 h
     timeout-minutes: 20
     # @wasichai/* are private packages of wasichai-ui: the workflow token cannot read them, a read:packages PAT can
-    # (repo secret PACKAGES_TOKEN; dependabot has its own copy). job level, not only on the install step:
+    # (repo secret PACKAGES_TOKEN). job level, not only on the install step:
     # setup-node writes an .npmrc that reads ${NODE_AUTH_TOKEN} and, with cache: yarn, runs yarn right away
     env:
       NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}

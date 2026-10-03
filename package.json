@@ -10,8 +10,8 @@
     "scripts": {
         "dev": "vite",
         "preview": "vite preview",
-        "lint": "prettier --check src index.html package.json tsconfig.json tsconfig.build.json vite.config.ts commitlint.config.mjs .github",
-        "format": "prettier --write src index.html package.json tsconfig.json tsconfig.build.json vite.config.ts commitlint.config.mjs .github",
+        "lint": "prettier --check src index.html package.json tsconfig.json tsconfig.build.json vite.config.ts commitlint.config.mjs renovate.json .github",
+        "format": "prettier --write src index.html package.json tsconfig.json tsconfig.build.json vite.config.ts commitlint.config.mjs renovate.json .github",
         "test": "vitest run",
         "build": "tsc -p tsconfig.build.json && vite build",
         "typecheck": "tsc -p tsconfig.json",

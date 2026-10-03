@@ -1,0 +1,21 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+    "description": "weekly bumps. semantic commits keep the pr titles and commits conventional (commits.yml)",
+    "schedule": ["before 6am on monday"],
+    "timezone": "America/Lima",
+    "semanticCommits": "enabled",
+    "semanticCommitType": "chore",
+    "semanticCommitScope": "deps",
+    "labels": ["dependencies"],
+    "packageRules": [
+        {
+            "matchManagers": ["github-actions"],
+            "semanticCommitType": "ci"
+        },
+        {
+            "matchDepTypes": ["devDependencies"],
+            "semanticCommitScope": "deps-dev"
+        }
+    ]
+}
