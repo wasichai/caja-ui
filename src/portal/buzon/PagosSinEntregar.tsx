@@ -186,8 +186,8 @@ function TablaDePagos({
       <tbody>
         {pagos.map((pago) => (
           <tr key={pago.pago_id}>
-            <Td className="break-all tabular-nums">{pago.pago_id}</Td>
-            <Td className="break-all">{turnoDe(pago)}</Td>
+            <Td className="break-words tabular-nums">{pago.pago_id}</Td>
+            <Td className="break-words">{turnoDe(pago)}</Td>
             <Td>{etiqueta('tipo_evento_pago', pago.tipo)}</Td>
             <Td>{pago.destino}</Td>
             <Td className={`${derecha} tabular-nums`}>{pago.recibo ?? <SinDato motivo="el recibo no se pudo leer" />}</Td>
