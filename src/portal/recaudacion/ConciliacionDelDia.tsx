@@ -47,7 +47,11 @@ function DelOrigen({ linea, children }: { linea: LineaDeConciliacion; children: 
 export function ConciliacionDelDia() {
   const [params, setParams] = useSearchParams()
   const fecha = params.get(PARAMETRO) ?? ''
-  const conciliacion = useQuery({ queryKey: ['caja', 'conciliacion', fecha], queryFn: () => recaudacion.conciliacion(fecha), enabled: fecha !== '' })
+  const conciliacion = useQuery({
+    queryKey: [...recaudacion.claveDeLaConciliacion, fecha],
+    queryFn: () => recaudacion.conciliacion(fecha),
+    enabled: fecha !== ''
+  })
 
   // the day chosen goes to the url, beside what else is there (the turno). the same day again is the same query: it is
   // asked again, not left as it was read

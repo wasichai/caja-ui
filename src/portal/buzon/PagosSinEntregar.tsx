@@ -9,6 +9,7 @@ import { BotonConMotivo } from '../components/BotonConMotivo'
 import { leerBorrador } from '../escritura/borrador'
 import { fechaYHoraEnLima } from '../fechas'
 import { etiqueta } from '../forms/etiquetas'
+import { recaudacion } from '../recaudacion/api'
 import { CLAVE_DE_LOS_TURNOS } from '../turno/api'
 import type { PagoDelBuzon, TurnoEnElDia } from '../types'
 import { pagos } from './api'
@@ -69,10 +70,12 @@ export function PagosSinEntregar({
   // a 409 to an explanation: kept here, since the re-read takes the payment (and its act) off the list
   const [rechazo, setRechazo] = useState<{ pagoId: string; detalle: string } | null>(null)
 
-  // what the backend says now: the payments and the arqueo (whether the turno may close), read again
+  // what the backend says now: the payments, the arqueo (whether the turno may close) and the day's reconciliation
+  // (its payments not delivered and explained), read again
   const leerOtraVez = () => {
     void queryClient.invalidateQueries({ queryKey: pagos.claveSinEntregar, refetchType: 'all' })
     void queryClient.invalidateQueries({ queryKey: CLAVE_DE_LOS_TURNOS, refetchType: 'all' })
+    void queryClient.invalidateQueries({ queryKey: recaudacion.claveDeLaConciliacion })
   }
 
   // the order is the backend's (oldest first), with the turno being closed in front: nothing is added nor dropped

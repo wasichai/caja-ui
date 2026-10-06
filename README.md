@@ -312,7 +312,8 @@ el turno cierra. Es el bloque «Pagos pendientes de entrega» de caja-web, dentr
   `POST /api/caja/pagos/{pago_id}/explicacion` con el `pago_id` de la fila, nunca uno tecleado.
   - **El estado no se cambia en el cliente**: con éxito se dice lo que contestó el backend («Se explicó el pago …: el
     backend lo dejó «Explicado».»), y se vuelven a leer los pagos **y** el arqueo, para que «puede cerrar» lo diga el
-    backend. Si el backend lo siguiera listando, la pantalla lo seguiría mostrando.
+    backend, y la conciliación del día de la misma hoja, que cuenta los pagos sin entregar y los explicados. Si el
+    backend lo siguiera listando, la pantalla lo seguiría mostrando.
   - Un 400 se dice bajo su campo (`explicacion`, `observacion`), y otro (`pago_id`) encima del botón. El 409 (ya no está
     `MUERTO`: se entregó o alguien ya lo explicó) se dice con su `detail` en el bloque, no en el acto, porque al releer
     el pago sale de la lista y el acto con él; luego relee los pagos y el arqueo. Un 403 y un
