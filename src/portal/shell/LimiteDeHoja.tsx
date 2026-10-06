@@ -1,3 +1,4 @@
+import { Button } from '@wasichai/ui'
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 interface Props {
@@ -34,15 +35,19 @@ export class LimiteDeHoja extends Component<Props, Estado> {
   override render() {
     const { error } = this.state
     if (!error) return this.props.children
-    // it names what was thrown: it is what support needs to find it
+    // it names what was thrown: it is what support needs to find it. what failed once may not fail again (a figure
+    // read again, a moment later), and the same leaf in the menu is the same route, which tries nothing: so a button
     return (
       <div role="alert" className="space-y-2 rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
         <p className="font-semibold">Esta pantalla no se pudo dibujar</p>
         <p className="text-ink">
-          El resto de la caja sigue en pie: puede elegir otra opción del menú. Si vuelve a pasar, avise a soporte con el nombre de esta pantalla y lo que dice
-          abajo.
+          El resto de la caja sigue en pie: puede volver a intentarlo o elegir otra opción del menú. Si vuelve a pasar, avise a soporte con el nombre de esta
+          pantalla y lo que dice abajo.
         </p>
         <p className="font-mono text-xs break-words text-ink-muted">{error.message}</p>
+        <Button type="button" variant="secondary" size="sm" onClick={() => this.setState({ error: null })}>
+          Volver a intentar
+        </Button>
       </div>
     )
   }

@@ -22,8 +22,11 @@ vi.mock('./shell/Breadcrumbs', async () => {
   }
 })
 
-function Revienta(): never {
-  throw new Error('importe con otra forma: «12,3,4»')
+// the screen of cierre-caja throws while `falla.todavia` says so
+const falla = vi.hoisted(() => ({ todavia: true }))
+function Revienta() {
+  if (falla.todavia) throw new Error('importe con otra forma: «12,3,4»')
+  return <h2>Pantalla del cierre</h2>
 }
 
 function Tasas() {
@@ -36,6 +39,7 @@ beforeEach(() => {
   sessionStorage.clear()
   delete document.documentElement.dataset.theme
   rompe.migas = false
+  falla.todavia = true
   Object.assign(registradas, { 'cierre-caja': Revienta, 'caja-tasas': Tasas })
   // react reports what a boundary catches on the console; the boundary logs it too
   vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -83,5 +87,20 @@ describe('a piece outside a leaf that throws', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('el rastro no se pudo armar')
     expect(screen.getByRole('button', { name: 'Volver a cargar' })).toBeInTheDocument()
     expect(screen.queryByText(/Unexpected Application Error/)).not.toBeInTheDocument()
+  })
+})
+
+describe('a leaf that threw', () => {
+  it('is drawn again on «Volver a intentar», once what failed no longer does', async () => {
+    abrirSesion(ADMIN)
+    window.history.pushState({}, '', '/cierre-caja')
+    fetch = mockFetch(rutasDeSesion(ADMIN, { admin: true, objects: {} }))
+    render(<PortalApp />)
+    const fallo = await within(screen.getByRole('main')).findByRole('alert')
+    expect(fallo).toHaveTextContent('Esta pantalla no se pudo dibujar')
+    falla.todavia = false
+    await userEvent.click(within(fallo).getByRole('button', { name: 'Volver a intentar' }))
+    expect(await screen.findByRole('heading', { name: 'Pantalla del cierre' })).toBeInTheDocument()
+    expect(screen.queryByText('Esta pantalla no se pudo dibujar')).not.toBeInTheDocument()
   })
 })
