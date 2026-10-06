@@ -1,5 +1,4 @@
-import { enviar } from '../cobro/api'
-import { client } from '../api'
+import { client, enviar } from '../api'
 import type { CobroHecho, ConceptoPedido, NuevoCobroDeTasas, TasaVigente, VistaPrevia } from '../types'
 
 // caja-backend's caja de tasas (/api/caja/tasas, /api/caja/cobros/tasas/**). the price is never the client's: the list

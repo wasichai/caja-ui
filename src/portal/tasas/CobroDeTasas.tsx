@@ -8,15 +8,14 @@ import { useEnvioDelCobro, validarCobro } from '../cobro/envio'
 import {
   CampoFormaDePago,
   CampoObservacion,
-  conError,
   ConfirmarCobro,
-  ErrorDelCampo,
   impedimentoDeLaVistaPrevia,
   PieDelCobro,
   TotalDeLaVistaPrevia,
   TotalSinPedir
 } from '../cobro/Formulario'
 import { AvisoDeBorrador } from '../escritura/useEscritura'
+import { conError, ErrorDelCampo } from '../forms/campos'
 import { loQueFalta, type Par } from '../shell/navTree'
 import type { CobroHecho, NuevoCobroDeTasas, TasaVigente } from '../types'
 import { tasas } from './api'

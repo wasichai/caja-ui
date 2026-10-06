@@ -1,5 +1,4 @@
-import { client } from '../api'
-import { enviar } from '../cobro/api'
+import { client, enviar } from '../api'
 import type { ArqueoDelTurno, CierreHecho, PeticionDeCierre, PeticionDeReversion, ReversionHecha, TurnoDelDia } from '../types'
 
 // caja-backend's turno (/api/caja/turnos/**), as «Cierre y arqueo de caja» uses it

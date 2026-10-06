@@ -2,6 +2,7 @@ import { ApiError } from '@wasichai/core'
 import { useRef, useState } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { SesionCaducada, useEscritura } from '../escritura/useEscritura'
+import { OBSERVACION } from '../forms/campos'
 import { claveDelIntento, type Intento } from './intento'
 
 // how a cobro is sent, shared by «Caja tributaria» and «Caja de tasas»: one Idempotency-Key per attempt (intento.ts),
@@ -16,9 +17,6 @@ import { claveDelIntento, type Intento } from './intento'
 // would still leave a key no one can change. only an answered cobro (2xx) says what happened; a refusal of a later
 // attempt (a 400) says nothing of the first, and the notice stays. the clerk may let the key go on purpose, once they
 // checked in «Duplicado de recibo» that it was not charged, or that it was annulled (OTRO_COBRO)
-
-// caja-backend's Observacion: trimmed, 5 to 500 characters
-export const OBSERVACION = { minimo: 5, maximo: 500 }
 
 export const NO_SE_SABE =
   'No se sabe si se cobró: vuelva a pulsar Cobrar sin cambiar nada (se reconoce el mismo intento), o busque el recibo en Duplicado de recibo.'

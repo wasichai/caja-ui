@@ -4,27 +4,13 @@ import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
 import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
+import { conError, ErrorDelCampo, OBSERVACION } from '../forms/campos'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type VistaPrevia } from '../types'
-import { MISMO_INTENTO, NO_SE_SABE, OBSERVACION, OTRO_COBRO } from './envio'
+import { MISMO_INTENTO, NO_SE_SABE, OTRO_COBRO } from './envio'
 
 // the pieces of a cobro's form that «Caja tributaria» and «Caja de tasas» share: the forma de pago, the observación,
 // the total the backend previews, the button that is never mute and the confirmation (a cobro is not undone)
-
-// a field's error under it, tied to its control
-const idDelError = (id: string) => `${id}-error`
-export const conError = (id: string, error: string | undefined) => ({
-  'aria-invalid': error ? true : undefined,
-  'aria-describedby': error ? idDelError(id) : undefined
-})
-
-export function ErrorDelCampo({ id, error }: { id: string; error: string | undefined }) {
-  return error ? (
-    <p id={idDelError(id)} className="text-xs text-danger">
-      {error}
-    </p>
-  ) : null
-}
 
 // the five forms of payment, with their etiqueta
 export function CampoFormaDePago({ value, onChange, error }: { value: string; onChange: (valor: string) => void; error: string | undefined }) {

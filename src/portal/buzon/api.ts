@@ -1,5 +1,4 @@
-import { client } from '../api'
-import { enviar } from '../cobro/api'
+import { client, enviar } from '../api'
 import type { PagoDelBuzon, PeticionDeExplicacion } from '../types'
 
 // caja-backend's buzón (/api/caja/pagos/**), as «Pagos sin entregar» of «Cierre y arqueo de caja» uses it

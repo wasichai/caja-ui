@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import type { Cifra } from '../cifras/Importe'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo } from '../forms/campos'
 import type { Filtros } from './api'
 
 // what «Avance de recaudación», «Recaudación por área» and «Conciliación del día» share: the date of a table's figures
