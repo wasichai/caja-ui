@@ -1,7 +1,7 @@
 // copiado de srtm-ui@a1df33a (src/portal/KitDelPortal.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+import { Alert } from '@wasichai/ui'
 import type { ReactNode } from 'react'
 import { KitProvider } from '../kit/KitProvider'
-import { Alert } from '@wasichai/ui'
 import { etiqueta } from './forms/etiquetas'
 import { FICHA_DEL_PORTAL } from './forms/importe'
 

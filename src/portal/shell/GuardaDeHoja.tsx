@@ -1,6 +1,6 @@
 import { LoadingState, useAuth } from '@wasichai/core'
-import type { ReactNode } from 'react'
 import { Alert } from '@wasichai/ui'
+import type { ReactNode } from 'react'
 import { loQueFalta, type HojaNav } from './navTree'
 
 // a leaf's screen, kept by the same seOfreceCon the tree offers it with: whoever arrives by its url without it (a link
