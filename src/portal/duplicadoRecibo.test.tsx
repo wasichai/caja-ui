@@ -346,6 +346,18 @@ describe('Duplicado de recibo: the leaf and its list', () => {
     await waitFor(() => expect(llamadas('GET', '/caja/recibos').at(-1)?.path).toBe('/caja/recibos?page=0&size=50'))
   })
 
+  it('leads back from a page left empty (an anulación out of the filter) instead of saying nothing matches', async () => {
+    start({ path: '/duplicado-recibo?estado=EMITIDO&page=1' })
+    rutaDe('GET', '/caja/recibos').body = { ...LISTA, content: [], page: 1, totalElements: 25, totalPages: 1 }
+    expect(await main().findByText(/Esta página ya no tiene recibos: los que coinciden caben en las anteriores\./)).toBeInTheDocument()
+    expect(main().queryByText('Ningún recibo coincide con la búsqueda.')).not.toBeInTheDocument()
+
+    rutaDe('GET', '/caja/recibos').body = LISTA
+    await userEvent.click(main().getByRole('button', { name: 'Ir a la última página' }))
+    await waitFor(() => expect(enLaRuta()).toBe('/duplicado-recibo?estado=EMITIDO'))
+    expect(await tabla()).toBeInTheDocument()
+  })
+
   it('says a 400 of the list under its filter', async () => {
     start({ path: '/duplicado-recibo?desde=2026-10-05&hasta=2026-10-01' })
     Object.assign(rutaDe('GET', '/caja/recibos'), {

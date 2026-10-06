@@ -187,7 +187,8 @@ guarda su ruta.
   emitido (hora de Lima), documento, pagador, importe (`Importe`; si todas las cifras son del mismo día, la fecha va una
   vez en la cabecera con `FechaDeLasCifras`), medio de pago, duplicados y estado, con su etiqueta. «Ver» lleva a la ruta
   del recibo, sin perder los filtros. Un 400 se dice bajo su filtro; cualquier otro fallo (un 403) se dice en el hueco
-  de la lista, y la ficha sigue.
+  de la lista, y la ficha sigue. Una página que se quedó vacía (una anulación que sale del filtro «Emitido») no dice que
+  nada coincide: lleva a la última página que tiene recibos.
 - **El recibo elegido**: `GET /api/caja/recibos/{numero}`, en `FieldGrid`: número, estado, caja, cajero, emitido en,
   forma y tipo de pago, pagador, duplicados emitidos, total (`kind: 'importe'`) y la observación del cobro; sus líneas
   como las lee su tipo (órdenes o tasas, con código, cantidad y precio unitario); y, si está anulado, la anulación:

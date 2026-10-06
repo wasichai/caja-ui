@@ -74,8 +74,25 @@ export function ListaDeRecibos() {
           <LoadingState label="Buscando los recibos…" />
         ) : lista.isError ? (
           <Alert tone="danger">No se pudo leer la lista de recibos: {errorMessage(lista.error, 'el backend no contestó')}</Alert>
-        ) : lista.data.content.length === 0 ? (
+        ) : lista.data.totalElements === 0 ? (
           <p className="text-sm text-ink-muted">Ningún recibo coincide con la búsqueda.</p>
+        ) : lista.data.content.length === 0 ? (
+          // the page ran out under the clerk (an anulación out of an «Emitido» filter, an older link): some do match, so
+          // it leads to the last page that has them, never says that nothing matches
+          <p className="text-sm text-ink-muted">
+            Esta página ya no tiene recibos: los que coinciden caben en las anteriores.{' '}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const ultima = Math.max(0, Math.ceil(lista.data.totalElements / size) - 1)
+                cambiar({ page: ultima > 0 ? String(ultima) : null })
+              }}
+            >
+              Ir a la última página
+            </Button>
+          </p>
         ) : (
           <>
             <TablaDeRecibos filas={lista.data.content} />
