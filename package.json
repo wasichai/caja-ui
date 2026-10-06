@@ -18,11 +18,11 @@
         "prepare": "husky"
     },
     "dependencies": {
-        "@wasichai/core": "0.4.0",
-        "@wasichai/forms": "0.4.0",
-        "@wasichai/pages": "0.4.0",
-        "@wasichai/ui": "0.4.0",
-        "@wasichai/views": "0.4.0",
+        "@wasichai/core": "0.5.0",
+        "@wasichai/forms": "0.5.0",
+        "@wasichai/pages": "0.5.0",
+        "@wasichai/ui": "0.5.0",
+        "@wasichai/views": "0.5.0",
         "@tanstack/react-query": "5.104.0",
         "i18next": "26.4.2",
         "lucide-react": "1.48.0",
@@ -33,7 +33,7 @@
         "react-router": "8.4.0"
     },
     "devDependencies": {
-        "@wasichai/testing": "0.4.0",
+        "@wasichai/testing": "0.5.0",
         "@commitlint/cli": "21.2.3",
         "@commitlint/config-conventional": "21.2.3",
         "@tailwindcss/vite": "4.3.3",

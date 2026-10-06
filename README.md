@@ -56,7 +56,7 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   («adaptado: diverge de srtm-ui en …»: `api.ts`, `shell/navTree.ts`, `PortalApp.tsx`, `shell/AppShell.tsx`,
   `shell/comun.tsx` y `shell/Breadcrumbs.tsx`; `PdfDialog.tsx` con su «DIVERGE»), para no tomarlas por la copia de srtm
   al unir las dos.
-- **`Alerta` y `ArbolNav` ya subieron** (wasichai-ui#14, `@wasichai/*` 0.5.0-dev.0): las alertas son `Alert` de
+- **`Alerta` y `ArbolNav` ya subieron** (wasichai-ui#14, `@wasichai/*` 0.5.0): las alertas son `Alert` de
   `@wasichai/ui` y el árbol del tema es `NavTree` de `@wasichai/core`, con sus parciales en la hoja de la librería
   (`alerts.css`, `nav.css`). `navTree.ts` se queda con el árbol de Tesorería, los permisos y el rastro, sobre los nodos
   de core. Bajo _Portal tributario_ las alertas tienen ahora la caja del prototipo (fondo suave, borde y relleno por
@@ -473,7 +473,7 @@ yarn build           # dist/, luego yarn preview
 
 ## Notas
 
-- Versión de wasichai-ui: `@wasichai/*` 0.4.0, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
+- Versión de wasichai-ui: `@wasichai/*` 0.5.0, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
   `testing`). Para actualizar, cambiar la versión de todos a la vez en `package.json`, alinear las dependencias que
   comparten (react-query, testing-library…) y correr `yarn install`. Luego reiniciar el servidor con `yarn dev --force`:
   Vite guarda los paquetes pre-empaquetados y, si no, sigue sirviendo la versión anterior.
