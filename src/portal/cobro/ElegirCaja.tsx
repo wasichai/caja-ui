@@ -70,7 +70,12 @@ export function ElegirCaja({ caja }: { caja: CajaDeLaRuta }) {
             ))}
         </NativeSelect>
       </div>
-      {cajas.isPending && <p className="text-sm text-ink-muted">Leyendo las cajas…</p>}
+      {/* in line under the picker, not LoadingState's centered block; a status, as every other wait of the portal */}
+      {cajas.isPending && (
+        <p role="status" className="text-sm text-ink-muted">
+          Leyendo las cajas…
+        </p>
+      )}
       {cajas.isError && <Alert tone="danger">No se pudieron leer las cajas: {errorMessage(cajas.error, 'el backend no contestó')}</Alert>}
       {cajas.data && deLaRuta && !activa && (
         <Alert tone="warning">

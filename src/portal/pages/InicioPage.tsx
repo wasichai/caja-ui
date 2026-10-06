@@ -22,7 +22,10 @@ export function InicioPage() {
   return (
     <div className="space-y-2">
       <h1 className="text-xl font-semibold text-ink">Inicio</h1>
-      <p className="text-sm text-ink-muted">{frase}</p>
+      {/* a status: from «Leyendo los permisos…» to what the menu offers, a screen reader hears it change */}
+      <p role="status" className="text-sm text-ink-muted">
+        {frase}
+      </p>
     </div>
   )
 }

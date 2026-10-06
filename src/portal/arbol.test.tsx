@@ -109,7 +109,7 @@ describe('a leaf without a screen', () => {
   it('is not drawn, even for an account that may open it', async () => {
     registradas['duplicado-recibo'] = Prueba
     start({ user: ADMIN, permisos: { admin: true, objects: {} } })
-    expect(await inicio().findByText('Elija una pantalla del menú.')).toBeInTheDocument()
+    expect(await inicio().findByText('Elija una pantalla del menú.')).toHaveAttribute('role', 'status')
     expect(hojas()).toEqual(['Ir al inicio', 'Duplicado de recibo', 'Administración'])
   })
 
