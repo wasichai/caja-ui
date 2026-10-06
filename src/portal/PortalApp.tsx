@@ -3,7 +3,7 @@
 // cada una dentro de GuardaDeHoja y con /:sujeto? si es conSujeto; y en la configuración (prefijo 'caja', appName,
 // CAJA_THEMES). el QueryClient, los proveedores de core, el i18n y KitDelPortal son los de srtm
 import { QueryClient } from '@tanstack/react-query'
-import { ApiError, createRegistry, createWasichaiI18n, EmptyState, navTreeLeaves, resolveConfig, WasichaiProviders } from '@wasichai/core'
+import { ApiError, createRegistry, createWasichaiI18n, navTreeLeaves, resolveConfig, WasichaiProviders } from '@wasichai/core'
 import { useState } from 'react'
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router'
 import { CAJA_THEMES } from '../themes'
@@ -13,6 +13,7 @@ import { RequireSession } from './auth/RequireSession'
 import { ajustarI18n } from './i18n'
 import { KitDelPortal } from './KitDelPortal'
 import { InicioPage } from './pages/InicioPage'
+import { NoExistePage } from './pages/NoExistePage'
 import { PANTALLAS } from './pantallas'
 import { AppShell } from './shell/AppShell'
 import { GuardaDeHoja } from './shell/GuardaDeHoja'
@@ -55,7 +56,7 @@ const rutas = () =>
               ]
             : []
         })}
-        <Route path="*" element={<EmptyState title="Esta página no existe" />} />
+        <Route path="*" element={<NoExistePage />} />
       </Route>
     </>
   )

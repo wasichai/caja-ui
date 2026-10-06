@@ -115,7 +115,10 @@ describe('a leaf without a screen', () => {
 
   it('has no page either', async () => {
     start({ permisos: { admin: false, objects: { orden_de_cobro: ['READ'] } }, path: '/caja-tributaria' })
-    expect(await screen.findByText('Esta página no existe')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Esta página no existe' })).toBeInTheDocument()
+    // and the way back
+    await userEvent.click(screen.getByRole('link', { name: 'Volver al inicio' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
   })
 
   // none has one in this version: home says so, and the tree has no module
