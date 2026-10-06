@@ -455,6 +455,14 @@ Lo que caja-web cumplía en cada pantalla, como primitivas que cada pantalla usa
   recaudación y Recaudación por área) y «Conciliar» con lo mismo que ya dice la ruta vuelven a pedirlo al backend: la
   misma URL es la misma consulta, y sin esto el botón no haría nada. Tests: uno por pantalla («… pressed with the same
   …»).
+- **Un acto confirmado espera su respuesta.** Ningún acto se deshace, así que, una vez confirmado (cobro, cierre,
+  reversión, explicación, anulación), su diálogo no se cierra hasta que el backend conteste: «Volver», Escape, la X o un
+  clic fuera solo lo esconderían mientras el acto llega igual, o se perdería su rechazo. El botón dice «Cobrando…» (o el
+  verbo del acto) y una línea explica que ya no se puede volver atrás (`ConfirmarEscritura`, `src/portal/components`).
+  Tests: «… waits for the answer» en `cajaTributaria.test.tsx` y `duplicadoRecibo.test.tsx`.
+- **Lo que caja arregla de las piezas de `@wasichai/ui`, hasta que la librería lo haga**, va en `src/index.css` por su
+  `data-slot`: la tabla, posicionada para que nada de ella (una cabecera `sr-only`) se salga de su caja de scroll y
+  ensanche la página; y la confirmación, acotada a la pantalla. Test: `src/themes/parciales.test.tsx`.
 
 ## Requisitos
 
