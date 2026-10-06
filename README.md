@@ -36,7 +36,9 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
     pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre; una vez leídos, volver a leerlos y
     fallar (una reconexión) no cierra la pantalla abierta ni lo que se tecleó en ella. Test: `src/portal/guarda.test.tsx`.
 - **Una hoja que revienta no tumba la raíz**: cada pantalla se dibuja dentro de un límite de error (`LimiteDeHoja`)
-  que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja.
+  que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja. Lo que
+  revienta fuera de una hoja (la barra, el árbol, el rastro, el login) dibuja `FalloDeLaCaja`: la frase, lo que se lanzó
+  y «Volver a cargar», nunca la página en inglés de react-router.
 - **El estado del árbol** se guarda por pestaña del navegador (`sessionStorage['caja.nav']`).
 - **Pestañas de trabajo: todavía no.** La barra de pestañas (`TabBar` y `WorkspaceTabs`, copiadas de srtm-ui) está
   montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), así que solo muestra «Inicio».

@@ -16,6 +16,7 @@ import { InicioPage } from './pages/InicioPage'
 import { NoExistePage } from './pages/NoExistePage'
 import { PANTALLAS } from './pantallas'
 import { AppShell } from './shell/AppShell'
+import { FalloDeLaCaja } from './shell/FalloDeLaCaja'
 import { GuardaDeHoja } from './shell/GuardaDeHoja'
 import { NAV_TREE } from './shell/navTree'
 import { WorkspaceTabsProvider } from './shell/WorkspaceTabs'
@@ -29,8 +30,9 @@ const retry = (count: number, error: unknown) => !(error instanceof ApiError && 
 const rutas = () =>
   createRoutesFromElements(
     <>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} errorElement={<FalloDeLaCaja />} />
       <Route
+        errorElement={<FalloDeLaCaja />}
         element={
           <RequireSession>
             <WorkspaceTabsProvider>
