@@ -34,6 +34,12 @@ describe('NAV_TREE', () => {
     ])
   })
 
+  it('has no group with soloAdmin: arbolPara reads soloAdmin on leaves only', () => {
+    const conSoloAdmin = (nodos: typeof NAV_TREE): boolean =>
+      nodos.some((nodo) => ('children' in nodo ? 'soloAdmin' in nodo || conSoloAdmin(nodo.children) : false))
+    expect(conSoloAdmin(NAV_TREE)).toBe(false)
+  })
+
   // the brief's table: each leaf with the pairs it needs, and the ones that are near but not enough
   it.each([
     [['orden_de_cobro READ'], ['caja-tributaria']],
