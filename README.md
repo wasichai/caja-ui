@@ -195,7 +195,9 @@ guarda su ruta.
 - **Duplicado en PDF** (solo PDF): pedir un duplicado **escribe**, porque registra la reimpresión. Por eso nunca se pide
   al abrir la ficha: el botón abre un formulario que pide la observación (de 5 a 500), y solo entonces va
   `POST /api/caja/recibos/{numero}/duplicados` (`blob`, con el cuerpo en JSON). El PDF que contestó se abre en
-  `PdfDialog` sin volver a pedirlo (su `load` opcional, que diverge de la copia de srtm-ui y lo anota en su cabecera), y la ficha se vuelve a leer (sus duplicados). Un 409 dice que el recibo ya no se
+  `PdfDialog` sin volver a pedirlo (su `load` opcional, que diverge de la copia de srtm-ui y lo anota en su cabecera), y
+  la ficha se vuelve a leer (sus duplicados). Cerrarlo no lo pierde: mientras se ve la ficha, «Se registró el duplicado…»
+  ofrece «Ver el duplicado», que lo abre otra vez sin registrar otra reimpresión. Un 409 dice que el recibo ya no se
   dibuja igual que en su reimpresión anterior y que no se entregó ni se registró nada; un 400, bajo la observación; un
   403, con su `detail`. Un 401 guarda la observación con la clave `duplicado.<numero>`.
 - **Anular** es un acto con `RecordForm`: motivo (obligatorio, hasta 80: el sustento del acto, que se imprime en el

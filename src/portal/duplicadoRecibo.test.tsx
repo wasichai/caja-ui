@@ -735,6 +735,19 @@ describe('Duplicado de recibo: the duplicate in PDF', () => {
     expect(duplicados).toHaveLength(1)
   })
 
+  it('keeps the duplicate once its PDF is closed: seeing it again registers no other reprint', async () => {
+    await enLaFicha()
+    await pedirElDuplicado()
+    expect(await screen.findByTitle('Duplicado del recibo 001-0000001')).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    expect(main().getByText(/Se registró el duplicado del recibo 001-0000001\./)).toBeInTheDocument()
+    await userEvent.click(main().getByRole('button', { name: 'Ver el duplicado' }))
+    expect(await screen.findByTitle('Duplicado del recibo 001-0000001')).toHaveAttribute('src', 'blob:duplicado-1')
+    expect(duplicados).toHaveLength(1)
+  })
+
   it('checks the observation before asking', async () => {
     await enLaFicha()
     await pedirElDuplicado('no')

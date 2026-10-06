@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoadingState, useAuth } from '@wasichai/core'
-import { Alert, type PdfFile } from '@wasichai/ui'
+import { Alert, Button, type PdfFile } from '@wasichai/ui'
 import { Ban, FileText } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { FieldGrid } from '../../kit/forms/FieldGrid'
@@ -80,7 +80,10 @@ function FichaDelRecibo({ numero, cuenta }: { numero: string; cuenta: LaCuenta }
   const [anulando, setAnulando] = useState(anulacion.borrador !== null)
   const [duplicando, setDuplicando] = useState(duplicado.borrador !== null)
   const [anulada, setAnulada] = useState(false)
+  // the duplicate handed out, kept while the ficha is shown: closing its PDF before printing must not cost another
+  // registered reprint to see it again
   const [archivo, setArchivo] = useState<PdfFile | null>(null)
+  const [viendo, setViendo] = useState(false)
 
   if (ficha.isPending) return <LoadingState label={`Leyendo el recibo ${numero}…`} />
 
@@ -104,6 +107,14 @@ function FichaDelRecibo({ numero, cuenta }: { numero: string; cuenta: LaCuenta }
         <Ficha recibo={ficha.data} />
       )}
       {anulada && <Alert tone="success">El recibo {numero} quedó anulado.</Alert>}
+      {archivo && (
+        <Alert tone="success">
+          Se registró el duplicado del recibo {numero}.{' '}
+          <Button type="button" variant="secondary" size="sm" onClick={() => setViendo(true)}>
+            Ver el duplicado
+          </Button>
+        </Alert>
+      )}
       <Acciones
         anular={noAnula}
         duplicar={noDuplica}
@@ -121,6 +132,7 @@ function FichaDelRecibo({ numero, cuenta }: { numero: string; cuenta: LaCuenta }
           onEntregado={(entregado) => {
             setDuplicando(false)
             setArchivo(entregado)
+            setViendo(true)
             leerOtraVez()
           }}
         />
@@ -138,12 +150,12 @@ function FichaDelRecibo({ numero, cuenta }: { numero: string; cuenta: LaCuenta }
           onChoque={leerOtraVez}
         />
       )}
-      {archivo && (
+      {archivo && viendo && (
         <PdfDialog
           path={recibos.rutaDelDuplicado(numero)}
           titulo={`Duplicado del recibo ${numero}`}
           load={() => Promise.resolve(archivo)}
-          onClose={() => setArchivo(null)}
+          onClose={() => setViendo(false)}
         />
       )}
     </SeccionDelRecibo>
