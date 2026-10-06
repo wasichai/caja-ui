@@ -1,9 +1,10 @@
 import { ApiError } from '@wasichai/core'
-import { Alert, Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
+import { Alert, Button, Label, Textarea } from '@wasichai/ui'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import { etiqueta } from '../forms/etiquetas'
 import type { PagoDelBuzon, PeticionDeExplicacion } from '../types'
@@ -161,7 +162,7 @@ export function ExplicarElPago({
         </div>
       </form>
       {confirmando && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar la explicación"
           description={
             <>
@@ -178,7 +179,8 @@ export function ExplicarElPago({
           confirmLabel="Explicar"
           cancelLabel="Volver"
           variant="primary"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Explicando…"
           onConfirm={() => void explicar()}
           onCancel={() => setConfirmando(false)}
         />

@@ -1,5 +1,5 @@
 import { ApiError } from '@wasichai/core'
-import { Alert, ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
+import { Alert, Input, Label, Textarea } from '@wasichai/ui'
 import { Lock } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
@@ -8,6 +8,7 @@ import { IrALosPagosSinEntregar } from '../buzon/PagosSinEntregar'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
 import { BotonConMotivo } from '../components/BotonConMotivo'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type CierreHecho, type FormaDePago, type PeticionDeCierre, type TurnoEnElDia } from '../types'
@@ -204,7 +205,7 @@ export function CerrarElTurno({
         Cerrar el turno
       </BotonConMotivo>
       {confirmando && turno && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar el cierre"
           description={
             <>
@@ -232,7 +233,8 @@ export function CerrarElTurno({
           confirmLabel="Cerrar el turno"
           cancelLabel="Volver"
           variant="primary"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Cerrando el turno…"
           onConfirm={() => void cerrar()}
           onCancel={() => setConfirmando(false)}
         />

@@ -1,5 +1,5 @@
 import { ApiError } from '@wasichai/core'
-import { Alert, ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
+import { Alert, Input, Label, Textarea } from '@wasichai/ui'
 import { Undo2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
@@ -7,6 +7,7 @@ import { errorMessage } from '../../kit/ui/errorMessage'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
 import { BotonConMotivo } from '../components/BotonConMotivo'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import type { PeticionDeReversion, ReversionHecha, TurnoEnElDia } from '../types'
 import { turnos } from './api'
@@ -136,7 +137,7 @@ export function ReversarElCierre({
         Reversar el cierre
       </BotonConMotivo>
       {confirmando && turno && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar la reversión"
           description={
             <>
@@ -152,7 +153,8 @@ export function ReversarElCierre({
           confirmLabel="Reversar"
           cancelLabel="Volver"
           variant="danger"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Reversando…"
           onConfirm={() => void reversar()}
           onCancel={() => setConfirmando(false)}
         />

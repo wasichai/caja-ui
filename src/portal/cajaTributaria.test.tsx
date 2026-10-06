@@ -105,6 +105,8 @@ let cabeceras: Headers[] = []
 let pdf: Response | null = null
 // what POST /caja/cobros throws instead of answering (the network failed), or null
 let caida: Error | null = null
+// what POST /caja/cobros waits for before it answers (a slow backend), or null
+let retenido: Promise<void> | null = null
 
 const rutaDe = (method: string, path: string) => rutas.find((r) => r.method === method && r.path === path)!
 
@@ -114,6 +116,7 @@ beforeEach(() => {
   cabeceras = []
   pdf = null
   caida = null
+  retenido = null
   Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:recibo-1'), revokeObjectURL: vi.fn() })
 })
 afterEach(() => {
@@ -148,6 +151,7 @@ function start({
     if (url.endsWith('/pdf') && pdf) return pdf
     if (url === '/api/caja/cobros' && init?.method === 'POST') {
       cabeceras.push(new Headers(init.headers))
+      if (retenido) await retenido
       if (caida) throw caida
     }
     return simulado(input, init)
@@ -402,6 +406,28 @@ describe('Caja tributaria: cobrar', () => {
     expect(within(dialogo).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
     await userEvent.tab()
     expect(within(dialogo).getByRole('button', { name: 'Cobrar' })).toHaveFocus()
+  })
+
+  it('once confirmed, waits for the answer: «Cancelar» and Escape do not hide a cobro that is on its way', async () => {
+    let soltar = () => {}
+    retenido = new Promise((resolver) => (soltar = resolver))
+    start({ path: EN_C01 })
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+
+    const dialogo = screen.getByRole('dialog', { name: 'Confirmar el cobro' })
+    expect(await within(dialogo).findByRole('button', { name: 'Cobrando…' })).toBeDisabled()
+    expect(within(dialogo).getByRole('status')).toHaveTextContent('Se envió al backend: espere su respuesta, ya no se puede volver atrás.')
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }))
+    await userEvent.keyboard('{Escape}')
+    expect(screen.getByRole('dialog', { name: 'Confirmar el cobro' })).toBeInTheDocument()
+
+    soltar()
+    // the dialog leaves with the answer (until then it hides the page from the accessibility tree)
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(await main().findByRole('heading', { name: 'Recibo 001-0000001' })).toBeInTheDocument()
+    expect(llamadas('POST', '/caja/cobros')).toHaveLength(1)
   })
 
   it('cancelling the confirmation sends nothing', async () => {

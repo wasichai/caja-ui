@@ -146,6 +146,8 @@ let rutas: MockRoute[] = []
 // POST …/duplicados: its body (mockFetch reads JSON answers only, so the PDF is answered here) and its answer
 let duplicados: { url: string; body: unknown }[] = []
 let respuestaDelDuplicado: () => Response = () => pdf()
+// what POST …/anulacion waits for before it answers (a slow backend), or null
+let retenido: Promise<void> | null = null
 
 const pdf = () =>
   new Response('%PDF-1.7', {
@@ -165,6 +167,7 @@ beforeEach(() => {
   sessionStorage.clear()
   duplicados = []
   respuestaDelDuplicado = () => pdf()
+  retenido = null
   // only the date: 12:00 of 2026-10-02 in Lima. the timers stay real, for user-event
   vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-02T17:00:00Z') })
   Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:duplicado-1'), revokeObjectURL: vi.fn() })
@@ -194,6 +197,7 @@ function start({ path = '/duplicado-recibo', permisos = TODO, user = CAJERA }: {
       duplicados.push({ url, body: JSON.parse(String(init.body)) })
       return respuestaDelDuplicado()
     }
+    if (url.endsWith('/anulacion') && init?.method === 'POST' && retenido) await retenido
     return simulado(input, init)
   }) as typeof globalThis.fetch
   render(<PortalApp />)
@@ -620,6 +624,25 @@ describe('Duplicado de recibo: anular', () => {
     await confirmarLaAnulacion()
     expect(await elActo().findByRole('alert')).toHaveTextContent(detail)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('once confirmed, waits for the answer: «Volver» neither hides an anulación on its way nor loses its refusal', async () => {
+    let soltar = () => {}
+    retenido = new Promise((resolver) => (soltar = resolver))
+    await enLaFicha()
+    const detail = 'El recibo 001-0000001 se cobró el 2026-10-01 y hoy es 2026-10-02: un recibo solo se anula el mismo día del pago.'
+    Object.assign(rutaDe('POST', '/caja/recibos/001-0000001/anulacion'), { status: 422, body: { title: 'Error', status: 422, detail } })
+    await llenarLaAnulacion()
+    await confirmarLaAnulacion()
+
+    const dialogo = screen.getByRole('dialog', { name: 'Confirmar la anulación' })
+    expect(await within(dialogo).findByRole('button', { name: 'Anulando…' })).toBeDisabled()
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Volver' }))
+    expect(screen.getByRole('dialog', { name: 'Confirmar la anulación' })).toBeInTheDocument()
+
+    soltar()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(await elActo().findByRole('alert')).toHaveTextContent(detail)
   })
 
   it('reads the ficha again on a 409, so «Anular» says why instead of staying pressable on an old ficha', async () => {

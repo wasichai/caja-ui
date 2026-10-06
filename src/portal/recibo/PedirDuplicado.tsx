@@ -87,10 +87,12 @@ export function PedirDuplicado({
           <ErrorDelCampo id={id} error={error} />
         </div>
         {general && <Alert tone="danger">{general}</Alert>}
+        {/* while it is asked, the reprint is already on its way: cancelling would only lose the PDF, or its refusal */}
         <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="secondary"
+            disabled={enviando}
             onClick={() => {
               cancelar()
               onCerrar()
@@ -99,7 +101,7 @@ export function PedirDuplicado({
             Cancelar
           </Button>
           <Button type="submit" disabled={enviando}>
-            Pedir el duplicado
+            {enviando ? 'Pidiendo el duplicado…' : 'Pedir el duplicado'}
           </Button>
         </div>
       </form>

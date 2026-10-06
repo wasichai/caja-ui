@@ -1,8 +1,9 @@
-import { Alert, Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
+import { Alert, Button, Label, Textarea } from '@wasichai/ui'
 import type { ReactNode } from 'react'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type VistaPrevia } from '../types'
 import { MISMO_INTENTO, NO_SE_SABE, OBSERVACION, OTRO_COBRO } from './envio'
@@ -194,7 +195,7 @@ export function ConfirmarCobro({
   children: ReactNode
 }) {
   return (
-    <ConfirmDialog
+    <ConfirmarEscritura
       title="Confirmar el cobro"
       description={
         <>
@@ -217,7 +218,8 @@ export function ConfirmarCobro({
       confirmLabel="Cobrar"
       cancelLabel="Cancelar"
       variant="primary"
-      busy={enviando}
+      enviando={enviando}
+      enviandoLabel="Cobrando…"
       onConfirm={onConfirm}
       onCancel={onCancel}
     />
