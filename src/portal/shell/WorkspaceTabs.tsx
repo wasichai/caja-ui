@@ -1,4 +1,5 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/WorkspaceTabs.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// adaptado: diverge de srtm-ui en que load comprueba lo guardado antes de usarlo (como leerNav en panelLateral.ts)
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { TABS_KEY } from '../auth/session'
@@ -19,10 +20,15 @@ interface WorkspaceTabs {
 
 const Context = createContext<WorkspaceTabs | null>(null)
 
+const esPestana = (valor: unknown): valor is WorkspaceTab =>
+  typeof valor === 'object' && valor !== null && typeof (valor as WorkspaceTab).path === 'string' && typeof (valor as WorkspaceTab).label === 'string'
+
+// what the browser tab kept, as tabs: anything else (another build's, one edited by hand) is dropped, never handed to
+// the bar, which sits outside every leaf's LimiteDeHoja and would take the whole portal down
 function load(): WorkspaceTab[] {
   try {
-    const raw = sessionStorage.getItem(TABS_KEY)
-    return raw ? (JSON.parse(raw) as WorkspaceTab[]) : []
+    const leido: unknown = JSON.parse(sessionStorage.getItem(TABS_KEY) ?? '[]')
+    return Array.isArray(leido) ? leido.filter(esPestana) : []
   } catch {
     return []
   }

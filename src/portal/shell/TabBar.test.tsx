@@ -34,6 +34,12 @@ describe('TabBar', () => {
     expect(screen.getByRole('link', { name: 'Inicio' }).closest('li')).toHaveAttribute('data-ui', 'workspace-tab')
   })
 
+  it.each(['{}', '"Inicio"', '[1, {"path": "/x"}]', 'no es json'])('drops what the browser tab kept when it is not tabs: %s', (guardado) => {
+    sessionStorage.setItem(TABS_KEY, guardado)
+    start('/')
+    expect(screen.getAllByRole('link').map((enlace) => enlace.textContent)).toEqual(['Inicio'])
+  })
+
   it('closes a tab, and forgets it for the browser tab', async () => {
     start('/')
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar Recibo 001-000123' }))
