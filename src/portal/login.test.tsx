@@ -92,6 +92,14 @@ describe('login', () => {
     expect(aqui()).toBe('/')
   })
 
+  // what a browser reads as another site although the text starts with one slash
+  it.each(['/\\evil.example', '/\t/evil.example', '/\\/evil.example'])('goes home instead of to another site from %j', async (otro) => {
+    start(`/login?next=${encodeURIComponent(otro)}`, [login(), ...rutasDeSesion(CAJERA, { admin: false, objects: {} })])
+    await ingresar('cajera@caja.test', 'secreta')
+    expect(within(await screen.findByRole('main')).getByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(aqui()).toBe('/')
+  })
+
   it('signs out from the session menu, back to the login, forgetting the session and the tabs', async () => {
     abrirSesion(CAJERA)
     localStorage.setItem('caja.theme', 'portal-tributario')
