@@ -388,6 +388,22 @@ describe('Caja tributaria: cobrar', () => {
     expect(cabeceras[0].get('Idempotency-Key')).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
   })
 
+  it('keeps what is cobrado in its own box, which the keyboard reaches first: a long list does not push «Cobrar» away', async () => {
+    start({ path: EN_C01 })
+    await listoParaCobrar()
+    await llenarYCobrar()
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Confirmar el cobro' })
+    const lineas = within(dialogo).getByRole('list', { name: 'Lo que se cobra' })
+    expect(within(lineas).getAllByRole('listitem').map(texto)).toEqual(['IMPUESTO PREDIAL 2026 - CUOTA 1 · PREDIAL-2026-0001 · S/ 0.10 al 02/10/2026'])
+    // the dialog opens on it, so a keyboard scrolls it; the next tabs reach the buttons
+    await waitFor(() => expect(lineas).toHaveFocus())
+    await userEvent.tab()
+    expect(within(dialogo).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
+    await userEvent.tab()
+    expect(within(dialogo).getByRole('button', { name: 'Cobrar' })).toHaveFocus()
+  })
+
   it('cancelling the confirmation sends nothing', async () => {
     start({ path: EN_C01 })
     await listoParaCobrar()

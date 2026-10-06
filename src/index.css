@@ -16,4 +16,11 @@
     [data-slot='table'] {
         position: relative;
     }
+
+    /* a confirmation is centered and fixed, with nothing that bounds it: one taller than the screen hid its title and its
+       buttons, and the page under it does not scroll. bounded, it scrolls inside */
+    [data-slot='confirm-dialog'] {
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+    }
 }

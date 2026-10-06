@@ -166,7 +166,9 @@ export function TotalDeLaVistaPrevia({
 }
 
 // the confirmation, with what is cobrado (the lines of the preview, as the screen lists them), the preview's total and
-// the forma de pago. spans, not a list: the dialog's description is a paragraph
+// the forma de pago. spans, not a list: the dialog's description is a paragraph. the lines scroll in their own box (a
+// year of arbitrios is a long list), so the total and «Cobrar» stay in view; the box takes the focus, or a keyboard
+// could not scroll it
 export function ConfirmarCobro({
   que,
   caja,
@@ -199,7 +201,7 @@ export function ConfirmarCobro({
           <span className="block">
             Se cobran {que} en la caja {caja}:
           </span>
-          <span role="list" className="mt-2 block space-y-1">
+          <span role="list" aria-label="Lo que se cobra" tabIndex={0} className="mt-2 block max-h-[40vh] space-y-1 overflow-y-auto">
             {children}
           </span>
           {previa.total && (

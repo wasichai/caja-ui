@@ -63,4 +63,10 @@ describe('src/index.css', () => {
   it('keeps what a table positions (an sr-only header) inside its scroll box', () => {
     expect(rule(index, "[data-slot='table']").get('position')).toBe('relative')
   })
+
+  it('bounds a confirmation to the screen, scrolling inside when it is taller', () => {
+    const confirmacion = rule(index, "[data-slot='confirm-dialog']")
+    expect(confirmacion.get('max-height')).toBe('calc(100dvh - 2rem)')
+    expect(confirmacion.get('overflow-y')).toBe('auto')
+  })
 })
