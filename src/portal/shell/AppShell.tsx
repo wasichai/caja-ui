@@ -3,7 +3,7 @@
 // se le ofrece a la cuenta (useArbol), la cabecera dice appName y la cuenta que contesta wasichai (useCuenta), y cada
 // hoja va dentro de LimiteDeHoja. la estructura (cabecera, lateral, pestañas sobre el contenido, PortalShell con el
 // tema portal-tributario) es la de srtm
-import { useWasichaiConfig } from '@wasichai/core'
+import { isNavTreeGroup, navTreeLeaves, useWasichaiConfig } from '@wasichai/core'
 import { cn } from '@wasichai/ui'
 import { FileText, Home, Landmark, LogOut, Menu, Settings, type LucideIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
@@ -13,7 +13,7 @@ import { useCuenta } from '../queries'
 import { Breadcrumbs } from './Breadcrumbs'
 import { rotuloDeCuenta, type LateralProps, type PiezasShell } from './comun'
 import { LimiteDeHoja } from './LimiteDeHoja'
-import { esGrupo, hojasDe, useArbol } from './navTree'
+import { useArbol } from './navTree'
 import { usePanelLateral } from './panelLateral'
 import { PortalShell } from './PortalShell'
 import { TabBar } from './TabBar'
@@ -118,7 +118,7 @@ function SesionClasica() {
 // the classic sidebar: home, then each module of the tree the account is offered (useArbol) with its leaves. the
 // administration is in the header already
 function LateralClasico({ abierto, onNavegar }: LateralProps) {
-  const grupos = useArbol().filter(esGrupo)
+  const grupos = useArbol().filter(isNavTreeGroup)
   return (
     <nav id="sidebar" aria-label="Secciones" className={cn('w-60 shrink-0 bg-shell p-3 md:block', abierto ? 'block' : 'hidden')}>
       <ul className="space-y-1">
@@ -129,8 +129,8 @@ function LateralClasico({ abierto, onNavegar }: LateralProps) {
           <li key={grupo.label}>
             <p className="px-3 pt-3 pb-1 text-xs font-semibold text-shell-muted">{grupo.label}</p>
             <ul className="space-y-1">
-              {hojasDe(grupo.hijos)
-                .filter((hoja) => !hoja.externa)
+              {navTreeLeaves(grupo.children)
+                .filter((hoja) => !hoja.external)
                 .map((hoja) => (
                   <li key={hoja.to}>
                     <EnlaceClasico to={hoja.to} label={hoja.label} icon={FileText} onNavegar={onNavegar} />

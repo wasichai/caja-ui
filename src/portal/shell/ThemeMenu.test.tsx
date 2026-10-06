@@ -61,7 +61,7 @@ describe('theme menu', () => {
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('portal-tributario'))
     expect(localStorage.getItem('caja.theme')).toBe('portal-tributario')
     expect(screen.getByRole('banner')).toHaveClass('bg-shell')
-    expect(screen.getByRole('navigation', { name: 'Secciones' })).toHaveAttribute('data-ui', 'arbol-nav')
+    expect(screen.getByRole('navigation', { name: 'Secciones' })).toHaveAttribute('data-slot', 'nav-tree')
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Caja — Ventanilla de Tesorería')
   })
 

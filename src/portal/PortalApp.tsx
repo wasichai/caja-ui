@@ -3,7 +3,7 @@
 // cada una dentro de GuardaDeHoja y con /:sujeto? si es conSujeto; y en la configuración (prefijo 'caja', appName,
 // CAJA_THEMES). el QueryClient, los proveedores de core, el i18n y KitDelPortal son los de srtm
 import { QueryClient } from '@tanstack/react-query'
-import { ApiError, createRegistry, createWasichaiI18n, EmptyState, resolveConfig, WasichaiProviders } from '@wasichai/core'
+import { ApiError, createRegistry, createWasichaiI18n, EmptyState, navTreeLeaves, resolveConfig, WasichaiProviders } from '@wasichai/core'
 import { useState } from 'react'
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router'
 import { CAJA_THEMES } from '../themes'
@@ -16,7 +16,7 @@ import { InicioPage } from './pages/InicioPage'
 import { PANTALLAS } from './pantallas'
 import { AppShell } from './shell/AppShell'
 import { GuardaDeHoja } from './shell/GuardaDeHoja'
-import { hojasDe, NAV_TREE } from './shell/navTree'
+import { NAV_TREE } from './shell/navTree'
 import { WorkspaceTabsProvider } from './shell/WorkspaceTabs'
 
 // a 4xx will not change by asking again; a network blip or a 5xx might
@@ -39,7 +39,7 @@ const rutas = () =>
         }
       >
         <Route index element={<InicioPage />} />
-        {hojasDe(NAV_TREE).flatMap((hoja) => {
+        {navTreeLeaves(NAV_TREE).flatMap((hoja) => {
           const Pantalla = hoja.clave && PANTALLAS[hoja.clave]
           return Pantalla
             ? [
