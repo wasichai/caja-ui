@@ -51,11 +51,11 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
     `useVarianteTema()` dice `'portal'` o `'clasico'`.
   - La elección se guarda en `caja.theme` y, con un backend que tenga `PUT /auth/me/preferences`, también para el
     usuario. `index.html` aplica el tema antes de cargar la app, para que no parpadee.
-- Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `KitDelPortal`) llevan
-  arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14). Las que se reescribieron
-  dicen además en qué divergen («adaptado: diverge de srtm-ui en …»: `api.ts`, `shell/navTree.ts`, `PortalApp.tsx`,
-  `shell/AppShell.tsx`, `shell/comun.tsx` y `shell/Breadcrumbs.tsx`; `PdfDialog.tsx` con su «DIVERGE»), para no
-  tomarlas por la copia de srtm al unir las dos.
+- Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `KitDelPortal`) llevan arriba la cabecera «copiado de
+  srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14). Las que se reescribieron dicen además en qué divergen
+  («adaptado: diverge de srtm-ui en …»: `api.ts`, `shell/navTree.ts`, `PortalApp.tsx`, `shell/AppShell.tsx`,
+  `shell/comun.tsx` y `shell/Breadcrumbs.tsx`; `PdfDialog.tsx` con su «DIVERGE»), para no tomarlas por la copia de srtm
+  al unir las dos.
 - **`Alerta` y `ArbolNav` ya subieron** (wasichai-ui#14, `@wasichai/*` 0.5.0-dev.0): las alertas son `Alert` de
   `@wasichai/ui` y el árbol del tema es `NavTree` de `@wasichai/core`, con sus parciales en la hoja de la librería
   (`alerts.css`, `nav.css`). `navTree.ts` se queda con el árbol de Tesorería, los permisos y el rastro, sobre los nodos
