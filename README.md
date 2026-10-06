@@ -45,8 +45,9 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   primero que alcanza el teclado, salta la barra y el árbol. Test: `src/portal/navegacion.test.tsx`.
 - **El estado del árbol** se guarda por pestaña del navegador (`sessionStorage['caja.nav']`).
 - **Pestañas de trabajo: todavía no.** La barra de pestañas (`TabBar` y `WorkspaceTabs`, copiadas de srtm-ui) está
-  montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), así que solo muestra «Inicio».
-  `sessionStorage['caja.tabs']` no guarda ninguna, y cerrar sesión lo borra.
+  montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), y sin pestañas no se dibuja: solo
+  repetiría el «Inicio» del árbol. Aparece sola cuando una pantalla abra la suya. `sessionStorage['caja.tabs']` no guarda
+  ninguna, y cerrar sesión lo borra.
 - **Hueco conocido: salir de una hoja con un acto a medio teclear lo pierde sin avisar.** Ninguna pantalla monta
   `useUnsavedChanges` del kit: lo tecleado en una anulación, un cierre, una reversión, una explicación o un cobro se
   pierde al ir a otra hoja (o a otro recibo, turno o pago). Solo un 401 lo guarda (`useEscritura`, más abajo).

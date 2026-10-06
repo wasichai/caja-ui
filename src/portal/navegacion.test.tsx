@@ -84,3 +84,22 @@ describe('moving between leaves', () => {
     expect(screen.getByRole('main')).toHaveFocus()
   })
 })
+
+describe('the workspace tabs', () => {
+  it('draw no bar while no screen opened a tab: it would only repeat the tree’s «Inicio»', async () => {
+    start('/caja-tributaria')
+    await screen.findByRole('heading', { name: 'Caja tributaria' })
+    expect(screen.queryByRole('navigation', { name: 'Pestañas abiertas' })).not.toBeInTheDocument()
+  })
+
+  it('draw it once there is one', async () => {
+    sessionStorage.setItem('caja.tabs', JSON.stringify([{ path: '/duplicado-recibo', label: 'Duplicado de recibo' }]))
+    start('/caja-tributaria')
+    const barra = await screen.findByRole('navigation', { name: 'Pestañas abiertas' })
+    expect(
+      within(barra)
+        .getAllByRole('link')
+        .map((enlace) => enlace.textContent)
+    ).toEqual(['Inicio', 'Duplicado de recibo'])
+  })
+})

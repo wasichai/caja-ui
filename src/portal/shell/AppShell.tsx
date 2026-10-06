@@ -1,8 +1,8 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/AppShell.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
 // adaptado: diverge de srtm-ui en que no hay búsqueda global ni entidad fija: el lateral clásico dibuja el árbol que
 // se le ofrece a la cuenta (useArbol), la cabecera dice appName y la cuenta que contesta wasichai (useCuenta), cada
-// hoja va dentro de LimiteDeHoja, la hoja nombra la pestaña y toma el foco al llegar (useHojaActual) y hay un enlace
-// para saltar al contenido. la estructura (cabecera, lateral, pestañas sobre el contenido, PortalShell con el
+// hoja va dentro de LimiteDeHoja, la hoja nombra la pestaña y toma el foco al llegar (useHojaActual), hay un enlace
+// para saltar al contenido y la barra de pestañas solo se dibuja cuando hay alguna. la estructura (cabecera, lateral, pestañas sobre el contenido, PortalShell con el
 // tema portal-tributario) es la de srtm
 import { isNavTreeGroup, navTreeLeaves, useWasichaiConfig } from '@wasichai/core'
 import { cn } from '@wasichai/ui'
@@ -19,6 +19,7 @@ import { useArbol } from './navTree'
 import { usePanelLateral } from './panelLateral'
 import { PortalShell } from './PortalShell'
 import { TabBar } from './TabBar'
+import { useWorkspaceTabs } from './WorkspaceTabs'
 import { ThemeMenu } from './ThemeMenu'
 
 // the classic shell of the cash desk: light header, dark sidebar, workspace tabs over the content.
@@ -32,6 +33,8 @@ export function AppShell() {
   const lateral = usePanelLateral(piezas.plegable === true)
   const { pathname, search } = useLocation()
   useHojaActual()
+  // the workspace tabs, once a screen opens one: until then the bar would only repeat the tree's «Inicio»
+  const { tabs } = useWorkspaceTabs()
 
   return (
     <div className="flex h-full flex-col">
@@ -76,7 +79,7 @@ export function AppShell() {
       <div className="flex min-h-0 flex-1">
         <Lateral abierto={lateral.abierto} onNavegar={lateral.alNavegar} onPlegar={lateral.plegar} />
         <main id="content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col overflow-hidden focus-visible:outline-none">
-          <TabBar />
+          {tabs.length > 0 && <TabBar />}
           <Breadcrumbs />
           <div className="min-h-0 flex-1 overflow-auto px-6 py-5">
             <LimiteDeHoja reinicio={pathname + search}>
