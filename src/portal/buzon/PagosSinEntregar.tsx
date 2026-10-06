@@ -1,11 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoadingState, useAuth } from '@wasichai/core'
-import { Button, Table, Td, Th } from '@wasichai/ui'
+import { Alert, Button, Table, Td, Th } from '@wasichai/ui'
 import { useState, type ReactNode } from 'react'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { SinDato } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import { BotonConMotivo } from '../components/BotonConMotivo'
 import { leerBorrador } from '../escritura/borrador'
 import { fechaYHoraEnLima } from '../fechas'
@@ -95,19 +94,19 @@ export function PagosSinEntregar({
         entregan solos, y el arqueo los nombra. Los del turno que va a cerrar van primero.
       </p>
       {explicado && (
-        <Alerta tono="exito">
+        <Alert tone="success">
           Se explicó el pago {explicado.pago_id}: el backend lo dejó «{etiqueta('estado_evento', explicado.estado)}».
-        </Alerta>
+        </Alert>
       )}
       {rechazo && (
-        <Alerta tono="error">
+        <Alert tone="danger">
           No se explicó el pago {rechazo.pagoId}: {rechazo.detalle}
-        </Alerta>
+        </Alert>
       )}
       {lista.isPending ? (
         <LoadingState label="Leyendo los pagos sin entregar…" />
       ) : lista.isError ? (
-        <Alerta tono="error">No se pudieron leer los pagos sin entregar: {errorMessage(lista.error, 'el backend no contestó')}</Alerta>
+        <Alert tone="danger">No se pudieron leer los pagos sin entregar: {errorMessage(lista.error, 'el backend no contestó')}</Alert>
       ) : filas.length === 0 ? (
         <p className="text-sm text-ink">No hay pagos sin entregar</p>
       ) : (

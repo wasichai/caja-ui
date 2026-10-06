@@ -1,10 +1,9 @@
 import { ApiError } from '@wasichai/core'
-import { Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
+import { Alert, Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
-import { Alerta } from '../components/Alerta'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import { etiqueta } from '../forms/etiquetas'
 import type { PagoDelBuzon, PeticionDeExplicacion } from '../types'
@@ -144,7 +143,7 @@ export function ExplicarElPago({
           />
           <ErrorDelCampo id={`${prefijo}-observacion`} error={errores.observacion} />
         </div>
-        {general && <Alerta tono="error">{general}</Alerta>}
+        {general && <Alert tone="danger">{general}</Alert>}
         <div className="flex flex-wrap justify-end gap-3">
           <Button
             type="button"

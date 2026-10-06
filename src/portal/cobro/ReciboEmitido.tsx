@@ -1,9 +1,8 @@
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { FileText, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 import { FieldGrid } from '../../kit/forms/FieldGrid'
 import type { FieldSpec, SectionSpec } from '../../kit/forms/spec'
-import { Alerta } from '../components/Alerta'
 import { PdfDialog } from '../components/PdfDialog'
 import { fechaYHoraEnLima } from '../fechas'
 import type { CobroHecho, Recibo } from '../types'
@@ -75,9 +74,9 @@ export function ReciboEmitido({
         Recibo {recibo.numero_impreso}
       </h2>
       {hecho.emitido ? (
-        <Alerta tono="exito">Se cobró y se emitió el recibo.</Alerta>
+        <Alert tone="success">Se cobró y se emitió el recibo.</Alert>
       ) : (
-        <Alerta tono="aviso">Este cobro ya se había registrado con este mismo intento: no se cobró otra vez.</Alerta>
+        <Alert tone="notice">Este cobro ya se había registrado con este mismo intento: no se cobró otra vez.</Alert>
       )}
       <FieldGrid sections={[seccion]} values={{ ...recibo, emitido_en: fechaYHoraEnLima(recibo.emitido_en), pagador: pagadorDelRecibo(recibo) }} />
       {recibo.lineas.map((valores, indice) => (

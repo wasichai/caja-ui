@@ -1,12 +1,11 @@
 import { ApiError } from '@wasichai/core'
-import { ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
+import { Alert, ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
 import { Undo2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
-import { Alerta } from '../components/Alerta'
 import { BotonConMotivo } from '../components/BotonConMotivo'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import type { PeticionDeReversion, ReversionHecha, TurnoEnElDia } from '../types'
@@ -131,7 +130,7 @@ export function ReversarElCierre({
           </div>
         </form>
       )}
-      {general && <Alerta tono="error">{general}</Alerta>}
+      {general && <Alert tone="danger">{general}</Alert>}
       <BotonConMotivo id="reversar-impedido" impedido={impedido} variante="danger" type="submit" form={formulario}>
         <Undo2 className="size-4" />
         Reversar el cierre

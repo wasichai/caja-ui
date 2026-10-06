@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { LoadingState } from '@wasichai/core'
-import { Table, Td, Th } from '@wasichai/ui'
+import { Alert, Table, Td, Th } from '@wasichai/ui'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import { Dato } from '../turno/Arqueo'
 import type { FilaDePartida, RecaudacionPorArea } from '../types'
 import { FILTROS_POR_AREA, recaudacion } from './api'
@@ -58,7 +57,7 @@ export function RecaudacionPorAreaPage() {
         {porArea.isPending ? (
           <LoadingState label="Leyendo la recaudación por área…" />
         ) : porArea.isError ? (
-          <Alerta tono="error">No se pudo leer la recaudación por área: {errorMessage(porArea.error, 'el backend no contestó')}</Alerta>
+          <Alert tone="danger">No se pudo leer la recaudación por área: {errorMessage(porArea.error, 'el backend no contestó')}</Alert>
         ) : (
           <ElPeriodo porArea={porArea.data} conArea={filtros.area !== ''} />
         )}

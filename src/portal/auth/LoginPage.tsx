@@ -1,10 +1,9 @@
 // copiado de srtm-ui@a1df33a (src/portal/auth/LoginPage.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
 import { ApiError, useWasichaiConfig } from '@wasichai/core'
-import { Button, Card, CardBody, Input, Label } from '@wasichai/ui'
+import { Alert, Button, Card, CardBody, Input, Label } from '@wasichai/ui'
 import { Landmark } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
-import { Alerta } from '../components/Alerta'
 import { hayBorradores } from '../escritura/borrador'
 import { SESION_CADUCADA } from '../escritura/useEscritura'
 import { safeNext } from './RequireSession'
@@ -51,7 +50,7 @@ export function LoginPage() {
             <h1 className="text-xl font-semibold">{appName}</h1>
             <p className="text-sm text-ink-muted">Ventanilla de Tesorería</p>
           </div>
-          {caducada && <Alerta tono="atencion">{SESION_CADUCADA}</Alerta>}
+          {caducada && <Alert tone="warning">{SESION_CADUCADA}</Alert>}
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Correo</Label>

@@ -1,6 +1,6 @@
 import { ApiError, useAuth } from '@wasichai/core'
 import { useCallback, useState } from 'react'
-import { Alerta } from '../components/Alerta'
+import { Alert } from '@wasichai/ui'
 import { borrarBorrador, guardarBorrador, leerBorrador, type Campos } from './borrador'
 
 export const SESION_CADUCADA = 'La sesión caducó: vuelve a entrar. Lo que escribiste quedó guardado.'
@@ -57,5 +57,5 @@ function tecleado(valores: object, campos: readonly string[]): Campos {
 
 // what an act filled in from a draft says above its fields
 export function AvisoDeBorrador() {
-  return <Alerta tono="aviso">Se recuperó lo que escribiste antes de que caducara la sesión.</Alerta>
+  return <Alert tone="notice">Se recuperó lo que escribiste antes de que caducara la sesión.</Alert>
 }

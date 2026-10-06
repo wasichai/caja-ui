@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { LoadingState } from '@wasichai/core'
-import { Table, Td, Th } from '@wasichai/ui'
+import { Alert, Table, Td, Th } from '@wasichai/ui'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import { etiqueta } from '../forms/etiquetas'
 import { Cuadra, Dato, porQueSinDeclarar, TablaDeArqueo } from '../turno/Arqueo'
 import type { AvanceDeRecaudacion, FilaDeOrigen, TurnoDelAvance } from '../types'
@@ -54,7 +53,7 @@ export function AvanceDeRecaudacionPage() {
         {avance.isPending ? (
           <LoadingState label="Leyendo el avance de recaudación…" />
         ) : avance.isError ? (
-          <Alerta tono="error">No se pudo leer el avance de recaudación: {errorMessage(avance.error, 'el backend no contestó')}</Alerta>
+          <Alert tone="danger">No se pudo leer el avance de recaudación: {errorMessage(avance.error, 'el backend no contestó')}</Alert>
         ) : (
           <ElPeriodo avance={avance.data} />
         )}

@@ -9,7 +9,7 @@ import { abrirSesion, CAJERA, rutasDeSesion } from '../test/portal'
 import { PortalApp } from './PortalApp'
 
 // the kit inside the portal: PortalApp wraps every screen in KitDelPortal, so the kit's forms write caja's options
-// with their labels (forms/etiquetas.ts) and say a form's error in the portal's Alerta
+// with their labels (forms/etiquetas.ts) and say a form's error in the portal's Alert
 const registradas = vi.hoisted(() => ({}) as Record<string, ComponentType>)
 vi.mock('./pantallas', () => ({ PANTALLAS: registradas }))
 
@@ -55,8 +55,8 @@ describe('KitDelPortal', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))
     const alerta = await screen.findByRole('alert')
     expect(alerta).toHaveTextContent('El backend no contesta')
-    expect(alerta).toHaveAttribute('data-ui', 'alerta')
-    expect(alerta).toHaveAttribute('data-tono', 'error')
+    expect(alerta).toHaveAttribute('data-slot', 'alert')
+    expect(alerta).toHaveAttribute('data-tone', 'danger')
   })
 })
 

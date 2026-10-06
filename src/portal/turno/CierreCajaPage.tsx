@@ -6,7 +6,7 @@ import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe } from '../cifras/Importe'
 import { PagosSinEntregar as BloqueDePagosSinEntregar } from '../buzon/PagosSinEntregar'
-import { Alerta } from '../components/Alerta'
+import { Alert } from '@wasichai/ui'
 import { fechaYHoraEnLima } from '../fechas'
 import { ConciliacionDelDia } from '../recaudacion/ConciliacionDelDia'
 import type { CierreHecho, CierreVigente, TurnoDelDia as ElDelDia } from '../types'
@@ -95,7 +95,7 @@ export function CierreCajaPage() {
           {arqueo.isPending ? (
             <LoadingState label="Leyendo el arqueo…" />
           ) : arqueo.isError ? (
-            <Alerta tono="error">No se pudo leer el arqueo: {errorMessage(arqueo.error, 'el backend no contestó')}</Alerta>
+            <Alert tone="danger">No se pudo leer el arqueo: {errorMessage(arqueo.error, 'el backend no contestó')}</Alert>
           ) : (
             <>
               <p className="text-sm text-ink-muted">{porQueSinDeclarar(arqueo.data.estado_del_turno).explicacion}</p>
@@ -109,7 +109,7 @@ export function CierreCajaPage() {
 
       <BloqueDePagosSinEntregar turno={turno} turnosDelDia={delDia.data?.turnos ?? []} />
 
-      {recienCerrado?.estado_del_turno === 'CERRADO' && <Alerta tono="exito">El turno quedó cerrado.</Alerta>}
+      {recienCerrado?.estado_del_turno === 'CERRADO' && <Alert tone="success">El turno quedó cerrado.</Alert>}
       {vigente ? (
         <ActaDelCierre acta={vigente} titulo={`Acta del cierre vigente del ${formatDate(vigente.fecha)}`} />
       ) : (
@@ -130,7 +130,7 @@ export function CierreCajaPage() {
         onChoque={leerOtraVez}
       />
 
-      {reversado !== null && reversado === turno?.turno_id && <Alerta tono="exito">Se reversó el cierre del turno de la caja {turno.caja}.</Alerta>}
+      {reversado !== null && reversado === turno?.turno_id && <Alert tone="success">Se reversó el cierre del turno de la caja {turno.caja}.</Alert>}
       <ReversarElCierre
         key={`reversion-${clave}`}
         turno={turno}

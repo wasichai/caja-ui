@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { LoadingState } from '@wasichai/core'
-import { Table, Td, Th } from '@wasichai/ui'
+import { Alert, Table, Td, Th } from '@wasichai/ui'
 import { useState } from 'react'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import { hoyEnLima } from '../fechas'
 import type { CobroHecho, OrdenDeCobro } from '../types'
 import { cobro } from './api'
@@ -56,7 +55,7 @@ export function OrdenesPendientes({
   const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(new Set())
 
   if (ordenes.isPending) return <LoadingState label="Buscando las órdenes pendientes…" />
-  if (ordenes.isError) return <Alerta tono="error">No se pudieron leer las órdenes: {errorMessage(ordenes.error, 'el backend no contestó')}</Alerta>
+  if (ordenes.isError) return <Alert tone="danger">No se pudieron leer las órdenes: {errorMessage(ordenes.error, 'el backend no contestó')}</Alert>
 
   const filas = ordenes.data.content
   if (filas.length === 0) return <p className="text-sm text-ink-muted">Este documento no tiene órdenes pendientes</p>

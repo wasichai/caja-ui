@@ -1,9 +1,8 @@
-import { Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
+import { Alert, Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
 import type { ReactNode } from 'react'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type VistaPrevia } from '../types'
 import { MISMO_INTENTO, NO_SE_SABE, OBSERVACION, OTRO_COBRO } from './envio'
@@ -75,7 +74,7 @@ export function PieDelCobro({
   return (
     <>
       {incierto && (
-        <Alerta tono="error">
+        <Alert tone="danger">
           <span className="block font-semibold">{NO_SE_SABE}</span>
           <span className="mt-1 block">{MISMO_INTENTO}</span>
           <span className="mt-1 block">Lo que pasó: {incierto}.</span>
@@ -87,9 +86,9 @@ export function PieDelCobro({
               Solo si en Duplicado de recibo vio que no se cobró, o que se anuló: el siguiente cobro irá como uno nuevo.
             </span>
           </span>
-        </Alerta>
+        </Alert>
       )}
-      {general && <Alerta tono="error">{general}</Alerta>}
+      {general && <Alert tone="danger">{general}</Alert>}
       <div className="flex flex-wrap items-center justify-end gap-3">
         {impedido && (
           <p id="cobro-impedido" className="text-sm text-ink-muted">
@@ -154,13 +153,13 @@ export function TotalDeLaVistaPrevia({
         </span>
       </p>
       {previa && previa.motivos.length > 0 && (
-        <Alerta tono="atencion" titulo="No se puede cobrar.">
+        <Alert tone="warning" title="No se puede cobrar.">
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             {previa.motivos.map((motivo) => (
               <li key={motivo}>{motivo}</li>
             ))}
           </ul>
-        </Alerta>
+        </Alert>
       )}
     </div>
   )

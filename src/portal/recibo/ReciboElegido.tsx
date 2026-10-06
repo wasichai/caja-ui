@@ -7,7 +7,7 @@ import { FieldGrid } from '../../kit/forms/FieldGrid'
 import type { FieldSpec, SectionSpec } from '../../kit/forms/spec'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { LINEA_DE_ORDEN, LINEA_DE_TASA, pagadorDelRecibo } from '../cobro/ReciboEmitido'
-import { Alerta } from '../components/Alerta'
+import { Alert } from '@wasichai/ui'
 import { BotonConMotivo } from '../components/BotonConMotivo'
 import { PdfDialog } from '../components/PdfDialog'
 import { useEscritura } from '../escritura/useEscritura'
@@ -98,13 +98,13 @@ function FichaDelRecibo({ numero, cuenta }: { numero: string; cuenta: LaCuenta }
   return (
     <SeccionDelRecibo titulo={`Recibo ${numero}`}>
       {ficha.isError ? (
-        <Alerta tono="error">
+        <Alert tone="danger">
           No se pudo leer el recibo {numero}: {errorMessage(ficha.error, 'el backend no contestó')}
-        </Alerta>
+        </Alert>
       ) : (
         <Ficha recibo={ficha.data} />
       )}
-      {anulada && <Alerta tono="exito">El recibo {numero} quedó anulado.</Alerta>}
+      {anulada && <Alert tone="success">El recibo {numero} quedó anulado.</Alert>}
       <Acciones
         anular={noAnula}
         duplicar={noDuplica}
@@ -173,7 +173,7 @@ function Ficha({ recibo }: { recibo: ReciboEnFicha }) {
   }
   return (
     <div className="space-y-4">
-      {recibo.anulacion && <Alerta tono="atencion">Este recibo está anulado: no acredita pago.</Alerta>}
+      {recibo.anulacion && <Alert tone="warning">Este recibo está anulado: no acredita pago.</Alert>}
       <FieldGrid sections={[{ id: 'recibo', title: 'Recibo', fields: RECIBO }]} values={valores} />
       {recibo.lineas.length === 0 ? (
         <p className="text-sm text-ink-muted">Este recibo no tiene ninguna línea.</p>

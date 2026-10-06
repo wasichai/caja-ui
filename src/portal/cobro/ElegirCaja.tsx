@@ -1,9 +1,8 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import { Label } from '@wasichai/ui'
+import { Alert, Label } from '@wasichai/ui'
 import { useSearchParams } from 'react-router'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
-import { Alerta } from '../components/Alerta'
 import type { CajaEnLista, Pagina } from '../types'
 import { cobro } from './api'
 
@@ -72,13 +71,13 @@ export function ElegirCaja({ caja }: { caja: CajaDeLaRuta }) {
         </NativeSelect>
       </div>
       {cajas.isPending && <p className="text-sm text-ink-muted">Leyendo las cajas…</p>}
-      {cajas.isError && <Alerta tono="error">No se pudieron leer las cajas: {errorMessage(cajas.error, 'el backend no contestó')}</Alerta>}
+      {cajas.isError && <Alert tone="danger">No se pudieron leer las cajas: {errorMessage(cajas.error, 'el backend no contestó')}</Alert>}
       {cajas.data && deLaRuta && !activa && (
-        <Alerta tono="atencion">
+        <Alert tone="warning">
           {cajas.data.content.some((c) => c.codigo === deLaRuta)
             ? `La caja ${deLaRuta} está de baja: elija otra.`
             : `No hay ninguna caja ${deLaRuta}: elija otra.`}
-        </Alerta>
+        </Alert>
       )}
       {cajas.data && cajas.data.totalElements > cajas.data.content.length && (
         <p className="text-sm text-ink-muted">

@@ -1,5 +1,5 @@
 import { ApiError } from '@wasichai/core'
-import { ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
+import { Alert, ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
 import { Lock } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
@@ -7,7 +7,6 @@ import { errorMessage } from '../../kit/ui/errorMessage'
 import { IrALosPagosSinEntregar } from '../buzon/PagosSinEntregar'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
-import { Alerta } from '../components/Alerta'
 import { BotonConMotivo } from '../components/BotonConMotivo'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import { etiqueta } from '../forms/etiquetas'
@@ -190,7 +189,7 @@ export function CerrarElTurno({
         </form>
       )}
       {general && (
-        <Alerta tono="error">
+        <Alert tone="danger">
           {general}
           {choque && hayPagosPorExplicar && (
             <>
@@ -198,7 +197,7 @@ export function CerrarElTurno({
               <IrALosPagosSinEntregar />
             </>
           )}
-        </Alerta>
+        </Alert>
       )}
       <BotonConMotivo id="cerrar-impedido" impedido={impedido} variante="primary" type="submit" form={formulario}>
         <Lock className="size-4" />

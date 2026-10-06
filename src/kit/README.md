@@ -27,8 +27,8 @@ propio del test y `boundaries.test.tsx` tiene el vocabulario de caja).
    cabecera es la única línea que puede nombrar srtm-ui.
 3. **La cabecera.** Todo archivo que no es un test la lleva en la primera línea, con su propia ruta.
 4. Lo que el kit sabe de caja le llega por `KitProvider`: el portal lo monta en `src/portal/KitDelPortal.tsx` con las
-   etiquetas de los enums (`src/portal/forms/etiquetas.ts`), su `Alerta` de error y el `kind` de ficha `importe`
-   (`displayKinds`, `src/portal/forms/importe.tsx`), que dibuja el importe con `Importe`.
+   etiquetas de los enums (`src/portal/forms/etiquetas.ts`), el `Alert` de `@wasichai/ui` con tono `danger` y el
+   `kind` de ficha `importe` (`displayKinds`, `src/portal/forms/importe.tsx`), que dibuja el importe con `Importe`.
 
 ## Qué se copió y para qué lo usa caja-ui
 
