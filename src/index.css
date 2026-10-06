@@ -6,3 +6,14 @@
 @import './themes/portal-tributario/index.css';
 /* the @wasichai packages ship class names, not css, so tailwind scans them */
 @source '../node_modules/@wasichai';
+
+/* what caja fixes of @wasichai/ui's pieces until the library does, by their data-slot (ADR-035). in a layer, so a
+   utility on the piece still wins */
+@layer components {
+    /* a table scrolls sideways in its own box, which is not positioned: a header said only to a screen reader (sr-only,
+       position absolute) escaped it, and its place far right or far down widened the page. a phone scrolled sideways into
+       nothing, and a long leaf scrolled the whole shell. positioned, the table holds it inside both scroll boxes */
+    [data-slot='table'] {
+        position: relative;
+    }
+}

@@ -55,38 +55,31 @@ export function TurnoDelDia({ delDia, elTurno, onElegir }: { delDia: UseQueryRes
 
 function TablaDeTurnos({ turnos, onElegir }: { turnos: TurnoEnElDia[]; onElegir: (turnoId: string) => void }) {
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Turnos de hoy">
-        <thead>
-          <tr>
-            <Th>Caja</Th>
-            <Th>Abierto el</Th>
-            <Th>Estado</Th>
-            <Th>
-              <span className="sr-only">Arquear</span>
-            </Th>
+    <Table aria-label="Turnos de hoy">
+      <thead>
+        <tr>
+          <Th>Caja</Th>
+          <Th>Abierto el</Th>
+          <Th>Estado</Th>
+          <Th>
+            <span className="sr-only">Arquear</span>
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {turnos.map((turno) => (
+          <tr key={turno.turno_id}>
+            <Td>{nombreDeCaja(turno)}</Td>
+            <Td>{fechaYHoraEnLima(turno.abierto_en)}</Td>
+            <Td>{etiqueta('estado_del_turno', turno.estado_del_turno)}</Td>
+            <Td>
+              <Button size="sm" variant="secondary" aria-label={`Arquear el turno de ${turno.caja ?? turno.turno_id}`} onClick={() => onElegir(turno.turno_id)}>
+                Arquear
+              </Button>
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {turnos.map((turno) => (
-            <tr key={turno.turno_id}>
-              <Td>{nombreDeCaja(turno)}</Td>
-              <Td>{fechaYHoraEnLima(turno.abierto_en)}</Td>
-              <Td>{etiqueta('estado_del_turno', turno.estado_del_turno)}</Td>
-              <Td>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  aria-label={`Arquear el turno de ${turno.caja ?? turno.turno_id}`}
-                  onClick={() => onElegir(turno.turno_id)}
-                >
-                  Arquear
-                </Button>
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   )
 }

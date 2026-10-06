@@ -49,12 +49,18 @@ describe('tabs.css', () => {
 })
 
 describe('src/index.css', () => {
+  const index = readFileSync(join(__dirname, '..', 'index.css'), 'utf8')
+
   it("imports the library's theme sheet after its base theme, then caja's own partials", () => {
-    const index = readFileSync(join(__dirname, '..', 'index.css'), 'utf8')
     const at = (path: string) => index.indexOf(`@import '${path}';`)
     expect(at('tailwindcss')).toBeGreaterThanOrEqual(0)
     expect(at('@wasichai/ui/theme.css')).toBeGreaterThan(at('tailwindcss'))
     expect(at('@wasichai/ui/themes/portal-tributario.css')).toBeGreaterThan(at('@wasichai/ui/theme.css'))
     expect(at('./themes/portal-tributario/index.css')).toBeGreaterThan(at('@wasichai/ui/themes/portal-tributario.css'))
+  })
+
+  // jsdom draws no layout: what keeps a wide table's sr-only header from widening the page is this rule
+  it('keeps what a table positions (an sr-only header) inside its scroll box', () => {
+    expect(rule(index, "[data-slot='table']").get('position')).toBe('relative')
   })
 })

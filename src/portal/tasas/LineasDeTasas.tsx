@@ -37,61 +37,59 @@ export function LineasDeTasas({
       {lineas.length === 0 ? (
         <p className="text-sm text-ink-muted">Agregue las tasas que va a cobrar desde la lista de tasas vigentes.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <Table aria-label="Tasas a cobrar">
-            <thead>
-              <tr>
-                <Th>Código</Th>
-                <Th>Descripción</Th>
-                <Th>Área</Th>
-                <Th>Partida</Th>
-                <Th className="text-right">Precio unitario</Th>
-                <Th>Cantidad</Th>
-                <Th className="text-right">Monto</Th>
-                <Th>
-                  <span className="sr-only">Quitar</span>
-                </Th>
-              </tr>
-            </thead>
-            <tbody>
-              {lineas.map((linea) => {
-                const tasa = porCodigo.get(linea.codigo)
-                const id = `cantidad-${linea.codigo}`
-                const error = cantidadValida(linea.cantidad) ? undefined : CANTIDAD_INVALIDA
-                return (
-                  <tr key={linea.codigo}>
-                    <Td>{linea.codigo}</Td>
-                    <Td>{tasa ? (tasa.descripcion ?? <SinDato motivo={NO_REGISTRADO} />) : <SinDato motivo={sinTasa} />}</Td>
-                    <Td>{tasa?.area ?? <SinDato motivo={tasa ? NO_REGISTRADO : sinTasa} />}</Td>
-                    <Td>{tasa?.partida_presupuestal ?? <SinDato motivo={tasa ? NO_REGISTRADO : sinTasa} />}</Td>
-                    <Td className="text-right">{tasa ? <Importe cifra={tasa.precio} /> : <SinDato motivo={sinTasa} />}</Td>
-                    <Td>
-                      <Input
-                        id={id}
-                        className="w-24"
-                        inputMode="numeric"
-                        autoComplete="off"
-                        aria-label={`Cantidad de ${linea.codigo}`}
-                        value={linea.cantidad}
-                        onChange={(e) => onCantidad(linea.codigo, e.target.value)}
-                        {...conError(id, error)}
-                      />
-                      <ErrorDelCampo id={id} error={error} />
-                    </Td>
-                    <Td className="text-right">
-                      <span data-ui="monto-de-linea">{monto(linea)}</span>
-                    </Td>
-                    <Td>
-                      <Button variant="ghost" size="icon" aria-label={`Quitar ${linea.codigo}`} onClick={() => onQuitar(linea.codigo)}>
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </Td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </div>
+        <Table aria-label="Tasas a cobrar">
+          <thead>
+            <tr>
+              <Th>Código</Th>
+              <Th>Descripción</Th>
+              <Th>Área</Th>
+              <Th>Partida</Th>
+              <Th className="text-right">Precio unitario</Th>
+              <Th>Cantidad</Th>
+              <Th className="text-right">Monto</Th>
+              <Th>
+                <span className="sr-only">Quitar</span>
+              </Th>
+            </tr>
+          </thead>
+          <tbody>
+            {lineas.map((linea) => {
+              const tasa = porCodigo.get(linea.codigo)
+              const id = `cantidad-${linea.codigo}`
+              const error = cantidadValida(linea.cantidad) ? undefined : CANTIDAD_INVALIDA
+              return (
+                <tr key={linea.codigo}>
+                  <Td>{linea.codigo}</Td>
+                  <Td>{tasa ? (tasa.descripcion ?? <SinDato motivo={NO_REGISTRADO} />) : <SinDato motivo={sinTasa} />}</Td>
+                  <Td>{tasa?.area ?? <SinDato motivo={tasa ? NO_REGISTRADO : sinTasa} />}</Td>
+                  <Td>{tasa?.partida_presupuestal ?? <SinDato motivo={tasa ? NO_REGISTRADO : sinTasa} />}</Td>
+                  <Td className="text-right">{tasa ? <Importe cifra={tasa.precio} /> : <SinDato motivo={sinTasa} />}</Td>
+                  <Td>
+                    <Input
+                      id={id}
+                      className="w-24"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      aria-label={`Cantidad de ${linea.codigo}`}
+                      value={linea.cantidad}
+                      onChange={(e) => onCantidad(linea.codigo, e.target.value)}
+                      {...conError(id, error)}
+                    />
+                    <ErrorDelCampo id={id} error={error} />
+                  </Td>
+                  <Td className="text-right">
+                    <span data-ui="monto-de-linea">{monto(linea)}</span>
+                  </Td>
+                  <Td>
+                    <Button variant="ghost" size="icon" aria-label={`Quitar ${linea.codigo}`} onClick={() => onQuitar(linea.codigo)}>
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </Td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </Table>
       )}
     </section>
   )

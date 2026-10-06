@@ -175,53 +175,51 @@ function TablaDeRecibos({ filas }: { filas: ReciboEnLista[] }) {
   const comun = fechas.size === 1 ? filas[0].total.actualizado_a : undefined
   const ver = (numero: string) => navigate({ pathname: `/duplicado-recibo/${encodeURIComponent(numero)}`, search })
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Recibos">
-        <thead>
-          <tr>
-            <Th>Número</Th>
-            <Th>Emitido</Th>
-            <Th>Documento</Th>
-            <Th>Pagador</Th>
-            <Th className="text-right">
-              Importe
-              {comun && (
-                <>
-                  {' '}
-                  <FechaDeLasCifras fecha={comun} />
-                </>
-              )}
-            </Th>
-            <Th>Medio de pago</Th>
-            <Th className="text-right">Duplicados</Th>
-            <Th>Estado</Th>
-            <Th>
-              <span className="sr-only">Ver</span>
-            </Th>
+    <Table aria-label="Recibos">
+      <thead>
+        <tr>
+          <Th>Número</Th>
+          <Th>Emitido</Th>
+          <Th>Documento</Th>
+          <Th>Pagador</Th>
+          <Th className="text-right">
+            Importe
+            {comun && (
+              <>
+                {' '}
+                <FechaDeLasCifras fecha={comun} />
+              </>
+            )}
+          </Th>
+          <Th>Medio de pago</Th>
+          <Th className="text-right">Duplicados</Th>
+          <Th>Estado</Th>
+          <Th>
+            <span className="sr-only">Ver</span>
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {filas.map((recibo) => (
+          <tr key={recibo.numero_impreso}>
+            <Td className="tabular-nums">{recibo.numero_impreso}</Td>
+            <Td>{fechaYHoraEnLima(recibo.emitido_en)}</Td>
+            <Td>{recibo.pagador_documento ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
+            <Td>{recibo.pagador_nombre ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
+            <Td className="text-right">
+              <Importe cifra={recibo.total} fechaDeLaTabla={comun} />
+            </Td>
+            <Td>{etiqueta('forma_pago', recibo.forma_pago)}</Td>
+            <Td className="text-right tabular-nums">{recibo.duplicados}</Td>
+            <Td>{etiqueta('estado_recibo', recibo.estado)}</Td>
+            <Td>
+              <Button size="sm" variant="secondary" aria-label={`Ver ${recibo.numero_impreso}`} onClick={() => ver(recibo.numero_impreso)}>
+                Ver
+              </Button>
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {filas.map((recibo) => (
-            <tr key={recibo.numero_impreso}>
-              <Td className="tabular-nums">{recibo.numero_impreso}</Td>
-              <Td>{fechaYHoraEnLima(recibo.emitido_en)}</Td>
-              <Td>{recibo.pagador_documento ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
-              <Td>{recibo.pagador_nombre ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
-              <Td className="text-right">
-                <Importe cifra={recibo.total} fechaDeLaTabla={comun} />
-              </Td>
-              <Td>{etiqueta('forma_pago', recibo.forma_pago)}</Td>
-              <Td className="text-right tabular-nums">{recibo.duplicados}</Td>
-              <Td>{etiqueta('estado_recibo', recibo.estado)}</Td>
-              <Td>
-                <Button size="sm" variant="secondary" aria-label={`Ver ${recibo.numero_impreso}`} onClick={() => ver(recibo.numero_impreso)}>
-                  Ver
-                </Button>
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   )
 }

@@ -163,44 +163,42 @@ function TablaDePagos({
 }) {
   const derecha = 'text-right'
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Pagos sin entregar">
-        <thead>
-          <tr>
-            <Th>Pago</Th>
-            <Th>Turno</Th>
-            <Th>Tipo</Th>
-            <Th>Destino</Th>
-            <Th className={derecha}>Recibo</Th>
-            <Th className={derecha}>Intentos</Th>
-            <Th>Último error</Th>
-            <Th>Creado</Th>
-            <Th>Estado</Th>
-            <Th>
-              <span className="sr-only">Explicar</span>
-            </Th>
+    <Table aria-label="Pagos sin entregar">
+      <thead>
+        <tr>
+          <Th>Pago</Th>
+          <Th>Turno</Th>
+          <Th>Tipo</Th>
+          <Th>Destino</Th>
+          <Th className={derecha}>Recibo</Th>
+          <Th className={derecha}>Intentos</Th>
+          <Th>Último error</Th>
+          <Th>Creado</Th>
+          <Th>Estado</Th>
+          <Th>
+            <span className="sr-only">Explicar</span>
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {pagos.map((pago) => (
+          <tr key={pago.pago_id}>
+            <Td className="break-all tabular-nums">{pago.pago_id}</Td>
+            <Td className="break-all">{turnoDe(pago)}</Td>
+            <Td>{etiqueta('tipo_evento_pago', pago.tipo)}</Td>
+            <Td>{pago.destino}</Td>
+            <Td className={`${derecha} tabular-nums`}>{pago.recibo ?? <SinDato motivo="el recibo no se pudo leer" />}</Td>
+            <Td className={`${derecha} tabular-nums`}>{pago.intentos}</Td>
+            <Td>{pago.ultimo_error ?? <SinDato motivo="el backend no registró ningún error" />}</Td>
+            <Td>{pago.creado_en ? fechaYHoraEnLima(pago.creado_en) : <SinDato motivo="el backend no mandó cuándo se cobró" />}</Td>
+            <Td>{etiqueta('estado_evento', pago.estado)}</Td>
+            <Td>
+              <BotonDeExplicar pago={pago} sinPermiso={sinPermiso} onExplicar={onExplicar} />
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {pagos.map((pago) => (
-            <tr key={pago.pago_id}>
-              <Td className="break-all tabular-nums">{pago.pago_id}</Td>
-              <Td className="break-all">{turnoDe(pago)}</Td>
-              <Td>{etiqueta('tipo_evento_pago', pago.tipo)}</Td>
-              <Td>{pago.destino}</Td>
-              <Td className={`${derecha} tabular-nums`}>{pago.recibo ?? <SinDato motivo="el recibo no se pudo leer" />}</Td>
-              <Td className={`${derecha} tabular-nums`}>{pago.intentos}</Td>
-              <Td>{pago.ultimo_error ?? <SinDato motivo="el backend no registró ningún error" />}</Td>
-              <Td>{pago.creado_en ? fechaYHoraEnLima(pago.creado_en) : <SinDato motivo="el backend no mandó cuándo se cobró" />}</Td>
-              <Td>{etiqueta('estado_evento', pago.estado)}</Td>
-              <Td>
-                <BotonDeExplicar pago={pago} sinPermiso={sinPermiso} onExplicar={onExplicar} />
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   )
 }
 

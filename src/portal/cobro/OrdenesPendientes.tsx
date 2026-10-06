@@ -82,61 +82,59 @@ export function OrdenesPendientes({
         <p className="text-sm text-ink">
           Pagador: {pagador ? <strong>{pagador}</strong> : <SinDato motivo={SIN_DATO} />} ({documento})
         </p>
-        <div className="overflow-x-auto">
-          <Table>
-            <thead>
-              <tr>
-                <Th>
-                  <span className="sr-only">Cobrar</span>
-                </Th>
-                <Th>Concepto</Th>
-                <Th>Detalle</Th>
-                <Th>Referencia</Th>
-                <Th>Sistema de origen</Th>
-                <Th>Exigible desde</Th>
-                <Th className="text-right">Importe</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {filas.map((orden) => {
-                const marcada = marcadas.has(orden.orden_id)
-                // a marked one is of the system marked, and was due when marked
-                const porque = marcada ? null : impedimento(orden, marcado, hoy)
-                const motivoId = `impedida-${orden.orden_id}`
-                return (
-                  <tr key={orden.orden_id} data-impedida={porque ? true : undefined}>
-                    <Td>
-                      <input
-                        type="checkbox"
-                        className="accent-brand"
-                        aria-label={`Cobrar ${nombreDe(orden)}`}
-                        checked={marcada}
-                        disabled={porque !== null}
-                        aria-describedby={porque ? motivoId : undefined}
-                        onChange={() => alternar(orden.orden_id)}
-                      />
-                    </Td>
-                    <Td>
-                      {orden.concepto ?? <SinDato motivo={SIN_DATO} />}
-                      {porque && (
-                        <p id={motivoId} className="mt-0.5 text-xs text-ink-muted">
-                          {porque}
-                        </p>
-                      )}
-                    </Td>
-                    <Td>{orden.detalle ?? <SinDato motivo={SIN_DATO} />}</Td>
-                    <Td>{orden.referencia_externa ?? <SinDato motivo={SIN_DATO} />}</Td>
-                    <Td>{orden.sistema_origen ?? <SinDato motivo={SIN_DATO} />}</Td>
-                    <Td>{orden.fecha_exigibilidad ? formatDate(orden.fecha_exigibilidad) : <SinDato motivo={SIN_DATO} />}</Td>
-                    <Td className="text-right">
-                      <Importe cifra={orden.importe} />
-                    </Td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </div>
+        <Table>
+          <thead>
+            <tr>
+              <Th>
+                <span className="sr-only">Cobrar</span>
+              </Th>
+              <Th>Concepto</Th>
+              <Th>Detalle</Th>
+              <Th>Referencia</Th>
+              <Th>Sistema de origen</Th>
+              <Th>Exigible desde</Th>
+              <Th className="text-right">Importe</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((orden) => {
+              const marcada = marcadas.has(orden.orden_id)
+              // a marked one is of the system marked, and was due when marked
+              const porque = marcada ? null : impedimento(orden, marcado, hoy)
+              const motivoId = `impedida-${orden.orden_id}`
+              return (
+                <tr key={orden.orden_id} data-impedida={porque ? true : undefined}>
+                  <Td>
+                    <input
+                      type="checkbox"
+                      className="accent-brand"
+                      aria-label={`Cobrar ${nombreDe(orden)}`}
+                      checked={marcada}
+                      disabled={porque !== null}
+                      aria-describedby={porque ? motivoId : undefined}
+                      onChange={() => alternar(orden.orden_id)}
+                    />
+                  </Td>
+                  <Td>
+                    {orden.concepto ?? <SinDato motivo={SIN_DATO} />}
+                    {porque && (
+                      <p id={motivoId} className="mt-0.5 text-xs text-ink-muted">
+                        {porque}
+                      </p>
+                    )}
+                  </Td>
+                  <Td>{orden.detalle ?? <SinDato motivo={SIN_DATO} />}</Td>
+                  <Td>{orden.referencia_externa ?? <SinDato motivo={SIN_DATO} />}</Td>
+                  <Td>{orden.sistema_origen ?? <SinDato motivo={SIN_DATO} />}</Td>
+                  <Td>{orden.fecha_exigibilidad ? formatDate(orden.fecha_exigibilidad) : <SinDato motivo={SIN_DATO} />}</Td>
+                  <Td className="text-right">
+                    <Importe cifra={orden.importe} />
+                  </Td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </Table>
         {ordenes.data.totalElements > filas.length && (
           <p className="text-sm text-ink-muted">
             Se muestran las primeras {filas.length} de {ordenes.data.totalElements} órdenes pendientes, por fecha de exigibilidad.

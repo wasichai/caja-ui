@@ -87,51 +87,49 @@ function PorOrigen({ avance }: { avance: AvanceDeRecaudacion }) {
   const fecha = avance.a_la_fecha
   const derecha = 'text-right'
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Por origen">
-        <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
-          Cifras <FechaDeLasCifras fecha={fecha} />
-        </caption>
-        <thead>
-          <tr>
-            <Th>Origen</Th>
-            <Th className={derecha}>Cobrado</Th>
-            <Th className={derecha}>Anulado</Th>
-            <Th className={derecha}>Neto</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {avance.filas.map((fila, i) => (
-            <tr key={fila.origen ?? `sin-origen-${i}`}>
-              <Td>{origenDe(fila)}</Td>
-              <Td className={derecha}>
-                <Importe cifra={fila.cobrado} fechaDeLaTabla={fecha} />
-              </Td>
-              <Td className={derecha}>
-                <Importe cifra={fila.anulado} fechaDeLaTabla={fecha} />
-              </Td>
-              <Td className={derecha}>
-                <Importe cifra={fila.neto} fechaDeLaTabla={fecha} />
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="font-semibold">
-            <Td>Total</Td>
+    <Table aria-label="Por origen">
+      <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
+        Cifras <FechaDeLasCifras fecha={fecha} />
+      </caption>
+      <thead>
+        <tr>
+          <Th>Origen</Th>
+          <Th className={derecha}>Cobrado</Th>
+          <Th className={derecha}>Anulado</Th>
+          <Th className={derecha}>Neto</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {avance.filas.map((fila, i) => (
+          <tr key={fila.origen ?? `sin-origen-${i}`}>
+            <Td>{origenDe(fila)}</Td>
             <Td className={derecha}>
-              <Importe cifra={avance.cobrado} fechaDeLaTabla={fecha} />
+              <Importe cifra={fila.cobrado} fechaDeLaTabla={fecha} />
             </Td>
             <Td className={derecha}>
-              <Importe cifra={avance.anulado} fechaDeLaTabla={fecha} />
+              <Importe cifra={fila.anulado} fechaDeLaTabla={fecha} />
             </Td>
             <Td className={derecha}>
-              <Importe cifra={avance.neto} fechaDeLaTabla={fecha} />
+              <Importe cifra={fila.neto} fechaDeLaTabla={fecha} />
             </Td>
           </tr>
-        </tfoot>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr className="font-semibold">
+          <Td>Total</Td>
+          <Td className={derecha}>
+            <Importe cifra={avance.cobrado} fechaDeLaTabla={fecha} />
+          </Td>
+          <Td className={derecha}>
+            <Importe cifra={avance.anulado} fechaDeLaTabla={fecha} />
+          </Td>
+          <Td className={derecha}>
+            <Importe cifra={avance.neto} fechaDeLaTabla={fecha} />
+          </Td>
+        </tr>
+      </tfoot>
+    </Table>
   )
 }
 

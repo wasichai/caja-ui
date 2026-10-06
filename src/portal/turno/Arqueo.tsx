@@ -59,75 +59,73 @@ export function TablaDeArqueo({ arqueo, nombre, sinDeclarar }: { arqueo: Arqueo;
   const fecha = fechaComun(arqueo)
   const derecha = 'text-right'
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label={nombre}>
-        {fecha && (
-          <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
-            Cifras <FechaDeLasCifras fecha={fecha} />
-          </caption>
-        )}
-        <thead>
+    <Table aria-label={nombre}>
+      {fecha && (
+        <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
+          Cifras <FechaDeLasCifras fecha={fecha} />
+        </caption>
+      )}
+      <thead>
+        <tr>
+          <Th>Forma de pago</Th>
+          <Th className={derecha}>Cobrado</Th>
+          <Th className={derecha}>Anulado</Th>
+          <Th className={derecha}>Neto</Th>
+          <Th className={derecha}>Declarado</Th>
+          <Th className={derecha}>Diferencia</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {arqueo.lineas.length === 0 ? (
           <tr>
-            <Th>Forma de pago</Th>
-            <Th className={derecha}>Cobrado</Th>
-            <Th className={derecha}>Anulado</Th>
-            <Th className={derecha}>Neto</Th>
-            <Th className={derecha}>Declarado</Th>
-            <Th className={derecha}>Diferencia</Th>
+            <Td colSpan={6} className="text-ink-muted">
+              Este turno no tiene movimiento.
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {arqueo.lineas.length === 0 ? (
-            <tr>
-              <Td colSpan={6} className="text-ink-muted">
-                Este turno no tiene movimiento.
+        ) : (
+          arqueo.lineas.map((linea) => (
+            <tr key={linea.forma_pago}>
+              <Td>{etiqueta('forma_pago', linea.forma_pago)}</Td>
+              <Td className={derecha}>
+                <Importe cifra={linea.cobrado} fechaDeLaTabla={fecha} />
+              </Td>
+              <Td className={derecha}>
+                <Importe cifra={linea.anulado} fechaDeLaTabla={fecha} />
+              </Td>
+              <Td className={derecha}>
+                <Importe cifra={linea.neto} fechaDeLaTabla={fecha} />
+              </Td>
+              <Td className={derecha}>
+                <Declarable cifra={linea.declarado} fecha={fecha} motivo={sinDeclarar} />
+              </Td>
+              <Td className={derecha}>
+                <Declarable cifra={linea.diferencia} fecha={fecha} motivo={sinDeclarar} />
               </Td>
             </tr>
-          ) : (
-            arqueo.lineas.map((linea) => (
-              <tr key={linea.forma_pago}>
-                <Td>{etiqueta('forma_pago', linea.forma_pago)}</Td>
-                <Td className={derecha}>
-                  <Importe cifra={linea.cobrado} fechaDeLaTabla={fecha} />
-                </Td>
-                <Td className={derecha}>
-                  <Importe cifra={linea.anulado} fechaDeLaTabla={fecha} />
-                </Td>
-                <Td className={derecha}>
-                  <Importe cifra={linea.neto} fechaDeLaTabla={fecha} />
-                </Td>
-                <Td className={derecha}>
-                  <Declarable cifra={linea.declarado} fecha={fecha} motivo={sinDeclarar} />
-                </Td>
-                <Td className={derecha}>
-                  <Declarable cifra={linea.diferencia} fecha={fecha} motivo={sinDeclarar} />
-                </Td>
-              </tr>
-            ))
-          )}
-        </tbody>
-        <tfoot>
-          <tr className="font-semibold">
-            <Td>Total</Td>
-            <Td className={derecha}>
-              <Importe cifra={arqueo.total_cobrado} fechaDeLaTabla={fecha} />
-            </Td>
-            <Td className={derecha}>
-              <Importe cifra={arqueo.total_anulado} fechaDeLaTabla={fecha} />
-            </Td>
-            <Td className={derecha}>
-              <Importe cifra={arqueo.neto} fechaDeLaTabla={fecha} />
-            </Td>
-            <Td className={derecha}>
-              <Declarable cifra={arqueo.total_declarado} fecha={fecha} motivo={sinDeclarar} />
-            </Td>
-            <Td className={derecha}>
-              <Declarable cifra={arqueo.diferencia} fecha={fecha} motivo={sinDeclarar} />
-            </Td>
-          </tr>
-        </tfoot>
-      </Table>
-    </div>
+          ))
+        )}
+      </tbody>
+      <tfoot>
+        <tr className="font-semibold">
+          <Td>Total</Td>
+          <Td className={derecha}>
+            <Importe cifra={arqueo.total_cobrado} fechaDeLaTabla={fecha} />
+          </Td>
+          <Td className={derecha}>
+            <Importe cifra={arqueo.total_anulado} fechaDeLaTabla={fecha} />
+          </Td>
+          <Td className={derecha}>
+            <Importe cifra={arqueo.neto} fechaDeLaTabla={fecha} />
+          </Td>
+          <Td className={derecha}>
+            <Declarable cifra={arqueo.total_declarado} fecha={fecha} motivo={sinDeclarar} />
+          </Td>
+          <Td className={derecha}>
+            <Declarable cifra={arqueo.diferencia} fecha={fecha} motivo={sinDeclarar} />
+          </Td>
+        </tr>
+      </tfoot>
+    </Table>
   )
 }
 
