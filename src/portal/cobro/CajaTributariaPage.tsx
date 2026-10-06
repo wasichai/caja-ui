@@ -41,13 +41,21 @@ export function CajaTributariaPage() {
 
       <ElegirCaja caja={caja} />
 
-      <BuscarPagador key={documento} documento={documento} onBuscar={buscar} />
+      {/* both start again per payer, under keys of their own: siblings with the same key are not something React supports */}
+      <BuscarPagador key={`pagador:${documento}`} documento={documento} onBuscar={buscar} />
 
       {recibo ? (
         <ReciboEmitido cobro={recibo} linea={LINEA_DE_ORDEN} onNuevo={() => setRecibo(null)} />
       ) : (
         documento && (
-          <OrdenesPendientes key={documento} documento={documento} cajaDeLaRuta={caja.deLaRuta} caja={caja.activa} sinCaja={caja.sinCaja} onCobrado={cobrado} />
+          <OrdenesPendientes
+            key={`ordenes:${documento}`}
+            documento={documento}
+            cajaDeLaRuta={caja.deLaRuta}
+            caja={caja.activa}
+            sinCaja={caja.sinCaja}
+            onCobrado={cobrado}
+          />
         )
       )}
     </div>

@@ -199,6 +199,17 @@ async function listoParaCobrar() {
 }
 
 describe('Caja tributaria: the choice lives in the route', () => {
+  it('gives each piece a key of its own: React warns of no two alike', async () => {
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      start({ path: EN_C01 })
+      await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })
+      expect(errores.mock.calls.filter((llamada) => llamada.join(' ').includes('the same key'))).toEqual([])
+    } finally {
+      errores.mockRestore()
+    }
+  })
+
   it('puts the caja and the document in the url, and a reload shows the same', async () => {
     start()
     await main().findByRole('option', { name: 'C-01 — VENTANILLA 1' })
