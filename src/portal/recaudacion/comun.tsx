@@ -3,19 +3,11 @@ import { Button, Input, Label } from '@wasichai/ui'
 import { Search } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
-import type { Cifra } from '../cifras/Importe'
 import { conError, ErrorDelCampo } from '../forms/campos'
 import type { Filtros } from './api'
 
-// what «Avance de recaudación», «Recaudación por área» and «Conciliación del día» share: the date of a table's figures
-// once in its caption, and the filters that live in the route
-
-// the date of a table's figures, when they all share it: it goes once, in the caption. a missing one does not count
-export function fechaComun(cifras: (Cifra | null)[]): string | undefined {
-  const presentes = cifras.filter((c): c is Cifra => c !== null)
-  const fechas = new Set(presentes.map((c) => c.actualizado_a))
-  return fechas.size === 1 ? presentes[0].actualizado_a : undefined
-}
+// what «Avance de recaudación», «Recaudación por área» and «Conciliación del día» share: the filters that live in the
+// route
 
 // the filters of the route (?desde=&hasta=…): a reload or a link passed on asks the same. setting them drops the empty
 // ones and leaves any other key of the url alone. the same filters again are the same query: `repetir` asks it again

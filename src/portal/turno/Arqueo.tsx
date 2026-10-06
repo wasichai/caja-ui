@@ -1,7 +1,7 @@
 import { Alert, Table, Td, Th } from '@wasichai/ui'
 import type { ReactNode } from 'react'
-import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
-import type { Cifra } from '../cifras/Importe'
+import { fechaComun } from '../cifras/fechaComun'
+import { FechaDeLasCifras, Importe, SinDato, type Cifra } from '../cifras/Importe'
 import { etiqueta } from '../forms/etiquetas'
 import type { Arqueo, ArqueoDelTurno, PagoSinEntregar } from '../types'
 
@@ -40,23 +40,19 @@ function Declarable({ cifra, fecha, motivo }: { cifra: Cifra | null; fecha: stri
   return cifra ? <Importe cifra={cifra} fechaDeLaTabla={fecha} /> : <SinDato motivo={motivo} />
 }
 
-// the date of the table's figures, when they all share it: it goes once, in the caption
-function fechaComun(arqueo: Arqueo): string | undefined {
-  const cifras = [
-    ...arqueo.lineas.flatMap((l) => [l.cobrado, l.anulado, l.neto, l.declarado, l.diferencia]),
-    arqueo.total_cobrado,
-    arqueo.total_anulado,
-    arqueo.neto,
-    arqueo.total_declarado,
-    arqueo.diferencia
-  ].filter((c): c is Cifra => c !== null)
-  const fechas = new Set(cifras.map((c) => c.actualizado_a))
-  return fechas.size === 1 ? cifras[0].actualizado_a : undefined
-}
+// every figure of the table: their date goes once, in the caption, when they all share it
+const cifrasDe = (arqueo: Arqueo) => [
+  ...arqueo.lineas.flatMap((l) => [l.cobrado, l.anulado, l.neto, l.declarado, l.diferencia]),
+  arqueo.total_cobrado,
+  arqueo.total_anulado,
+  arqueo.neto,
+  arqueo.total_declarado,
+  arqueo.diferencia
+]
 
 // `sinDeclarar`: why a declared figure is missing (porQueSinDeclarar)
 export function TablaDeArqueo({ arqueo, nombre, sinDeclarar }: { arqueo: Arqueo; nombre: string; sinDeclarar: string }) {
-  const fecha = fechaComun(arqueo)
+  const fecha = fechaComun(cifrasDe(arqueo))
   const derecha = 'text-right'
   return (
     <Table aria-label={nombre}>

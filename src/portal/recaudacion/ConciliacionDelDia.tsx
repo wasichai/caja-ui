@@ -5,13 +5,13 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
+import { fechaComun } from '../cifras/fechaComun'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
 import type { Cifra } from '../cifras/Importe'
 import { conError, ErrorDelCampo } from '../forms/campos'
 import { Dato } from '../turno/Arqueo'
 import type { ConciliacionDelDia as LaConciliacion, LineaDeConciliacion } from '../types'
 import { recaudacion } from './api'
-import { fechaComun } from './comun'
 
 // «Conciliación del día», in «Cierre y arqueo de caja» (caja-web's blocks «Conciliación del día» and «El cuadre del
 // día»): what was charged at the window against what each source system says it applied. the day is chosen by whoever

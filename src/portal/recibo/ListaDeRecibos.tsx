@@ -6,6 +6,7 @@ import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
+import { fechaComun } from '../cifras/fechaComun'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
 import { conError, ErrorDelCampo } from '../forms/campos'
 import { fechaYHoraEnLima } from '../fechas'
@@ -188,8 +189,7 @@ function FiltrosDeRecibos({
 function TablaDeRecibos({ filas }: { filas: ReciboEnLista[] }) {
   const navigate = useNavigate()
   const { search } = useLocation()
-  const fechas = new Set(filas.map((r) => r.total.actualizado_a))
-  const comun = fechas.size === 1 ? filas[0].total.actualizado_a : undefined
+  const comun = fechaComun(filas.map((r) => r.total))
   const ver = (numero: string) => navigate({ pathname: `/duplicado-recibo/${encodeURIComponent(numero)}`, search })
   return (
     <Table aria-label="Recibos">
