@@ -1,7 +1,8 @@
 // copiado de srtm-ui@a1df33a (src/portal/shell/AppShell.tsx): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
 // adaptado: diverge de srtm-ui en que no hay búsqueda global ni entidad fija: el lateral clásico dibuja el árbol que
-// se le ofrece a la cuenta (useArbol), la cabecera dice appName y la cuenta que contesta wasichai (useCuenta), y cada
-// hoja va dentro de LimiteDeHoja. la estructura (cabecera, lateral, pestañas sobre el contenido, PortalShell con el
+// se le ofrece a la cuenta (useArbol), la cabecera dice appName y la cuenta que contesta wasichai (useCuenta), cada
+// hoja va dentro de LimiteDeHoja, la hoja nombra la pestaña y toma el foco al llegar (useHojaActual) y hay un enlace
+// para saltar al contenido. la estructura (cabecera, lateral, pestañas sobre el contenido, PortalShell con el
 // tema portal-tributario) es la de srtm
 import { isNavTreeGroup, navTreeLeaves, useWasichaiConfig } from '@wasichai/core'
 import { cn } from '@wasichai/ui'
@@ -12,6 +13,7 @@ import { useSession } from '../auth/session'
 import { useCuenta } from '../queries'
 import { Breadcrumbs } from './Breadcrumbs'
 import { rotuloDeCuenta, type LateralProps, type PiezasShell } from './comun'
+import { useHojaActual } from './hojaActual'
 import { LimiteDeHoja } from './LimiteDeHoja'
 import { useArbol } from './navTree'
 import { usePanelLateral } from './panelLateral'
@@ -29,9 +31,21 @@ export function AppShell() {
   const { Marca, Sesion, Lateral, Pie } = piezas
   const lateral = usePanelLateral(piezas.plegable === true)
   const { pathname, search } = useLocation()
+  useHojaActual()
 
   return (
     <div className="flex h-full flex-col">
+      {/* the first thing a keyboard reaches: past the bar and the tree, straight to the screen */}
+      <a
+        href="#content"
+        onClick={(event) => {
+          event.preventDefault()
+          document.getElementById('content')?.focus()
+        }}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:text-ink focus:shadow-lg"
+      >
+        Ir al contenido
+      </a>
       <header className={piezas.cabecera}>
         <button
           ref={lateral.boton}
@@ -61,7 +75,7 @@ export function AppShell() {
       </header>
       <div className="flex min-h-0 flex-1">
         <Lateral abierto={lateral.abierto} onNavegar={lateral.alNavegar} onPlegar={lateral.plegar} />
-        <main id="content" className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <main id="content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col overflow-hidden focus-visible:outline-none">
           <TabBar />
           <Breadcrumbs />
           <div className="min-h-0 flex-1 overflow-auto px-6 py-5">

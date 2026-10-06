@@ -23,4 +23,10 @@
         max-height: calc(100dvh - 2rem);
         overflow-y: auto;
     }
+
+    /* a screen's heading takes the focus when the clerk arrives at it (useHojaActual): it is where the reading starts,
+       not something to act on, so it gets no ring */
+    #content h1:focus-visible {
+        outline: none;
+    }
 }

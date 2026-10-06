@@ -39,6 +39,10 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja. Lo que
   revienta fuera de una hoja (la barra, el árbol, el rastro, el login) dibuja `FalloDeLaCaja`: la frase, lo que se lanzó
   y «Volver a cargar», nunca la página en inglés de react-router.
+- **Cada hoja se nombra y toma el foco** (`shell/hojaActual.ts`): la pestaña del navegador dice la hoja en pantalla
+  («Caja tributaria · Caja»), y al pasar a otra el foco va a su título, para que un lector de pantalla diga dónde llegó
+  y el contenido empiece arriba. Cambiar solo la query (un filtro, otro recibo) no mueve el foco. «Ir al contenido», lo
+  primero que alcanza el teclado, salta la barra y el árbol. Test: `src/portal/navegacion.test.tsx`.
 - **El estado del árbol** se guarda por pestaña del navegador (`sessionStorage['caja.nav']`).
 - **Pestañas de trabajo: todavía no.** La barra de pestañas (`TabBar` y `WorkspaceTabs`, copiadas de srtm-ui) está
   montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), así que solo muestra «Inicio».
