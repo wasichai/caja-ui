@@ -2,7 +2,7 @@ import { ApiError } from '@wasichai/core'
 import { useRef, useState } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { SesionCaducada, useEscritura } from '../escritura/useEscritura'
-import { OBSERVACION } from '../forms/campos'
+import { OBSERVACION, repartirElRechazo } from '../forms/campos'
 import { claveDelIntento, type Intento } from './intento'
 
 // how a cobro is sent, shared by «Caja tributaria» and «Caja de tasas»: one Idempotency-Key per attempt (intento.ts),
@@ -76,15 +76,10 @@ export function useEnvioDelCobro<Campo extends string>({
     return Object.keys(halladas).length === 0
   }
 
-  const esControl = (campo: string): campo is Campo => (controles as readonly string[]).includes(campo)
-
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const propias = violaciones.filter((v) => esControl(v.field))
-    const ajenas = violaciones.filter((v) => !esControl(v.field))
-    setErrores(Object.fromEntries(propias.map((v) => [v.field, v.message])) as Partial<Record<Campo, string>>)
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${rotular(v.field)}: ${v.message}`).join(' · '))
-    else if (propias.length === 0) setGeneral(errorMessage(e, 'No se pudo cobrar'))
+    const rechazo = repartirElRechazo(e, controles, rotular, 'No se pudo cobrar')
+    setErrores(rechazo.errores)
+    setGeneral(rechazo.general)
   }
 
   // sends `cuerpo` with the attempt's key (the same one when the same body is sent again). what it answered, or null:

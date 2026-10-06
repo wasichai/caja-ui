@@ -3,10 +3,8 @@ import { Alert, Input, Label, Textarea } from '@wasichai/ui'
 import { Lock } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
-import { errorMessage } from '../../kit/ui/errorMessage'
 import { IrALosPagosSinEntregar } from '../buzon/PagosSinEntregar'
-import { OBSERVACION } from '../forms/campos'
-import { conError, ErrorDelCampo } from '../forms/campos'
+import { conError, ErrorDelCampo, OBSERVACION, repartirElRechazo } from '../forms/campos'
 import { BotonConMotivo } from '../components/BotonConMotivo'
 import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
@@ -98,14 +96,11 @@ export function CerrarElTurno({
     if (Object.keys(porForma).length === 0 && !halladas.observacion) setConfirmando(true)
   }
 
+  // a 400 of declarado goes under «Lo declarado» (one per forma de pago, joined), the observación's under its field
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const declarado = violaciones.filter((v) => v.field === 'declarado').map((v) => v.message)
-    const deObservacion = violaciones.find((v) => v.field === 'observacion')?.message
-    const ajenas = violaciones.filter((v) => v.field !== 'declarado' && v.field !== 'observacion')
-    setErrores({ porForma: {}, ...(declarado.length > 0 ? { declarado: declarado.join(' · ') } : {}), observacion: deObservacion })
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${ROTULOS[v.field] ?? v.field}: ${v.message}`).join(' · '))
-    else if (violaciones.length === 0) setGeneral(errorMessage(e, 'No se pudo cerrar el turno'))
+    const rechazo = repartirElRechazo(e, ['declarado', 'observacion'], (campo) => ROTULOS[campo] ?? campo, 'No se pudo cerrar el turno')
+    setErrores({ porForma: {}, ...rechazo.errores })
+    setGeneral(rechazo.general)
   }
 
   const cerrar = async () => {
