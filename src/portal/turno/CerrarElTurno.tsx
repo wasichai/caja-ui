@@ -78,13 +78,13 @@ export function CerrarElTurno({
 
   // what is sent: only what was typed, trimmed and otherwise as it is
   const tecleados = FORMAS_DE_PAGO.filter((forma) => declarados[forma].trim() !== '')
-  const sinDeclarar = FORMAS_DE_PAGO.filter((forma) => declarados[forma].trim() === '')
+  const enBlanco = FORMAS_DE_PAGO.filter((forma) => declarados[forma].trim() === '')
 
   const pedir = (event: FormEvent) => {
     event.preventDefault()
     if (impedido) return
     const porForma = Object.fromEntries([
-      ...sinDeclarar.flatMap((forma) => (conMovimiento.includes(forma) ? [[forma, CON_MOVIMIENTO]] : [])),
+      ...enBlanco.flatMap((forma) => (conMovimiento.includes(forma) ? [[forma, CON_MOVIMIENTO]] : [])),
       ...tecleados.flatMap((forma) => (IMPORTE_DECLARADO.test(declarados[forma].trim()) ? [] : [[forma, NO_ES_IMPORTE]]))
     ]) as Errores['porForma']
     const largo = observacion.trim().length
@@ -219,9 +219,9 @@ export function CerrarElTurno({
                   </span>
                 ))}
               </span>
-              {sinDeclarar.length > 0 && (
+              {enBlanco.length > 0 && (
                 <span className="mt-2 block">
-                  Sin declarar, el backend las cierra en cero: {sinDeclarar.map((forma) => etiqueta('forma_pago', forma)).join(', ')}.
+                  En blanco, el backend las cierra en cero: {enBlanco.map((forma) => etiqueta('forma_pago', forma)).join(', ')}.
                 </span>
               )}
               <span className="mt-2 block">
