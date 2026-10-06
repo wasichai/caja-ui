@@ -33,7 +33,8 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
-    pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre. Test: `src/portal/guarda.test.tsx`.
+    pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre; una vez leídos, volver a leerlos y
+    fallar (una reconexión) no cierra la pantalla abierta ni lo que se tecleó en ella. Test: `src/portal/guarda.test.tsx`.
 - **Una hoja que revienta no tumba la raíz**: cada pantalla se dibuja dentro de un límite de error (`LimiteDeHoja`)
   que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja.
 - **El estado del árbol** se guarda por pestaña del navegador (`sessionStorage['caja.nav']`).
