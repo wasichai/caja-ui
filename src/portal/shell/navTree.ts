@@ -1,12 +1,11 @@
-// copiado de srtm-ui@a1df33a (src/portal/shell/navTree.ts): sube a wasichai-ui en la fase 2 (wasichai-ui#14)
+// copiado de srtm-ui@a1df33a (src/portal/shell/navTree.ts): los nodos y la hoja actual ya son de @wasichai/core (wasichai-ui#14)
 // adaptado: diverge de srtm-ui en el árbol (Tesorería con las seis hojas de caja, no los grupos de srtm) y en lo que
 // srtm no tiene: la clave de la pantalla de cada hoja (PANTALLAS), su seOfreceCon por permisos (Par, loQueFalta, la
-// Oferta de arbolPara, useArbol), conSujeto y el rastro de las migas. esGrupo, hojaActiva y la forma de NodoNav son
-// las de srtm
-import { useAuth } from '@wasichai/core'
-import { Settings, type LucideIcon } from 'lucide-react'
+// Oferta de arbolPara, useArbol), conSujeto y el rastro de las migas. la forma de los nodos, su dibujo (NavTree) y la
+// hoja actual son de @wasichai/core
+import { currentNavTreeLeaf, isNavTreeGroup, useAuth, type NavTreeGroup, type NavTreeLeaf, type NavTreeNode } from '@wasichai/core'
+import { Settings } from 'lucide-react'
 import { useMemo } from 'react'
-import { matchPath } from 'react-router'
 import { PANTALLAS } from '../pantallas'
 
 // the tree menu of the portal: what a clerk does, grouped by module. the home page is not a leaf, the panel's header
@@ -24,34 +23,20 @@ export interface Par {
   accion: Accion
 }
 
-export interface HojaNav {
-  label: string
-  to: string
+export interface HojaNav extends NavTreeLeaf {
   // a leaf of a module: the key its screen is registered under (PANTALLAS). one with no screen is not drawn
   clave?: ClaveDeHoja
   // when it is offered: any of these alternatives, each a list of pairs the account must all have
   seOfreceCon?: Par[][]
-  // route patterns (react-router's) that draw this leaf's page too: current there, over any other leaf
-  tambienEn?: string[]
   // its screen takes what is chosen as the last segment of its route (/duplicado-recibo/001-0000123): a reload or a
   // link passed on shows the same. the screen reads it as the route's param `sujeto`
   conSujeto?: boolean
-  // another app (the administration): a plain link, loaded in full, never current
-  externa?: boolean
-  soloAdmin?: boolean
-  // drawn only by a leaf at the root, where a group has its caret
-  icono?: LucideIcon
-}
-
-export interface GrupoNav {
-  label: string
-  hijos: NodoNav[]
+  // for admins only: the administration. no group has it
   soloAdmin?: boolean
 }
 
-export type NodoNav = GrupoNav | HojaNav
-
-export const esGrupo = (nodo: NodoNav): nodo is GrupoNav => 'hijos' in nodo
+export type GrupoNav = NavTreeGroup<HojaNav>
+export type NodoNav = NavTreeNode<HojaNav>
 
 const lee = (objeto: string): Par => ({ objeto, accion: 'READ' })
 
@@ -60,7 +45,7 @@ const lee = (objeto: string): Par => ({ objeto, accion: 'READ' })
 export const NAV_TREE: NodoNav[] = [
   {
     label: 'Tesorería',
-    hijos: [
+    children: [
       { clave: 'caja-tributaria', label: 'Caja tributaria', to: '/caja-tributaria', seOfreceCon: [[lee('orden_de_cobro')]] },
       { clave: 'caja-tasas', label: 'Caja de tasas y derechos administrativos', to: '/caja-tasas', seOfreceCon: [[lee('tasa')]] },
       {
@@ -87,7 +72,7 @@ export const NAV_TREE: NodoNav[] = [
       }
     ]
   },
-  { label: 'Administración', to: '/admin', externa: true, soloAdmin: true, icono: Settings }
+  { label: 'Administración', to: '/admin', external: true, soloAdmin: true, icon: Settings }
 ]
 
 // what arbolPara asks of the account (core's useAuth: can is always true for an admin) and of the screens
@@ -116,10 +101,10 @@ export function loQueFalta(alternativas: Par[][], can: Oferta['can']): string {
 // account may open it; a group left empty goes too
 export function arbolPara(nodos: NodoNav[], oferta: Oferta): NodoNav[] {
   return nodos.flatMap((nodo): NodoNav[] => {
-    if (nodo.soloAdmin && !oferta.isAdmin) return []
-    if (!esGrupo(nodo)) return (nodo.clave && !oferta.conPantalla(nodo.clave)) || !seOfrece(nodo, oferta.can) ? [] : [nodo]
-    const hijos = arbolPara(nodo.hijos, oferta)
-    return hijos.length ? [{ ...nodo, hijos }] : []
+    if (!isNavTreeGroup(nodo))
+      return (nodo.soloAdmin && !oferta.isAdmin) || (nodo.clave && !oferta.conPantalla(nodo.clave)) || !seOfrece(nodo, oferta.can) ? [] : [nodo]
+    const children = arbolPara(nodo.children, oferta)
+    return children.length ? [{ ...nodo, children }] : []
   })
 }
 
@@ -132,26 +117,13 @@ export function useArbol(): NodoNav[] {
   return useMemo(() => arbolPara(NAV_TREE, { isAdmin, can, conPantalla }), [isAdmin, can])
 }
 
-export const hojasDe = (nodos: NodoNav[]): HojaNav[] => nodos.flatMap((nodo) => (esGrupo(nodo) ? hojasDe(nodo.hijos) : [nodo]))
-
-// the leaf current on a path: one whose tambienEn matches it, else the one whose route is the path or the longest
-// start of it. a page with no leaf of its own has none
-export function hojaActiva(nodos: NodoNav[], pathname: string): HojaNav | undefined {
-  const propias = hojasDe(nodos).filter((hoja) => !hoja.externa)
-  const porPatron = propias.find((hoja) => hoja.tambienEn?.some((patron) => matchPath(patron, pathname)))
-  if (porPatron) return porPatron
-  return propias
-    .filter((hoja) => pathname === hoja.to || pathname.startsWith(`${hoja.to}/`))
-    .reduce<HojaNav | undefined>((mejor, hoja) => (!mejor || hoja.to.length > mejor.to.length ? hoja : mejor), undefined)
-}
-
 // the trail to the leaf current on a path, its groups' labels first; none off the tree
 export function rastro(nodos: NodoNav[], pathname: string): string[] {
-  const actual = hojaActiva(nodos, pathname)
+  const actual = currentNavTreeLeaf(nodos, pathname)
   const camino = (lista: NodoNav[]): string[] | null => {
     for (const nodo of lista) {
       if (nodo === actual) return [nodo.label]
-      const resto = esGrupo(nodo) ? camino(nodo.hijos) : null
+      const resto = isNavTreeGroup(nodo) ? camino(nodo.children) : null
       if (resto) return [nodo.label, ...resto]
     }
     return null

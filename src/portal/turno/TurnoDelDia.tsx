@@ -1,9 +1,8 @@
 import type { UseQueryResult } from '@tanstack/react-query'
 import { LoadingState } from '@wasichai/core'
-import { Button, Table, Td, Th } from '@wasichai/ui'
+import { Alert, Button, Table, Td, Th } from '@wasichai/ui'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
-import { Alerta } from '../components/Alerta'
 import { fechaYHoraEnLima } from '../fechas'
 import { etiqueta } from '../forms/etiquetas'
 import type { TurnoDelDia as ElDelDia, TurnoEnElDia } from '../types'
@@ -36,7 +35,7 @@ export function TurnoDelDia({ delDia, elTurno, onElegir }: { delDia: UseQueryRes
       {delDia.isPending ? (
         <LoadingState label="Leyendo su turno de hoy…" />
       ) : delDia.isError ? (
-        <Alerta tono="error">No se pudo leer su turno de hoy: {errorMessage(delDia.error, 'el backend no contestó')}</Alerta>
+        <Alert tone="danger">No se pudo leer su turno de hoy: {errorMessage(delDia.error, 'el backend no contestó')}</Alert>
       ) : (
         <>
           <p className="text-sm text-ink-muted">
@@ -47,7 +46,7 @@ export function TurnoDelDia({ delDia, elTurno, onElegir }: { delDia: UseQueryRes
           </p>
           {delDia.data.turnos.length > 0 && <TablaDeTurnos turnos={delDia.data.turnos} onElegir={onElegir} />}
           {elTurno.estado === 'sin-elegir' && <p className="text-sm text-ink-muted">Elija el turno que va a arquear con «Arquear».</p>}
-          {elTurno.estado === 'ajeno' && <Alerta tono="atencion">El turno de la dirección no es uno de sus turnos de hoy: elija uno de la lista.</Alerta>}
+          {elTurno.estado === 'ajeno' && <Alert tone="warning">El turno de la dirección no es uno de sus turnos de hoy: elija uno de la lista.</Alert>}
         </>
       )}
     </section>

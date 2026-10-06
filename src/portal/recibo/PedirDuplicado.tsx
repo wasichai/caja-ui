@@ -1,10 +1,9 @@
 import { ApiError } from '@wasichai/core'
-import { Button, Label, Textarea, type PdfFile } from '@wasichai/ui'
+import { Alert, Button, Label, type PdfFile, Textarea } from '@wasichai/ui'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { OBSERVACION } from '../cobro/envio'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
-import { Alerta } from '../components/Alerta'
 import { AvisoDeBorrador, SesionCaducada, type useEscritura } from '../escritura/useEscritura'
 import { recibos } from './api'
 
@@ -87,7 +86,7 @@ export function PedirDuplicado({
           />
           <ErrorDelCampo id={id} error={error} />
         </div>
-        {general && <Alerta tono="error">{general}</Alerta>}
+        {general && <Alert tone="danger">{general}</Alert>}
         <div className="flex justify-end gap-2">
           <Button
             type="button"

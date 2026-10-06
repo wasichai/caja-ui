@@ -1,12 +1,12 @@
-import { useAuth } from '@wasichai/core'
-import { conPantalla, hojasDe, NAV_TREE, useArbol } from '../shell/navTree'
+import { navTreeLeaves, useAuth } from '@wasichai/core'
+import { conPantalla, NAV_TREE, useArbol } from '../shell/navTree'
 
 // home: what the tree offers this account, said plainly. the screens of tesorería come one per version, so until then
 // the tree has none and home says that, instead of an empty menu that seems to be still loading
 export function InicioPage() {
   const { permissions, permissionsError } = useAuth()
-  const ofrecidas = hojasDe(useArbol()).filter((hoja) => hoja.clave)
-  const hayPantallas = hojasDe(NAV_TREE).some((hoja) => hoja.clave && conPantalla(hoja.clave))
+  const ofrecidas = navTreeLeaves(useArbol()).filter((hoja) => hoja.clave)
+  const hayPantallas = navTreeLeaves(NAV_TREE).some((hoja) => hoja.clave && conPantalla(hoja.clave))
 
   const frase = !hayPantallas
     ? 'Todavía no hay pantallas de Tesorería en esta versión de la caja.'

@@ -1,8 +1,7 @@
-import { Table, Td, Th } from '@wasichai/ui'
+import { Alert, Table, Td, Th } from '@wasichai/ui'
 import type { ReactNode } from 'react'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
 import type { Cifra } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import { etiqueta } from '../forms/etiquetas'
 import type { Arqueo, ArqueoDelTurno, PagoSinEntregar } from '../types'
 
@@ -175,7 +174,7 @@ export function ResumenDelArqueo({ delTurno }: { delTurno: ArqueoDelTurno }) {
 export function PagosSinEntregar({ pagos }: { pagos: PagoSinEntregar[] }) {
   if (pagos.length === 0) return null
   return (
-    <Alerta tono="atencion" titulo="Hay pagos sin entregar a su sistema de origen.">
+    <Alert tone="warning" title="Hay pagos sin entregar a su sistema de origen.">
       Hasta que se entreguen, o se expliquen los que no se pudieron entregar (en «Pagos sin entregar», más abajo), el turno no se cierra.
       <ul aria-label="Pagos sin entregar" className="mt-1 list-disc space-y-0.5 pl-5">
         {pagos.map((pago) => (
@@ -184,6 +183,6 @@ export function PagosSinEntregar({ pagos }: { pagos: PagoSinEntregar[] }) {
           </li>
         ))}
       </ul>
-    </Alerta>
+    </Alert>
   )
 }

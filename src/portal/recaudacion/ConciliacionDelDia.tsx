@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ApiError, LoadingState } from '@wasichai/core'
-import { Button, Input, Label, Table, Td, Th } from '@wasichai/ui'
+import { Alert, Button, Input, Label, Table, Td, Th } from '@wasichai/ui'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { formatDate } from '../../kit/format'
@@ -8,7 +8,6 @@ import { errorMessage } from '../../kit/ui/errorMessage'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
 import type { Cifra } from '../cifras/Importe'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
-import { Alerta } from '../components/Alerta'
 import { Dato } from '../turno/Arqueo'
 import type { ConciliacionDelDia as LaConciliacion, LineaDeConciliacion } from '../types'
 import { recaudacion } from './api'
@@ -87,11 +86,11 @@ export function ConciliacionDelDia() {
         ) : conciliacion.isPending ? (
           <LoadingState label="Leyendo la conciliación del día…" />
         ) : conciliacion.isError ? (
-          <Alerta tono="error">
+          <Alert tone="danger">
             {conciliacion.error instanceof ApiError && conciliacion.error.status === 400
               ? `El backend no aceptó el día «${fecha}»: ${errorMessage(conciliacion.error, 'no es un día válido')}`
               : `No se pudo leer la conciliación del día: ${errorMessage(conciliacion.error, 'el backend no contestó')}`}
-          </Alerta>
+          </Alert>
         ) : (
           <ElCuadre conciliacion={conciliacion.data} />
         )}

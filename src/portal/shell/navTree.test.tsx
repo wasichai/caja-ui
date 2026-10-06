@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { arbolPara, hojaActiva, hojasDe, NAV_TREE, rastro } from './navTree'
+import { currentNavTreeLeaf, navTreeLeaves } from '@wasichai/core'
+import { arbolPara, NAV_TREE, rastro } from './navTree'
 
 // the tree of tesorería as data: its leaves and what each one asks of the account (the shell draws it: arbol.test.tsx)
 
@@ -10,13 +11,13 @@ const cuenta = (pares: string[]) => ({
   conPantalla: () => true
 })
 const ofrecidas = (pares: string[]) =>
-  hojasDe(arbolPara(NAV_TREE, cuenta(pares)))
+  navTreeLeaves(arbolPara(NAV_TREE, cuenta(pares)))
     .filter((hoja) => hoja.clave)
     .map((hoja) => hoja.clave)
 
 describe('NAV_TREE', () => {
   it("has caja's six leaves of tesorería, with their keys and labels, and the administration for admins", () => {
-    const ver = (nodos: typeof NAV_TREE): unknown => nodos.map((nodo) => ('hijos' in nodo ? [nodo.label, ver(nodo.hijos)] : `${nodo.label} ${nodo.to}`))
+    const ver = (nodos: typeof NAV_TREE): unknown => nodos.map((nodo) => ('children' in nodo ? [nodo.label, ver(nodo.children)] : `${nodo.label} ${nodo.to}`))
     expect(ver(arbolPara(NAV_TREE, { isAdmin: true, can: () => true, conPantalla: () => true }))).toEqual([
       [
         'Tesorería',
@@ -31,6 +32,12 @@ describe('NAV_TREE', () => {
       ],
       'Administración /admin'
     ])
+  })
+
+  it('has no group with soloAdmin: arbolPara reads soloAdmin on leaves only', () => {
+    const conSoloAdmin = (nodos: typeof NAV_TREE): boolean =>
+      nodos.some((nodo) => ('children' in nodo ? 'soloAdmin' in nodo || conSoloAdmin(nodo.children) : false))
+    expect(conSoloAdmin(NAV_TREE)).toBe(false)
   })
 
   // the brief's table: each leaf with the pairs it needs, and the ones that are near but not enough
@@ -61,9 +68,9 @@ describe('NAV_TREE', () => {
   })
 
   it('offers no leaf without its screen, whatever the account may do', () => {
-    expect(hojasDe(arbolPara(NAV_TREE, { isAdmin: true, can: () => true, conPantalla: (clave) => clave === 'cierre-caja' })).map((hoja) => hoja.label)).toEqual(
-      ['Cierre y arqueo de caja', 'Administración']
-    )
+    expect(
+      navTreeLeaves(arbolPara(NAV_TREE, { isAdmin: true, can: () => true, conPantalla: (clave) => clave === 'cierre-caja' })).map((hoja) => hoja.label)
+    ).toEqual(['Cierre y arqueo de caja', 'Administración'])
   })
 
   // a leaf is current on its route and the routes under it (a recibo picked on duplicado-recibo); the trail goes from
@@ -75,7 +82,7 @@ describe('NAV_TREE', () => {
     ['/cierre-cajax', undefined, []],
     ['/admin', undefined, []]
   ])('on %s the current leaf is %s', (path, label, trail) => {
-    expect(hojaActiva(NAV_TREE, path)?.label).toBe(label)
+    expect(currentNavTreeLeaf(NAV_TREE, path)?.label).toBe(label)
     expect(rastro(NAV_TREE, path)).toEqual(trail)
   })
 })

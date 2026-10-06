@@ -51,11 +51,16 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
     `useVarianteTema()` dice `'portal'` o `'clasico'`.
   - La elección se guarda en `caja.theme` y, con un backend que tenga `PUT /auth/me/preferences`, también para el
     usuario. `index.html` aplica el tema antes de cargar la app, para que no parpadee.
-- Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `Alerta`, `BandaTitulo`, `KitDelPortal`) llevan
-  arriba la cabecera «copiado de srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14). Las que se reescribieron
-  dicen además en qué divergen («adaptado: diverge de srtm-ui en …»: `api.ts`, `shell/navTree.ts`, `PortalApp.tsx`,
-  `shell/AppShell.tsx`, `shell/comun.tsx` y `shell/Breadcrumbs.tsx`; `PdfDialog.tsx` con su «DIVERGE»), para no
-  tomarlas por la copia de srtm al unir las dos.
+- Las piezas copiadas de `srtm-ui@a1df33a` (shell, login, temas, `KitDelPortal`) llevan arriba la cabecera «copiado de
+  srtm-ui…»: suben a wasichai-ui en la fase 2 (wasichai-ui#14). Las que se reescribieron dicen además en qué divergen
+  («adaptado: diverge de srtm-ui en …»: `api.ts`, `shell/navTree.ts`, `PortalApp.tsx`, `shell/AppShell.tsx`,
+  `shell/comun.tsx` y `shell/Breadcrumbs.tsx`; `PdfDialog.tsx` con su «DIVERGE»), para no tomarlas por la copia de srtm
+  al unir las dos.
+- **`Alerta` y `ArbolNav` ya subieron** (wasichai-ui#14, `@wasichai/*` 0.5.0): las alertas son `Alert` de
+  `@wasichai/ui` y el árbol del tema es `NavTree` de `@wasichai/core`, con sus parciales en la hoja de la librería
+  (`alerts.css`, `nav.css`). `navTree.ts` se queda con el árbol de Tesorería, los permisos y el rastro, sobre los nodos
+  de core. Bajo _Portal tributario_ las alertas tienen ahora la caja del prototipo (fondo suave, borde y relleno por
+  tono), que caja-ui no había copiado. La copia de `BandaTitulo`, que nada usaba, se borró.
 - **Las etiquetas de los enums** de caja-backend (`forma_pago`, `estado_orden`, `estado_recibo`, `tipo_pago`,
   `tipo_evento_pago`, `estado_evento`, `estado_del_turno` y el `origen` del avance) están en `src/portal/forms/etiquetas.ts`, porque wasichai todavía no las tiene. Un valor que no
   conoce se escribe tal cual.
@@ -468,7 +473,7 @@ yarn build           # dist/, luego yarn preview
 
 ## Notas
 
-- Versión de wasichai-ui: `@wasichai/*` 0.4.0, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
+- Versión de wasichai-ui: `@wasichai/*` 0.5.0, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
   `testing`). Para actualizar, cambiar la versión de todos a la vez en `package.json`, alinear las dependencias que
   comparten (react-query, testing-library…) y correr `yarn install`. Luego reiniciar el servidor con `yarn dev --force`:
   Vite guarda los paquetes pre-empaquetados y, si no, sigue sirviendo la versión anterior.

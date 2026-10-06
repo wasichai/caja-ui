@@ -1,11 +1,10 @@
 import type { UseQueryResult } from '@tanstack/react-query'
 import { LoadingState } from '@wasichai/core'
-import { Button, Input, Label, Table, Td, Th } from '@wasichai/ui'
+import { Alert, Button, Input, Label, Table, Td, Th } from '@wasichai/ui'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
-import { Alerta } from '../components/Alerta'
 import type { TasaVigente } from '../types'
 
 // the tasas in force today (GET /api/caja/tasas?vigentes_a=), to add them to the cobro. the buscador is a text filter
@@ -54,7 +53,7 @@ export function TasasVigentes({
       {vigentes.isPending ? (
         <LoadingState label="Leyendo las tasas vigentes…" />
       ) : vigentes.isError ? (
-        <Alerta tono="error">No se pudieron leer las tasas vigentes: {errorMessage(vigentes.error, 'el backend no contestó')}</Alerta>
+        <Alert tone="danger">No se pudieron leer las tasas vigentes: {errorMessage(vigentes.error, 'el backend no contestó')}</Alert>
       ) : lista.length === 0 ? (
         <p className="text-sm text-ink-muted">No hay tasas vigentes hoy: no hay nada que cobrar.</p>
       ) : halladas.length === 0 ? (

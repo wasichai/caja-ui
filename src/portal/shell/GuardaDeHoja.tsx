@@ -1,6 +1,6 @@
 import { LoadingState, useAuth } from '@wasichai/core'
+import { Alert } from '@wasichai/ui'
 import type { ReactNode } from 'react'
-import { Alerta } from '../components/Alerta'
 import { loQueFalta, type HojaNav } from './navTree'
 
 // a leaf's screen, kept by the same seOfreceCon the tree offers it with: whoever arrives by its url without it (a link
@@ -9,13 +9,13 @@ import { loQueFalta, type HojaNav } from './navTree'
 export function GuardaDeHoja({ hoja, children }: { hoja: HojaNav; children: ReactNode }) {
   const { permissions, permissionsError, can } = useAuth()
   if (!hoja.seOfreceCon) return children
-  if (permissionsError) return <Alerta tono="atencion">No se pudieron leer los permisos de su cuenta: esta pantalla no se abre.</Alerta>
+  if (permissionsError) return <Alert tone="warning">No se pudieron leer los permisos de su cuenta: esta pantalla no se abre.</Alert>
   if (!permissions) return <LoadingState label="Leyendo los permisos de su cuenta…" />
   const falta = loQueFalta(hoja.seOfreceCon, can)
   if (!falta) return children
   return (
-    <Alerta tono="atencion">
+    <Alert tone="warning">
       Su cuenta no puede abrir «{hoja.label}»: le falta {falta}.
-    </Alerta>
+    </Alert>
   )
 }

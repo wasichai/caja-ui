@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ApiError, LoadingState } from '@wasichai/core'
-import { Button, Input, Label, PageSizePagination, Table, Td, Th } from '@wasichai/ui'
+import { Alert, Button, Input, Label, PageSizePagination, Table, Td, Th } from '@wasichai/ui'
 import { Search } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
@@ -8,7 +8,6 @@ import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
 import { conError, ErrorDelCampo } from '../cobro/Formulario'
-import { Alerta } from '../components/Alerta'
 import { fechaYHoraEnLima } from '../fechas'
 import { etiqueta } from '../forms/etiquetas'
 import { ESTADOS_DE_RECIBO, type ReciboEnLista } from '../types'
@@ -74,7 +73,7 @@ export function ListaDeRecibos() {
         {lista.isPending ? (
           <LoadingState label="Buscando los recibos…" />
         ) : lista.isError ? (
-          <Alerta tono="error">No se pudo leer la lista de recibos: {errorMessage(lista.error, 'el backend no contestó')}</Alerta>
+          <Alert tone="danger">No se pudo leer la lista de recibos: {errorMessage(lista.error, 'el backend no contestó')}</Alert>
         ) : lista.data.content.length === 0 ? (
           <p className="text-sm text-ink-muted">Ningún recibo coincide con la búsqueda.</p>
         ) : (

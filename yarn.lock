@@ -1042,41 +1042,41 @@
   resolved "https://registry.yarnpkg.com/@vitest/spy/-/spy-5.0.2.tgz#a4a13f5b336e7c4227cfd74e9b0199209ffbb7fb"
   integrity sha512-Ijc7T1nT9efNb5LxvjaBrEqw3f/QwUv5EE0nKqZxgqsaV/FxAAZ8baGylA8X/Z2oS4Lp+K74Jr6dTJsDKxJDeg==
 
-"@wasichai/core@0.4.0":
-  version "0.4.0"
-  resolved "https://npm.pkg.github.com/download/@wasichai/core/0.4.0/747f9345cc031794bdec4a39cc296f70d936be21#747f9345cc031794bdec4a39cc296f70d936be21"
-  integrity sha512-ZDzfcvVvJnNsMtv7uqXxwNmpBqUgI6CfWSWskwVXIPKY4+cK15Lzgso5WfwA0HRgjyp/PTaF3Tg3ugB69tZX0w==
+"@wasichai/core@0.5.0":
+  version "0.5.0"
+  resolved "https://npm.pkg.github.com/download/@wasichai/core/0.5.0/a2ca510980c33c963e0f312e97ece00151dedec4#a2ca510980c33c963e0f312e97ece00151dedec4"
+  integrity sha512-8mxTQu58ZCVRAy7I/A6A8SuhMuDS3N40m3eC6okgKJm9FO56NOKwDiKfjtglpiXsD3CooYD+eI6zNVcKoW1Evw==
   dependencies:
     "@hookform/resolvers" "5.9.1"
-    "@wasichai/ui" "0.4.0"
-    lucide-react "^1.47.0"
-    react-hook-form "^7.88.0"
+    "@wasichai/ui" "0.5.0"
+    lucide-react "^1.51.0"
+    react-hook-form "^7.89.0"
     zod "^4.6.5"
 
-"@wasichai/forms@0.4.0":
-  version "0.4.0"
-  resolved "https://npm.pkg.github.com/download/@wasichai/forms/0.4.0/6de55d06e6471764d5a9e800d50fc935b95b6f6d#6de55d06e6471764d5a9e800d50fc935b95b6f6d"
-  integrity sha512-3G8bEuHy6JK2KqCVF+ettuYoQ7Z7t2V9c31THKFog+1R13/PXDeGEQ1e73YJLCvCS2DR98GfGQrjaStemrGjXA==
+"@wasichai/forms@0.5.0":
+  version "0.5.0"
+  resolved "https://npm.pkg.github.com/download/@wasichai/forms/0.5.0/635b2e18e2d871040555fa870783c1371ae03276#635b2e18e2d871040555fa870783c1371ae03276"
+  integrity sha512-HKrjQoWRNvopS5G04W9iMRyCV3EF1Cuxq6fO10VXcJYeiZOPSk5Nth+gOHhCjn8zeJBvAByGdWgPuyIKd3Ao/A==
   dependencies:
-    lucide-react "^1.47.0"
+    lucide-react "^1.51.0"
 
-"@wasichai/pages@0.4.0":
-  version "0.4.0"
-  resolved "https://npm.pkg.github.com/download/@wasichai/pages/0.4.0/ab87f989f71d3a0d5b20a4aae70a9a9d3bf97578#ab87f989f71d3a0d5b20a4aae70a9a9d3bf97578"
-  integrity sha512-LMr15IPkJR+3eVA4/pAJmi7KAqZdIP8xCJHPfXH3FkvuSbYOtXa6WQg8j4bBK2Mz8KWlNDI37kd+5yOaLOckhw==
+"@wasichai/pages@0.5.0":
+  version "0.5.0"
+  resolved "https://npm.pkg.github.com/download/@wasichai/pages/0.5.0/50c11baf5961cdc113568b43780788fa302c3d84#50c11baf5961cdc113568b43780788fa302c3d84"
+  integrity sha512-0bmjact5ywPaLgV8djshNdv08XV4787TuE7FNBjHYxMCy3flkrT818bqVAuewUYtsbHdtxUtq2zp3WQmekZf+A==
   dependencies:
     "@dnd-kit/core" "6.3.1"
-    lucide-react "^1.47.0"
+    lucide-react "^1.51.0"
 
-"@wasichai/testing@0.4.0":
-  version "0.4.0"
-  resolved "https://npm.pkg.github.com/download/@wasichai/testing/0.4.0/ce88ed5b7f03ce63a050718c931dec93b0e3aeac#ce88ed5b7f03ce63a050718c931dec93b0e3aeac"
-  integrity sha512-zagCLQ3V/7tOmQzHzn+3Uvz0tzZsJMNqXA/nSUaMC7mYJVl7teJbP665Vdfu+t3WqRIsDofQ2OOTohsdHpogiw==
+"@wasichai/testing@0.5.0":
+  version "0.5.0"
+  resolved "https://npm.pkg.github.com/download/@wasichai/testing/0.5.0/36532cdf09127f9d27df68aff9787416e88d8cbd#36532cdf09127f9d27df68aff9787416e88d8cbd"
+  integrity sha512-Bp5ERectL/2BQGwy7hyNtmQsjIjXUTQE1nABb3gP31kdMO3s828iUHMXi9tnCHGMfR6s74TjvxriJ9oe9zlo5Q==
 
-"@wasichai/ui@0.4.0":
-  version "0.4.0"
-  resolved "https://npm.pkg.github.com/download/@wasichai/ui/0.4.0/76179ac407c4069a4e562aeaa245a4f070ee10f2#76179ac407c4069a4e562aeaa245a4f070ee10f2"
-  integrity sha512-9KjlW5Pt8YXlZ85iM24hLajjAneEqVwe4FyvN6FTuXRT5ePTz4009/83axmp5JPcOlIyc2K9BKphMPQqR/rD/A==
+"@wasichai/ui@0.5.0":
+  version "0.5.0"
+  resolved "https://npm.pkg.github.com/download/@wasichai/ui/0.5.0/9f885ed6d4f6324e3f893b660db7d86668def943#9f885ed6d4f6324e3f893b660db7d86668def943"
+  integrity sha512-35eD3n8mWHSHPNtqdmmtZxGd+Y01fjJ2/MlnJQEBoOlSqW1wXRtWaivxD/+6H6DskEVv82waPJmwodPO725CWw==
   dependencies:
     "@radix-ui/react-dialog" "1.1.23"
     "@radix-ui/react-label" "2.1.15"
@@ -1084,15 +1084,15 @@
     "@radix-ui/react-slot" "1.3.3"
     class-variance-authority "0.7.1"
     clsx "2.1.1"
-    lucide-react "1.47.0"
+    lucide-react "1.51.0"
     tailwind-merge "3.7.0"
 
-"@wasichai/views@0.4.0":
-  version "0.4.0"
-  resolved "https://npm.pkg.github.com/download/@wasichai/views/0.4.0/b4384f467a589894f13d0321bfc86554ee472e37#b4384f467a589894f13d0321bfc86554ee472e37"
-  integrity sha512-bjkfV4ZY8DvRAty4hESiCQw4UvgJWZfV9i6VlycFXpX6lXdsJuzqg+ymtzOsphdg/Quot3j40VVqx0mtHUh9VA==
+"@wasichai/views@0.5.0":
+  version "0.5.0"
+  resolved "https://npm.pkg.github.com/download/@wasichai/views/0.5.0/6ef9b2dd784bb485e509a9731d060fe76c7eeaec#6ef9b2dd784bb485e509a9731d060fe76c7eeaec"
+  integrity sha512-sE0kOriBYMZ5ji2N6wbaMADlQXeNVVNm/KLgTdNH/lviIjIwWaNPBfAECquW/Mr8q97wc2GGOA3HlfQYg7NbmA==
   dependencies:
-    lucide-react "^1.47.0"
+    lucide-react "^1.51.0"
 
 ajv@^8.11.0:
   version "8.20.0"
@@ -1671,15 +1671,20 @@ lru-cache@^11.5.2, lru-cache@^11.5.3:
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-11.5.3.tgz#a7767b4034e35269562d2b9da2b185b5df70c421"
   integrity sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==
 
-lucide-react@1.47.0:
-  version "1.47.0"
-  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-1.47.0.tgz#a358c1362b0377928ce58908ed9c884937d5b026"
-  integrity sha512-o8C23aXpNQypRY73W7fW02EyvWJinEMXgKeGjFoKym0zj3Q73hD97A1IQps1g8C14HTGsOpZL0Am+xjfgFZAbg==
-
-lucide-react@1.48.0, lucide-react@^1.47.0:
+lucide-react@1.48.0:
   version "1.48.0"
   resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-1.48.0.tgz#3e7f847ece24375d006bb5615c1cfe5c8f38fce4"
   integrity sha512-R0CIKY/fXiC6y9xRBADgsK+VW2p/pcTJOMhLZf1T+uG+vJUvyUR02nGOgmIIC7MPkiNK4Ox8QDnbqF8rJYWPZQ==
+
+lucide-react@1.51.0:
+  version "1.51.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-1.51.0.tgz#b4f828d2ac31a5ccc29adc139bb80b036ca58d0c"
+  integrity sha512-9929jimol5y7VbXUlVKcgURMSeIxFJB7dtWCkRAaNnF7KiCRkSkhmqWPUmAmUFYPezNawFk6qvz3Mu0gEnfI4g==
+
+lucide-react@^1.51.0:
+  version "1.52.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-1.52.0.tgz#9945c4edc9550be7cc79808ec8a510c80512c727"
+  integrity sha512-TUgPtl5ZI9WgxOcbu4ckaC5B3l1qxPQrCMgb6OfUB9owx/OvSJfcf93SMgUWAxRw5/1XDfh9uI5F5iNGXCcGDQ==
 
 lz-string@^1.5.0:
   version "1.5.0"
@@ -1789,7 +1794,7 @@ react-dom@19.3.0:
   dependencies:
     scheduler "^0.28.0"
 
-react-hook-form@7.89.0, react-hook-form@^7.88.0:
+react-hook-form@7.89.0, react-hook-form@^7.89.0:
   version "7.89.0"
   resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.89.0.tgz#16bde1ff233fef58bbbfd5cda47e6df929251e70"
   integrity sha512-vKcoCfy8RKZDrhSdqsRFp0uEOdS1AhLjOL6hR7Wmfzg1akNxEhaPf5WORx8SgEQPVXakdDyDkqQp+KNxVnnPHg==
