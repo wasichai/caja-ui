@@ -94,7 +94,8 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   concepto, detalle, referencia, sistema de origen, fecha de exigibilidad e importe (`Importe`, con su fecha), y una
   casilla por fila. Una orden que no se puede marcar dice por qué: la que todavía no es exigible (hoy en Lima) y la de
   otro sistema que el de lo marcado, porque un recibo se anula entero (una orden sin sistema marcada también impide las
-  de otro). Sin órdenes: «Este documento no tiene órdenes pendientes».
+  de otro). Sin órdenes: «Este documento no tiene órdenes pendientes». Si volver a leerlas falla, se dice encima y se
+  quedan las leídas, con el cobro de abajo: lo tecleado y la clave de un intento que no se sabe si se cobró.
 - **El total lo da el backend**: al cambiar lo marcado, `POST /api/caja/cobros/vista-previa` devuelve el total, que se
   dibuja tal cual con `Importe`, y los `motivos` por los que no se puede cobrar, que se dicen como vienen. El cliente
   no suma nada.

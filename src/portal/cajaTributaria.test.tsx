@@ -460,6 +460,35 @@ describe('Caja tributaria: cobrar', () => {
     expect(cabeceras[2].get('Idempotency-Key')).not.toBe(cabeceras[0].get('Idempotency-Key'))
   })
 
+  it('keeps the orders, what was typed and the attempt’s key when reading the orders again fails', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+
+    // the clerk searches the same payer again (to see whether it was charged), and that read fails
+    Object.assign(rutaDe('GET', '/caja/ordenes-de-cobro'), {
+      status: 403,
+      body: { title: 'Forbidden', status: 403, detail: 'Su cuenta ya no puede leer las órdenes' }
+    })
+    await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
+    expect(
+      await main().findByText('No se pudieron volver a leer las órdenes: Su cuenta ya no puede leer las órdenes. Se muestran las que se leyeron antes.')
+    ).toBeInTheDocument()
+    expect(casilla('PREDIAL-2026-0001')).toBeChecked()
+    expect(main().getByRole('textbox', { name: 'Observación' })).toHaveValue('cobro en ventanilla')
+    expect(texto(document.querySelector('main'))).toContain(NO_SE_SABE)
+
+    // and the next cobro goes with the same key: the first is never charged twice
+    caida = null
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    await waitFor(() => expect(cabeceras).toHaveLength(2))
+    expect(cabeceras[1].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
+  })
+
   it('says an unknown outcome when the backend does not answer, and keeps the attempt’s key even after an edit', async () => {
     start({ path: EN_C01 })
     caida = new TypeError('Failed to fetch')

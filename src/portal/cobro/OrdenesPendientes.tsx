@@ -55,10 +55,23 @@ export function OrdenesPendientes({
   const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(new Set())
 
   if (ordenes.isPending) return <LoadingState label="Buscando las órdenes pendientes…" />
-  if (ordenes.isError) return <Alert tone="danger">No se pudieron leer las órdenes: {errorMessage(ordenes.error, 'el backend no contestó')}</Alert>
+  if (!ordenes.data) return <Alert tone="danger">No se pudieron leer las órdenes: {errorMessage(ordenes.error, 'el backend no contestó')}</Alert>
+  // a read again that fails («Buscar» with the same document, on a flaky network) keeps what was read: with it would go
+  // the cobro below, what was typed in it and the key of an attempt whose outcome is not known (envio.ts)
+  const sinReleer = ordenes.isError && (
+    <Alert tone="warning">
+      No se pudieron volver a leer las órdenes: {errorMessage(ordenes.error, 'el backend no contestó')}. Se muestran las que se leyeron antes.
+    </Alert>
+  )
 
   const filas = ordenes.data.content
-  if (filas.length === 0) return <p className="text-sm text-ink-muted">Este documento no tiene órdenes pendientes</p>
+  if (filas.length === 0)
+    return (
+      <>
+        {sinReleer}
+        <p className="text-sm text-ink-muted">Este documento no tiene órdenes pendientes</p>
+      </>
+    )
 
   // what is marked, in the table's order: the preview and the cobro get it so
   const elegidas = filas.filter((o) => marcadas.has(o.orden_id))
@@ -79,6 +92,7 @@ export function OrdenesPendientes({
         <h2 id="ordenes-titulo" className="text-xs font-semibold tracking-wide text-ink uppercase">
           Órdenes pendientes
         </h2>
+        {sinReleer}
         <p className="text-sm text-ink">
           Pagador: {pagador ? <strong>{pagador}</strong> : <SinDato motivo={SIN_DATO} />} ({documento})
         </p>
