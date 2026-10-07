@@ -1,13 +1,9 @@
-import { client } from '../api'
+import { client, enviar } from '../api'
 import type { CajaEnLista, CobroHecho, NuevoCobro, OrdenDeCobro, Pagina, VistaPrevia } from '../types'
 
 // caja-backend's cobro (/api/caja/**), as the screens of the cash desk use it. the largest page the backend gives
 // (wasichai's PageRequest.MAX_SIZE): a screen that gets fewer than there are says so
 export const TAMANO_DE_PAGINA = 200
-
-// a POST of JSON, with headers of its own (the Idempotency-Key)
-export const enviar = <T>(path: string, cuerpo: unknown, headers?: HeadersInit) =>
-  client.request<T>(path, { method: 'POST', body: JSON.stringify(cuerpo), headers })
 
 export const cobro = {
   // by code. a closed one comes too, with activa false

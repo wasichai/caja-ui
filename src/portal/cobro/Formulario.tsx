@@ -1,29 +1,16 @@
-import { Alert, Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
+import { Alert, Button, Label, Textarea } from '@wasichai/ui'
 import type { ReactNode } from 'react'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
+import { conError, ErrorDelCampo, OBSERVACION } from '../forms/campos'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type VistaPrevia } from '../types'
-import { MISMO_INTENTO, NO_SE_SABE, OBSERVACION, OTRO_COBRO } from './envio'
+import { MISMO_INTENTO, NO_SE_SABE, OTRO_COBRO } from './envio'
 
 // the pieces of a cobro's form that «Caja tributaria» and «Caja de tasas» share: the forma de pago, the observación,
 // the total the backend previews, the button that is never mute and the confirmation (a cobro is not undone)
-
-// a field's error under it, tied to its control
-const idDelError = (id: string) => `${id}-error`
-export const conError = (id: string, error: string | undefined) => ({
-  'aria-invalid': error ? true : undefined,
-  'aria-describedby': error ? idDelError(id) : undefined
-})
-
-export function ErrorDelCampo({ id, error }: { id: string; error: string | undefined }) {
-  return error ? (
-    <p id={idDelError(id)} className="text-xs text-danger">
-      {error}
-    </p>
-  ) : null
-}
 
 // the five forms of payment, with their etiqueta
 export function CampoFormaDePago({ value, onChange, error }: { value: string; onChange: (valor: string) => void; error: string | undefined }) {
@@ -166,7 +153,9 @@ export function TotalDeLaVistaPrevia({
 }
 
 // the confirmation, with what is cobrado (the lines of the preview, as the screen lists them), the preview's total and
-// the forma de pago. spans, not a list: the dialog's description is a paragraph
+// the forma de pago. spans, not a list: the dialog's description is a paragraph. the lines scroll in their own box (a
+// year of arbitrios is a long list), so the total and «Cobrar» stay in view; the box takes the focus, or a keyboard
+// could not scroll it
 export function ConfirmarCobro({
   que,
   caja,
@@ -192,14 +181,14 @@ export function ConfirmarCobro({
   children: ReactNode
 }) {
   return (
-    <ConfirmDialog
+    <ConfirmarEscritura
       title="Confirmar el cobro"
       description={
         <>
           <span className="block">
             Se cobran {que} en la caja {caja}:
           </span>
-          <span role="list" className="mt-2 block space-y-1">
+          <span role="list" aria-label="Lo que se cobra" tabIndex={0} className="mt-2 block max-h-[40vh] space-y-1 overflow-y-auto">
             {children}
           </span>
           {previa.total && (
@@ -215,7 +204,8 @@ export function ConfirmarCobro({
       confirmLabel="Cobrar"
       cancelLabel="Cancelar"
       variant="primary"
-      busy={enviando}
+      enviando={enviando}
+      enviandoLabel="Cobrando…"
       onConfirm={onConfirm}
       onCancel={onCancel}
     />

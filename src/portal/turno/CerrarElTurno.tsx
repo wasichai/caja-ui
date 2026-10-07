@@ -1,13 +1,12 @@
 import { ApiError } from '@wasichai/core'
-import { Alert, ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
+import { Alert, Input, Label, Textarea } from '@wasichai/ui'
 import { Lock } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
-import { errorMessage } from '../../kit/ui/errorMessage'
 import { IrALosPagosSinEntregar } from '../buzon/PagosSinEntregar'
-import { OBSERVACION } from '../cobro/envio'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo, OBSERVACION, repartirElRechazo } from '../forms/campos'
 import { BotonConMotivo } from '../components/BotonConMotivo'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import { etiqueta } from '../forms/etiquetas'
 import { FORMAS_DE_PAGO, type CierreHecho, type FormaDePago, type PeticionDeCierre, type TurnoEnElDia } from '../types'
@@ -77,13 +76,13 @@ export function CerrarElTurno({
 
   // what is sent: only what was typed, trimmed and otherwise as it is
   const tecleados = FORMAS_DE_PAGO.filter((forma) => declarados[forma].trim() !== '')
-  const sinDeclarar = FORMAS_DE_PAGO.filter((forma) => declarados[forma].trim() === '')
+  const enBlanco = FORMAS_DE_PAGO.filter((forma) => declarados[forma].trim() === '')
 
   const pedir = (event: FormEvent) => {
     event.preventDefault()
     if (impedido) return
     const porForma = Object.fromEntries([
-      ...sinDeclarar.flatMap((forma) => (conMovimiento.includes(forma) ? [[forma, CON_MOVIMIENTO]] : [])),
+      ...enBlanco.flatMap((forma) => (conMovimiento.includes(forma) ? [[forma, CON_MOVIMIENTO]] : [])),
       ...tecleados.flatMap((forma) => (IMPORTE_DECLARADO.test(declarados[forma].trim()) ? [] : [[forma, NO_ES_IMPORTE]]))
     ]) as Errores['porForma']
     const largo = observacion.trim().length
@@ -97,14 +96,11 @@ export function CerrarElTurno({
     if (Object.keys(porForma).length === 0 && !halladas.observacion) setConfirmando(true)
   }
 
+  // a 400 of declarado goes under «Lo declarado» (one per forma de pago, joined), the observación's under its field
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const declarado = violaciones.filter((v) => v.field === 'declarado').map((v) => v.message)
-    const deObservacion = violaciones.find((v) => v.field === 'observacion')?.message
-    const ajenas = violaciones.filter((v) => v.field !== 'declarado' && v.field !== 'observacion')
-    setErrores({ porForma: {}, ...(declarado.length > 0 ? { declarado: declarado.join(' · ') } : {}), observacion: deObservacion })
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${ROTULOS[v.field] ?? v.field}: ${v.message}`).join(' · '))
-    else if (violaciones.length === 0) setGeneral(errorMessage(e, 'No se pudo cerrar el turno'))
+    const rechazo = repartirElRechazo(e, ['declarado', 'observacion'], (campo) => ROTULOS[campo] ?? campo, 'No se pudo cerrar el turno')
+    setErrores({ porForma: {}, ...rechazo.errores })
+    setGeneral(rechazo.general)
   }
 
   const cerrar = async () => {
@@ -204,7 +200,7 @@ export function CerrarElTurno({
         Cerrar el turno
       </BotonConMotivo>
       {confirmando && turno && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar el cierre"
           description={
             <>
@@ -218,9 +214,9 @@ export function CerrarElTurno({
                   </span>
                 ))}
               </span>
-              {sinDeclarar.length > 0 && (
+              {enBlanco.length > 0 && (
                 <span className="mt-2 block">
-                  Sin declarar, el backend las cierra en cero: {sinDeclarar.map((forma) => etiqueta('forma_pago', forma)).join(', ')}.
+                  En blanco, el backend las cierra en cero: {enBlanco.map((forma) => etiqueta('forma_pago', forma)).join(', ')}.
                 </span>
               )}
               <span className="mt-2 block">
@@ -232,7 +228,8 @@ export function CerrarElTurno({
           confirmLabel="Cerrar el turno"
           cancelLabel="Volver"
           variant="primary"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Cerrando el turno…"
           onConfirm={() => void cerrar()}
           onCancel={() => setConfirmando(false)}
         />

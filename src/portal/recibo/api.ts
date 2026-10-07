@@ -1,5 +1,4 @@
-import { blob, client } from '../api'
-import { enviar } from '../cobro/api'
+import { blob, client, enviar } from '../api'
 import type { AnulacionHecha, Pagina, PeticionDeAnulacion, ReciboEnFicha, ReciboEnLista } from '../types'
 
 // caja-backend's recibo after it was issued (/api/caja/recibos/**), as «Duplicado de recibo» uses it

@@ -127,12 +127,40 @@ afterEach(() => {
   fetch = null
 })
 
+// the reconciliation of AL with one line of rentas: a payment not delivered keeps it from squaring until it is explained
+const conciliacion = (muertos: number, explicados: number) => ({
+  fecha: AL,
+  a_la_fecha: AL,
+  cuadra: muertos === 0,
+  lineas: [
+    {
+      sistema_destino: 'rentas',
+      registrados: 1,
+      anulados: 0,
+      en_transito: 0,
+      muertos,
+      explicados,
+      cobrado: cifra('10.00'),
+      anulado: cifra('0.00'),
+      neto: cifra('10.00'),
+      recibidos: 1,
+      aplicados: 1,
+      rechazados: 0,
+      importe_aplicado: cifra('10.00'),
+      diferencia: cifra('0.00'),
+      por_que_no_se_sabe: null,
+      cuadra: muertos === 0
+    }
+  ]
+})
+
 function start({
   permisos = SUPERVISOR,
   user = SUPERVISORA,
   sinEntregar = [pago()] as unknown[],
-  impiden = IMPIDE
-}: { permisos?: CallerPermissions; user?: AuthUser; sinEntregar?: unknown[]; impiden?: typeof IMPIDE } = {}) {
+  impiden = IMPIDE,
+  path = '/cierre-caja'
+}: { permisos?: CallerPermissions; user?: AuthUser; sinEntregar?: unknown[]; impiden?: typeof IMPIDE; path?: string } = {}) {
   abrirSesion(user)
   rutas = [
     { method: 'GET', path: '/caja/turnos/del-dia', body: DEL_DIA },
@@ -140,9 +168,10 @@ function start({
     { method: 'GET', path: '/caja/pagos/sin-entregar', body: sinEntregar },
     { method: 'POST', path: `/caja/pagos/${PAGO}/explicacion`, body: pago({ estado: 'EXPLICADO', explicacion: EXPLICACION }) },
     { method: 'POST', path: '/caja/turnos/cierre', status: 409, body: problema(409, 'Hay pagos sin entregar') },
+    { method: 'GET', path: '/caja/conciliacion', body: conciliacion(1, 0) },
     ...rutasDeSesion(user, permisos)
   ]
-  window.history.pushState({}, '', '/cierre-caja')
+  window.history.pushState({}, '', path)
   fetch = mockFetch(rutas)
   render(<PortalApp />)
 }
@@ -263,6 +292,22 @@ describe('Pagos sin entregar: explicar', () => {
     expect(screen.queryByRole('region', { name: `Explicar el pago ${PAGO}` })).not.toBeInTheDocument()
     // the cierre goes because the arqueo read again says so
     await waitFor(async () => expect(await main().findByRole('button', { name: 'Cerrar el turno' })).toBeEnabled())
+  })
+
+  it('reads the reconciliation of the day on the same leaf again too, so it does not keep saying the day does not square', async () => {
+    start({ path: `/cierre-caja?fecha=${AL}` })
+    const cuadre = await main().findByTestId('cuadre-del-dia')
+    await waitFor(() => expect(texto(cuadre)).toContain('¿Cuadra el día?: No: alguna línea no cuadra.'))
+    await abrirYLlenar()
+
+    rutaDe('GET', '/caja/pagos/sin-entregar').body = []
+    rutaDe('GET', `/caja/turnos/${T1}/arqueo`).body = arqueo([])
+    rutaDe('GET', '/caja/conciliacion').body = conciliacion(0, 1)
+    await confirmar()
+
+    expect(await (await elBloque()).findByText(`Se explicó el pago ${PAGO}: el backend lo dejó «Explicado».`)).toBeInTheDocument()
+    await waitFor(() => expect(llamadas('GET', '/caja/conciliacion')).toHaveLength(2))
+    await waitFor(() => expect(texto(main().getByTestId('cuadre-del-dia'))).toContain('¿Cuadra el día?: Sí: todas las líneas cuadran.'))
   })
 
   it('never changes the state here: if the backend still lists it when read again, so does the screen', async () => {

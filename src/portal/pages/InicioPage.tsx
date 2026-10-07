@@ -8,20 +8,24 @@ export function InicioPage() {
   const ofrecidas = navTreeLeaves(useArbol()).filter((hoja) => hoja.clave)
   const hayPantallas = navTreeLeaves(NAV_TREE).some((hoja) => hoja.clave && conPantalla(hoja.clave))
 
+  // the permissions read stay when a read again fails, as the tree keeps offering with them (GuardaDeHoja)
   const frase = !hayPantallas
     ? 'Todavía no hay pantallas de Tesorería en esta versión de la caja.'
-    : permissionsError
-      ? 'No se pudieron leer los permisos de su cuenta: el menú no ofrece ninguna pantalla.'
-      : !permissions
-        ? 'Leyendo los permisos de su cuenta…'
-        : ofrecidas.length
-          ? 'Elija una pantalla del menú.'
-          : 'Su cuenta no tiene acceso a ninguna pantalla de Tesorería.'
+    : !permissions
+      ? permissionsError
+        ? 'No se pudieron leer los permisos de su cuenta: el menú no ofrece ninguna pantalla.'
+        : 'Leyendo los permisos de su cuenta…'
+      : ofrecidas.length
+        ? 'Elija una pantalla del menú.'
+        : 'Su cuenta no tiene acceso a ninguna pantalla de Tesorería.'
 
   return (
     <div className="space-y-2">
       <h1 className="text-xl font-semibold text-ink">Inicio</h1>
-      <p className="text-sm text-ink-muted">{frase}</p>
+      {/* a status: from «Leyendo los permisos…» to what the menu offers, a screen reader hears it change */}
+      <p role="status" className="text-sm text-ink-muted">
+        {frase}
+      </p>
     </div>
   )
 }

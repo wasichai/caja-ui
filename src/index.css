@@ -6,3 +6,27 @@
 @import './themes/portal-tributario/index.css';
 /* the @wasichai packages ship class names, not css, so tailwind scans them */
 @source '../node_modules/@wasichai';
+
+/* what caja fixes of @wasichai/ui's pieces until the library does, by their data-slot (ADR-035). in a layer, so a
+   utility on the piece still wins */
+@layer components {
+    /* a table scrolls sideways in its own box, which is not positioned: a header said only to a screen reader (sr-only,
+       position absolute) escaped it, and its place far right or far down widened the page. a phone scrolled sideways into
+       nothing, and a long leaf scrolled the whole shell. positioned, the table holds it inside both scroll boxes */
+    [data-slot='table'] {
+        position: relative;
+    }
+
+    /* a confirmation is centered and fixed, with nothing that bounds it: one taller than the screen hid its title and its
+       buttons, and the page under it does not scroll. bounded, it scrolls inside */
+    [data-slot='confirm-dialog'] {
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+    }
+
+    /* a screen's heading takes the focus when the clerk arrives at it (useHojaActual): it is where the reading starts,
+       not something to act on, so it gets no ring */
+    #content h1:focus-visible {
+        outline: none;
+    }
+}

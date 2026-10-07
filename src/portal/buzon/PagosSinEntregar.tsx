@@ -9,6 +9,7 @@ import { BotonConMotivo } from '../components/BotonConMotivo'
 import { leerBorrador } from '../escritura/borrador'
 import { fechaYHoraEnLima } from '../fechas'
 import { etiqueta } from '../forms/etiquetas'
+import { recaudacion } from '../recaudacion/api'
 import { CLAVE_DE_LOS_TURNOS } from '../turno/api'
 import type { PagoDelBuzon, TurnoEnElDia } from '../types'
 import { pagos } from './api'
@@ -69,10 +70,12 @@ export function PagosSinEntregar({
   // a 409 to an explanation: kept here, since the re-read takes the payment (and its act) off the list
   const [rechazo, setRechazo] = useState<{ pagoId: string; detalle: string } | null>(null)
 
-  // what the backend says now: the payments and the arqueo (whether the turno may close), read again
+  // what the backend says now: the payments, the arqueo (whether the turno may close) and the day's reconciliation
+  // (its payments not delivered and explained), read again
   const leerOtraVez = () => {
     void queryClient.invalidateQueries({ queryKey: pagos.claveSinEntregar, refetchType: 'all' })
     void queryClient.invalidateQueries({ queryKey: CLAVE_DE_LOS_TURNOS, refetchType: 'all' })
+    void queryClient.invalidateQueries({ queryKey: recaudacion.claveDeLaConciliacion })
   }
 
   // the order is the backend's (oldest first), with the turno being closed in front: nothing is added nor dropped
@@ -163,44 +166,42 @@ function TablaDePagos({
 }) {
   const derecha = 'text-right'
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Pagos sin entregar">
-        <thead>
-          <tr>
-            <Th>Pago</Th>
-            <Th>Turno</Th>
-            <Th>Tipo</Th>
-            <Th>Destino</Th>
-            <Th className={derecha}>Recibo</Th>
-            <Th className={derecha}>Intentos</Th>
-            <Th>Último error</Th>
-            <Th>Creado</Th>
-            <Th>Estado</Th>
-            <Th>
-              <span className="sr-only">Explicar</span>
-            </Th>
+    <Table aria-label="Pagos sin entregar">
+      <thead>
+        <tr>
+          <Th>Pago</Th>
+          <Th>Turno</Th>
+          <Th>Tipo</Th>
+          <Th>Destino</Th>
+          <Th className={derecha}>Recibo</Th>
+          <Th className={derecha}>Intentos</Th>
+          <Th>Último error</Th>
+          <Th>Creado</Th>
+          <Th>Estado</Th>
+          <Th>
+            <span className="sr-only">Explicar</span>
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {pagos.map((pago) => (
+          <tr key={pago.pago_id}>
+            <Td className="break-words tabular-nums">{pago.pago_id}</Td>
+            <Td className="break-words">{turnoDe(pago)}</Td>
+            <Td>{etiqueta('tipo_evento_pago', pago.tipo)}</Td>
+            <Td>{pago.destino}</Td>
+            <Td className={`${derecha} tabular-nums`}>{pago.recibo ?? <SinDato motivo="el recibo no se pudo leer" />}</Td>
+            <Td className={`${derecha} tabular-nums`}>{pago.intentos}</Td>
+            <Td>{pago.ultimo_error ?? <SinDato motivo="el backend no registró ningún error" />}</Td>
+            <Td>{pago.creado_en ? fechaYHoraEnLima(pago.creado_en) : <SinDato motivo="el backend no mandó cuándo se cobró" />}</Td>
+            <Td>{etiqueta('estado_evento', pago.estado)}</Td>
+            <Td>
+              <BotonDeExplicar pago={pago} sinPermiso={sinPermiso} onExplicar={onExplicar} />
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {pagos.map((pago) => (
-            <tr key={pago.pago_id}>
-              <Td className="break-all tabular-nums">{pago.pago_id}</Td>
-              <Td className="break-all">{turnoDe(pago)}</Td>
-              <Td>{etiqueta('tipo_evento_pago', pago.tipo)}</Td>
-              <Td>{pago.destino}</Td>
-              <Td className={`${derecha} tabular-nums`}>{pago.recibo ?? <SinDato motivo="el recibo no se pudo leer" />}</Td>
-              <Td className={`${derecha} tabular-nums`}>{pago.intentos}</Td>
-              <Td>{pago.ultimo_error ?? <SinDato motivo="el backend no registró ningún error" />}</Td>
-              <Td>{pago.creado_en ? fechaYHoraEnLima(pago.creado_en) : <SinDato motivo="el backend no mandó cuándo se cobró" />}</Td>
-              <Td>{etiqueta('estado_evento', pago.estado)}</Td>
-              <Td>
-                <BotonDeExplicar pago={pago} sinPermiso={sinPermiso} onExplicar={onExplicar} />
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   )
 }
 

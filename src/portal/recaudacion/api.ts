@@ -26,5 +26,7 @@ export const recaudacion = {
   porArea: (filtros: Filtros<(typeof FILTROS_POR_AREA)[number]>) =>
     client.request<RecaudacionPorArea>(`/caja/recaudacion/por-area${consulta(FILTROS_POR_AREA, filtros)}`),
   // the day is required: the one chosen, never «today» by default
-  conciliacion: (fecha: string) => client.request<ConciliacionDelDia>(`/caja/conciliacion?${new URLSearchParams({ fecha })}`)
+  conciliacion: (fecha: string) => client.request<ConciliacionDelDia>(`/caja/conciliacion?${new URLSearchParams({ fecha })}`),
+  // every day's reconciliation: what an act that changes it (an explanation) reads again
+  claveDeLaConciliacion: ['caja', 'conciliacion'] as const
 }

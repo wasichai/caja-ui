@@ -105,6 +105,8 @@ let cabeceras: Headers[] = []
 let pdf: Response | null = null
 // what POST /caja/cobros throws instead of answering (the network failed), or null
 let caida: Error | null = null
+// what POST /caja/cobros waits for before it answers (a slow backend), or null
+let retenido: Promise<void> | null = null
 
 const rutaDe = (method: string, path: string) => rutas.find((r) => r.method === method && r.path === path)!
 
@@ -114,6 +116,7 @@ beforeEach(() => {
   cabeceras = []
   pdf = null
   caida = null
+  retenido = null
   Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:recibo-1'), revokeObjectURL: vi.fn() })
 })
 afterEach(() => {
@@ -148,6 +151,7 @@ function start({
     if (url.endsWith('/pdf') && pdf) return pdf
     if (url === '/api/caja/cobros' && init?.method === 'POST') {
       cabeceras.push(new Headers(init.headers))
+      if (retenido) await retenido
       if (caida) throw caida
     }
     return simulado(input, init)
@@ -195,6 +199,17 @@ async function listoParaCobrar() {
 }
 
 describe('Caja tributaria: the choice lives in the route', () => {
+  it('gives each piece a key of its own: React warns of no two alike', async () => {
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      start({ path: EN_C01 })
+      await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })
+      expect(errores.mock.calls.filter((llamada) => llamada.join(' ').includes('the same key'))).toEqual([])
+    } finally {
+      errores.mockRestore()
+    }
+  })
+
   it('puts the caja and the document in the url, and a reload shows the same', async () => {
     start()
     await main().findByRole('option', { name: 'C-01 — VENTANILLA 1' })
@@ -388,6 +403,44 @@ describe('Caja tributaria: cobrar', () => {
     expect(cabeceras[0].get('Idempotency-Key')).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
   })
 
+  it('keeps what is cobrado in its own box, which the keyboard reaches first: a long list does not push «Cobrar» away', async () => {
+    start({ path: EN_C01 })
+    await listoParaCobrar()
+    await llenarYCobrar()
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Confirmar el cobro' })
+    const lineas = within(dialogo).getByRole('list', { name: 'Lo que se cobra' })
+    expect(within(lineas).getAllByRole('listitem').map(texto)).toEqual(['IMPUESTO PREDIAL 2026 - CUOTA 1 · PREDIAL-2026-0001 · S/ 0.10 al 02/10/2026'])
+    // the dialog opens on it, so a keyboard scrolls it; the next tabs reach the buttons
+    await waitFor(() => expect(lineas).toHaveFocus())
+    await userEvent.tab()
+    expect(within(dialogo).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
+    await userEvent.tab()
+    expect(within(dialogo).getByRole('button', { name: 'Cobrar' })).toHaveFocus()
+  })
+
+  it('once confirmed, waits for the answer: «Cancelar» and Escape do not hide a cobro that is on its way', async () => {
+    let soltar = () => {}
+    retenido = new Promise((resolver) => (soltar = resolver))
+    start({ path: EN_C01 })
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+
+    const dialogo = screen.getByRole('dialog', { name: 'Confirmar el cobro' })
+    expect(await within(dialogo).findByRole('button', { name: 'Cobrando…' })).toBeDisabled()
+    expect(within(dialogo).getByRole('status')).toHaveTextContent('Se envió al backend: espere su respuesta, ya no se puede volver atrás.')
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }))
+    await userEvent.keyboard('{Escape}')
+    expect(screen.getByRole('dialog', { name: 'Confirmar el cobro' })).toBeInTheDocument()
+
+    soltar()
+    // the dialog leaves with the answer (until then it hides the page from the accessibility tree)
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(await main().findByRole('heading', { name: 'Recibo 001-0000001' })).toBeInTheDocument()
+    expect(llamadas('POST', '/caja/cobros')).toHaveLength(1)
+  })
+
   it('cancelling the confirmation sends nothing', async () => {
     start({ path: EN_C01 })
     await listoParaCobrar()
@@ -416,6 +469,35 @@ describe('Caja tributaria: cobrar', () => {
     await confirmar()
     await waitFor(() => expect(cabeceras).toHaveLength(3))
     expect(cabeceras[2].get('Idempotency-Key')).not.toBe(cabeceras[0].get('Idempotency-Key'))
+  })
+
+  it('keeps the orders, what was typed and the attempt’s key when reading the orders again fails', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+
+    // the clerk searches the same payer again (to see whether it was charged), and that read fails
+    Object.assign(rutaDe('GET', '/caja/ordenes-de-cobro'), {
+      status: 403,
+      body: { title: 'Forbidden', status: 403, detail: 'Su cuenta ya no puede leer las órdenes' }
+    })
+    await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
+    expect(
+      await main().findByText('No se pudieron volver a leer las órdenes: Su cuenta ya no puede leer las órdenes. Se muestran las que se leyeron antes.')
+    ).toBeInTheDocument()
+    expect(casilla('PREDIAL-2026-0001')).toBeChecked()
+    expect(main().getByRole('textbox', { name: 'Observación' })).toHaveValue('cobro en ventanilla')
+    expect(texto(document.querySelector('main'))).toContain(NO_SE_SABE)
+
+    // and the next cobro goes with the same key: the first is never charged twice
+    caida = null
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    await waitFor(() => expect(cabeceras).toHaveLength(2))
+    expect(cabeceras[1].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
   })
 
   it('says an unknown outcome when the backend does not answer, and keeps the attempt’s key even after an edit', async () => {

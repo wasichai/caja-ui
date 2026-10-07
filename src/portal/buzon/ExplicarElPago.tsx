@@ -1,9 +1,9 @@
 import { ApiError } from '@wasichai/core'
-import { Alert, Button, ConfirmDialog, Label, Textarea } from '@wasichai/ui'
+import { Alert, Button, Label, Textarea } from '@wasichai/ui'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
-import { OBSERVACION } from '../cobro/envio'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo, OBSERVACION, repartirElRechazo } from '../forms/campos'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import { etiqueta } from '../forms/etiquetas'
 import type { PagoDelBuzon, PeticionDeExplicacion } from '../types'
@@ -77,13 +77,9 @@ export function ExplicarElPago({
   }
 
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const esCampo = (campo: string): campo is Campo => (CAMPOS_DE_LA_EXPLICACION as readonly string[]).includes(campo)
-    const propias = violaciones.filter((v) => esCampo(v.field))
-    const ajenas = violaciones.filter((v) => !esCampo(v.field))
-    setErrores(Object.fromEntries(propias.map((v) => [v.field, v.message])))
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${ROTULOS[v.field] ?? v.field}: ${v.message}`).join(' · '))
-    else if (propias.length === 0) setGeneral(errorMessage(e, 'No se pudo explicar el pago'))
+    const rechazo = repartirElRechazo(e, CAMPOS_DE_LA_EXPLICACION, (campo) => ROTULOS[campo] ?? campo, 'No se pudo explicar el pago')
+    setErrores(rechazo.errores)
+    setGeneral(rechazo.general)
   }
 
   const explicar = async () => {
@@ -161,7 +157,7 @@ export function ExplicarElPago({
         </div>
       </form>
       {confirmando && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar la explicación"
           description={
             <>
@@ -178,7 +174,8 @@ export function ExplicarElPago({
           confirmLabel="Explicar"
           cancelLabel="Volver"
           variant="primary"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Explicando…"
           onConfirm={() => void explicar()}
           onCancel={() => setConfirmando(false)}
         />

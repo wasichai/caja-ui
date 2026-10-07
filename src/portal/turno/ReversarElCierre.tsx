@@ -1,12 +1,11 @@
 import { ApiError } from '@wasichai/core'
-import { Alert, ConfirmDialog, Input, Label, Textarea } from '@wasichai/ui'
+import { Alert, Input, Label, Textarea } from '@wasichai/ui'
 import { Undo2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { formatDate } from '../../kit/format'
-import { errorMessage } from '../../kit/ui/errorMessage'
-import { OBSERVACION } from '../cobro/envio'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo, OBSERVACION, repartirElRechazo } from '../forms/campos'
 import { BotonConMotivo } from '../components/BotonConMotivo'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, useEscritura } from '../escritura/useEscritura'
 import type { PeticionDeReversion, ReversionHecha, TurnoEnElDia } from '../types'
 import { turnos } from './api'
@@ -62,12 +61,9 @@ export function ReversarElCierre({
   }
 
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const propias = violaciones.filter((v): v is typeof v & { field: Campo } => (CAMPOS_DE_LA_REVERSION as readonly string[]).includes(v.field))
-    const ajenas = violaciones.filter((v) => !(CAMPOS_DE_LA_REVERSION as readonly string[]).includes(v.field))
-    setErrores(Object.fromEntries(propias.map((v) => [v.field, v.message])))
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${ROTULOS[v.field] ?? v.field}: ${v.message}`).join(' · '))
-    else if (propias.length === 0) setGeneral(errorMessage(e, 'No se pudo reversar el cierre'))
+    const rechazo = repartirElRechazo(e, CAMPOS_DE_LA_REVERSION, (campo) => ROTULOS[campo] ?? campo, 'No se pudo reversar el cierre')
+    setErrores(rechazo.errores)
+    setGeneral(rechazo.general)
   }
 
   const reversar = async () => {
@@ -136,7 +132,7 @@ export function ReversarElCierre({
         Reversar el cierre
       </BotonConMotivo>
       {confirmando && turno && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar la reversión"
           description={
             <>
@@ -152,7 +148,8 @@ export function ReversarElCierre({
           confirmLabel="Reversar"
           cancelLabel="Volver"
           variant="danger"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Reversando…"
           onConfirm={() => void reversar()}
           onCancel={() => setConfirmando(false)}
         />

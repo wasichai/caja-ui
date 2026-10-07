@@ -106,54 +106,52 @@ function PorAreaYPartida({ porArea }: { porArea: RecaudacionPorArea }) {
   const fecha = porArea.a_la_fecha
   const derecha = 'text-right'
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Por área y partida">
-        <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
-          Cifras <FechaDeLasCifras fecha={fecha} />
-        </caption>
-        <thead>
-          <tr>
-            <Th>Área</Th>
-            <Th>Partida</Th>
-            <Th>Concepto</Th>
-            <Th className={derecha}>Cobrado</Th>
-            <Th className={derecha}>Anulado</Th>
-            <Th className={derecha}>Neto</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {porArea.filas.map((fila, i) => (
-            <tr key={`${fila.area ?? ''}|${fila.partida ?? ''}|${fila.concepto ?? ''}|${i}`}>
-              <Td>{areaDe(fila)}</Td>
-              <Td>{partidaDe(fila)}</Td>
-              <Td>{fila.concepto ?? <SinDato motivo="el backend no mandó el concepto" />}</Td>
-              <Td className={derecha}>
-                <Importe cifra={fila.cobrado} fechaDeLaTabla={fecha} />
-              </Td>
-              <Td className={derecha}>
-                <Importe cifra={fila.anulado} fechaDeLaTabla={fecha} />
-              </Td>
-              <Td className={derecha}>
-                <Importe cifra={fila.neto} fechaDeLaTabla={fecha} />
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="font-semibold">
-            <Td colSpan={5}>Neto</Td>
+    <Table aria-label="Por área y partida">
+      <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
+        Cifras <FechaDeLasCifras fecha={fecha} />
+      </caption>
+      <thead>
+        <tr>
+          <Th>Área</Th>
+          <Th>Partida</Th>
+          <Th>Concepto</Th>
+          <Th className={derecha}>Cobrado</Th>
+          <Th className={derecha}>Anulado</Th>
+          <Th className={derecha}>Neto</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {porArea.filas.map((fila, i) => (
+          <tr key={`${fila.area ?? ''}|${fila.partida ?? ''}|${fila.concepto ?? ''}|${i}`}>
+            <Td>{areaDe(fila)}</Td>
+            <Td>{partidaDe(fila)}</Td>
+            <Td>{fila.concepto ?? <SinDato motivo="el backend no mandó el concepto" />}</Td>
             <Td className={derecha}>
-              <Importe cifra={porArea.neto} fechaDeLaTabla={fecha} />
+              <Importe cifra={fila.cobrado} fechaDeLaTabla={fecha} />
+            </Td>
+            <Td className={derecha}>
+              <Importe cifra={fila.anulado} fechaDeLaTabla={fecha} />
+            </Td>
+            <Td className={derecha}>
+              <Importe cifra={fila.neto} fechaDeLaTabla={fecha} />
             </Td>
           </tr>
-          <tr>
-            <Td colSpan={5}>Neto sin partida (lo cobrado por órdenes)</Td>
-            <Td className={derecha}>
-              <Importe cifra={porArea.neto_sin_partida} fechaDeLaTabla={fecha} />
-            </Td>
-          </tr>
-        </tfoot>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr className="font-semibold">
+          <Td colSpan={5}>Neto</Td>
+          <Td className={derecha}>
+            <Importe cifra={porArea.neto} fechaDeLaTabla={fecha} />
+          </Td>
+        </tr>
+        <tr>
+          <Td colSpan={5}>Neto sin partida (lo cobrado por órdenes)</Td>
+          <Td className={derecha}>
+            <Importe cifra={porArea.neto_sin_partida} fechaDeLaTabla={fecha} />
+          </Td>
+        </tr>
+      </tfoot>
+    </Table>
   )
 }

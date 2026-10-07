@@ -406,7 +406,7 @@ describe('Cierre y arqueo de caja: cerrar', () => {
     expect(texto(dialogo)).toContain('Efectivo: 187.40')
     expect(texto(dialogo)).toContain('Transferencia: 120.50')
     expect(texto(dialogo)).toContain('Tarjeta: 0')
-    expect(texto(dialogo)).toContain('Sin declarar, el backend las cierra en cero: Depósito.')
+    expect(texto(dialogo)).toContain('En blanco, el backend las cierra en cero: Depósito.')
     expect(texto(dialogo)).toContain('La diferencia la calcula el backend al cerrar')
     expect(texto(dialogo)).toContain(
       'Un cierre no se modifica: si hay que rehacerlo, se reversa desde esta misma cuenta, con el permiso de reversión, y se cierra otra vez.'
@@ -456,7 +456,7 @@ describe('Cierre y arqueo de caja: cerrar', () => {
     start()
     await llenarYCerrar()
     expect(texto(await screen.findByRole('dialog', { name: 'Confirmar el cierre' }))).toContain(
-      'Sin declarar, el backend las cierra en cero: Cheque, Depósito, Transferencia.'
+      'En blanco, el backend las cierra en cero: Cheque, Depósito, Transferencia.'
     )
     await confirmarElCierre()
     await main().findByText('El turno quedó cerrado.')

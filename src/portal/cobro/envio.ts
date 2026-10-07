@@ -2,6 +2,7 @@ import { ApiError } from '@wasichai/core'
 import { useRef, useState } from 'react'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { SesionCaducada, useEscritura } from '../escritura/useEscritura'
+import { OBSERVACION, repartirElRechazo } from '../forms/campos'
 import { claveDelIntento, type Intento } from './intento'
 
 // how a cobro is sent, shared by «Caja tributaria» and «Caja de tasas»: one Idempotency-Key per attempt (intento.ts),
@@ -16,9 +17,6 @@ import { claveDelIntento, type Intento } from './intento'
 // would still leave a key no one can change. only an answered cobro (2xx) says what happened; a refusal of a later
 // attempt (a 400) says nothing of the first, and the notice stays. the clerk may let the key go on purpose, once they
 // checked in «Duplicado de recibo» that it was not charged, or that it was annulled (OTRO_COBRO)
-
-// caja-backend's Observacion: trimmed, 5 to 500 characters
-export const OBSERVACION = { minimo: 5, maximo: 500 }
 
 export const NO_SE_SABE =
   'No se sabe si se cobró: vuelva a pulsar Cobrar sin cambiar nada (se reconoce el mismo intento), o busque el recibo en Duplicado de recibo.'
@@ -78,15 +76,10 @@ export function useEnvioDelCobro<Campo extends string>({
     return Object.keys(halladas).length === 0
   }
 
-  const esControl = (campo: string): campo is Campo => (controles as readonly string[]).includes(campo)
-
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const propias = violaciones.filter((v) => esControl(v.field))
-    const ajenas = violaciones.filter((v) => !esControl(v.field))
-    setErrores(Object.fromEntries(propias.map((v) => [v.field, v.message])) as Partial<Record<Campo, string>>)
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${rotular(v.field)}: ${v.message}`).join(' · '))
-    else if (propias.length === 0) setGeneral(errorMessage(e, 'No se pudo cobrar'))
+    const rechazo = repartirElRechazo(e, controles, rotular, 'No se pudo cobrar')
+    setErrores(rechazo.errores)
+    setGeneral(rechazo.general)
   }
 
   // sends `cuerpo` with the attempt's key (the same one when the same body is sent again). what it answered, or null:

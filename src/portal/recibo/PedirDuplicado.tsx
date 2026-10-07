@@ -1,9 +1,7 @@
 import { ApiError } from '@wasichai/core'
 import { Alert, Button, Label, type PdfFile, Textarea } from '@wasichai/ui'
 import { useState, type FormEvent } from 'react'
-import { errorMessage } from '../../kit/ui/errorMessage'
-import { OBSERVACION } from '../cobro/envio'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo, OBSERVACION, repartirElRechazo } from '../forms/campos'
 import { AvisoDeBorrador, SesionCaducada, type useEscritura } from '../escritura/useEscritura'
 import { recibos } from './api'
 
@@ -37,13 +35,11 @@ export function PedirDuplicado({
   const id = 'duplicado-observacion'
 
   const contar = (e: unknown) => {
-    const violaciones = e instanceof ApiError ? e.violations : []
-    const suya = violaciones.find((v) => v.field === 'observacion')
-    const ajenas = violaciones.filter((v) => v.field !== 'observacion')
-    setError(suya?.message)
-    if (ajenas.length > 0) setGeneral(ajenas.map((v) => `${v.field}: ${v.message}`).join(' · '))
-    else if (e instanceof ApiError && e.status === 409) setGeneral(`${YA_NO_SE_DIBUJA_IGUAL} ${e.message}`)
-    else if (!suya) setGeneral(errorMessage(e, 'No se pudo pedir el duplicado'))
+    const rechazo = repartirElRechazo(e, CAMPOS_DEL_DUPLICADO, (campo) => campo, 'No se pudo pedir el duplicado')
+    setError(rechazo.errores.observacion)
+    // a 409 says what it means here, unless another field was refused
+    const ajenas = rechazo.general !== null && e instanceof ApiError && e.violations.length > 0
+    setGeneral(e instanceof ApiError && e.status === 409 && !ajenas ? `${YA_NO_SE_DIBUJA_IGUAL} ${e.message}` : rechazo.general)
   }
 
   const pedir = async (event: FormEvent) => {
@@ -87,10 +83,12 @@ export function PedirDuplicado({
           <ErrorDelCampo id={id} error={error} />
         </div>
         {general && <Alert tone="danger">{general}</Alert>}
+        {/* while it is asked, the reprint is already on its way: cancelling would only lose the PDF, or its refusal */}
         <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="secondary"
+            disabled={enviando}
             onClick={() => {
               cancelar()
               onCerrar()
@@ -99,7 +97,7 @@ export function PedirDuplicado({
             Cancelar
           </Button>
           <Button type="submit" disabled={enviando}>
-            Pedir el duplicado
+            {enviando ? 'Pidiendo el duplicado…' : 'Pedir el duplicado'}
           </Button>
         </div>
       </form>

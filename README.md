@@ -33,13 +33,21 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
-    pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre. Test: `src/portal/guarda.test.tsx`.
+    pantalla llena de 403. Si los permisos no se pudieron leer, lo dice y no la abre; una vez leídos, volver a leerlos y
+    fallar (una reconexión) no cierra la pantalla abierta ni lo que se tecleó en ella. Test: `src/portal/guarda.test.tsx`.
 - **Una hoja que revienta no tumba la raíz**: cada pantalla se dibuja dentro de un límite de error (`LimiteDeHoja`)
-  que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja.
+  que se reinicia al cambiar la ruta. La barra y el árbol siguen, con la frase del fallo, y otra hoja se dibuja. Lo que
+  revienta fuera de una hoja (la barra, el árbol, el rastro, el login) dibuja `FalloDeLaCaja`: la frase, lo que se lanzó
+  y «Volver a cargar», nunca la página en inglés de react-router.
+- **Cada hoja se nombra y toma el foco** (`shell/hojaActual.ts`): la pestaña del navegador dice la hoja en pantalla
+  («Caja tributaria · Caja»), y al pasar a otra el foco va a su título, para que un lector de pantalla diga dónde llegó
+  y el contenido empiece arriba. Cambiar solo la query (un filtro, otro recibo) no mueve el foco. «Ir al contenido», lo
+  primero que alcanza el teclado, salta la barra y el árbol. Test: `src/portal/navegacion.test.tsx`.
 - **El estado del árbol** se guarda por pestaña del navegador (`sessionStorage['caja.nav']`).
 - **Pestañas de trabajo: todavía no.** La barra de pestañas (`TabBar` y `WorkspaceTabs`, copiadas de srtm-ui) está
-  montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), así que solo muestra «Inicio».
-  `sessionStorage['caja.tabs']` no guarda ninguna, y cerrar sesión lo borra.
+  montada, pero ninguna pantalla abre la suya (nadie llama a `useWorkspaceTab`), y sin pestañas no se dibuja: solo
+  repetiría el «Inicio» del árbol. Aparece sola cuando una pantalla abra la suya. `sessionStorage['caja.tabs']` no guarda
+  ninguna, y cerrar sesión lo borra.
 - **Hueco conocido: salir de una hoja con un acto a medio teclear lo pierde sin avisar.** Ninguna pantalla monta
   `useUnsavedChanges` del kit: lo tecleado en una anulación, un cierre, una reversión, una explicación o un cobro se
   pierde al ir a otra hoja (o a otro recibo, turno o pago). Solo un 401 lo guarda (`useEscritura`, más abajo).
@@ -93,7 +101,8 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   concepto, detalle, referencia, sistema de origen, fecha de exigibilidad e importe (`Importe`, con su fecha), y una
   casilla por fila. Una orden que no se puede marcar dice por qué: la que todavía no es exigible (hoy en Lima) y la de
   otro sistema que el de lo marcado, porque un recibo se anula entero (una orden sin sistema marcada también impide las
-  de otro). Sin órdenes: «Este documento no tiene órdenes pendientes».
+  de otro). Sin órdenes: «Este documento no tiene órdenes pendientes». Si volver a leerlas falla, se dice encima y se
+  quedan las leídas, con el cobro de abajo: lo tecleado y la clave de un intento que no se sabe si se cobró.
 - **El total lo da el backend**: al cambiar lo marcado, `POST /api/caja/cobros/vista-previa` devuelve el total, que se
   dibuja tal cual con `Importe`, y los `motivos` por los que no se puede cobrar, que se dicen como vienen. El cliente
   no suma nada.
@@ -185,7 +194,8 @@ guarda su ruta.
   emitido (hora de Lima), documento, pagador, importe (`Importe`; si todas las cifras son del mismo día, la fecha va una
   vez en la cabecera con `FechaDeLasCifras`), medio de pago, duplicados y estado, con su etiqueta. «Ver» lleva a la ruta
   del recibo, sin perder los filtros. Un 400 se dice bajo su filtro; cualquier otro fallo (un 403) se dice en el hueco
-  de la lista, y la ficha sigue.
+  de la lista, y la ficha sigue. Una página que se quedó vacía (una anulación que sale del filtro «Emitido») no dice que
+  nada coincide: lleva a la última página que tiene recibos.
 - **El recibo elegido**: `GET /api/caja/recibos/{numero}`, en `FieldGrid`: número, estado, caja, cajero, emitido en,
   forma y tipo de pago, pagador, duplicados emitidos, total (`kind: 'importe'`) y la observación del cobro; sus líneas
   como las lee su tipo (órdenes o tasas, con código, cantidad y precio unitario); y, si está anulado, la anulación:
@@ -193,7 +203,9 @@ guarda su ruta.
 - **Duplicado en PDF** (solo PDF): pedir un duplicado **escribe**, porque registra la reimpresión. Por eso nunca se pide
   al abrir la ficha: el botón abre un formulario que pide la observación (de 5 a 500), y solo entonces va
   `POST /api/caja/recibos/{numero}/duplicados` (`blob`, con el cuerpo en JSON). El PDF que contestó se abre en
-  `PdfDialog` sin volver a pedirlo (su `load` opcional, que diverge de la copia de srtm-ui y lo anota en su cabecera), y la ficha se vuelve a leer (sus duplicados). Un 409 dice que el recibo ya no se
+  `PdfDialog` sin volver a pedirlo (su `load` opcional, que diverge de la copia de srtm-ui y lo anota en su cabecera), y
+  la ficha se vuelve a leer (sus duplicados). Cerrarlo no lo pierde: mientras se ve la ficha, «Se registró el duplicado…»
+  ofrece «Ver el duplicado», que lo abre otra vez sin registrar otra reimpresión. Un 409 dice que el recibo ya no se
   dibuja igual que en su reimpresión anterior y que no se entregó ni se registró nada; un 400, bajo la observación; un
   403, con su `detail`. Un 401 guarda la observación con la clave `duplicado.<numero>`.
 - **Anular** es un acto con `RecordForm`: motivo (obligatorio, hasta 80: el sustento del acto, que se imprime en el
@@ -310,7 +322,8 @@ el turno cierra. Es el bloque «Pagos pendientes de entrega» de caja-web, dentr
   `POST /api/caja/pagos/{pago_id}/explicacion` con el `pago_id` de la fila, nunca uno tecleado.
   - **El estado no se cambia en el cliente**: con éxito se dice lo que contestó el backend («Se explicó el pago …: el
     backend lo dejó «Explicado».»), y se vuelven a leer los pagos **y** el arqueo, para que «puede cerrar» lo diga el
-    backend. Si el backend lo siguiera listando, la pantalla lo seguiría mostrando.
+    backend, y la conciliación del día de la misma hoja, que cuenta los pagos sin entregar y los explicados. Si el
+    backend lo siguiera listando, la pantalla lo seguiría mostrando.
   - Un 400 se dice bajo su campo (`explicacion`, `observacion`), y otro (`pago_id`) encima del botón. El 409 (ya no está
     `MUERTO`: se entregó o alguien ya lo explicó) se dice con su `detail` en el bloque, no en el acto, porque al releer
     el pago sale de la lista y el acto con él; luego relee los pagos y el arqueo. Un 403 y un
@@ -442,6 +455,14 @@ Lo que caja-web cumplía en cada pantalla, como primitivas que cada pantalla usa
   recaudación y Recaudación por área) y «Conciliar» con lo mismo que ya dice la ruta vuelven a pedirlo al backend: la
   misma URL es la misma consulta, y sin esto el botón no haría nada. Tests: uno por pantalla («… pressed with the same
   …»).
+- **Un acto confirmado espera su respuesta.** Ningún acto se deshace, así que, una vez confirmado (cobro, cierre,
+  reversión, explicación, anulación), su diálogo no se cierra hasta que el backend conteste: «Volver», Escape, la X o un
+  clic fuera solo lo esconderían mientras el acto llega igual, o se perdería su rechazo. El botón dice «Cobrando…» (o el
+  verbo del acto) y una línea explica que ya no se puede volver atrás (`ConfirmarEscritura`, `src/portal/components`).
+  Tests: «… waits for the answer» en `cajaTributaria.test.tsx` y `duplicadoRecibo.test.tsx`.
+- **Lo que caja arregla de las piezas de `@wasichai/ui`, hasta que la librería lo haga**, va en `src/index.css` por su
+  `data-slot`: la tabla, posicionada para que nada de ella (una cabecera `sr-only`) se salga de su caja de scroll y
+  ensanche la página; y la confirmación, acotada a la pantalla. Test: `src/themes/parciales.test.tsx`.
 
 ## Requisitos
 

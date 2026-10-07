@@ -6,8 +6,9 @@ import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { NativeSelect } from '../../kit/forms/NativeSelect'
 import { errorMessage } from '../../kit/ui/errorMessage'
+import { fechaComun } from '../cifras/fechaComun'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo } from '../forms/campos'
 import { fechaYHoraEnLima } from '../fechas'
 import { etiqueta } from '../forms/etiquetas'
 import { ESTADOS_DE_RECIBO, type ReciboEnLista } from '../types'
@@ -74,8 +75,25 @@ export function ListaDeRecibos() {
           <LoadingState label="Buscando los recibos…" />
         ) : lista.isError ? (
           <Alert tone="danger">No se pudo leer la lista de recibos: {errorMessage(lista.error, 'el backend no contestó')}</Alert>
-        ) : lista.data.content.length === 0 ? (
+        ) : lista.data.totalElements === 0 ? (
           <p className="text-sm text-ink-muted">Ningún recibo coincide con la búsqueda.</p>
+        ) : lista.data.content.length === 0 ? (
+          // the page ran out under the clerk (an anulación out of an «Emitido» filter, an older link): some do match, so
+          // it leads to the last page that has them, never says that nothing matches
+          <p className="text-sm text-ink-muted">
+            Esta página ya no tiene recibos: los que coinciden caben en las anteriores.{' '}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const ultima = Math.max(0, Math.ceil(lista.data.totalElements / size) - 1)
+                cambiar({ page: ultima > 0 ? String(ultima) : null })
+              }}
+            >
+              Ir a la última página
+            </Button>
+          </p>
         ) : (
           <>
             <TablaDeRecibos filas={lista.data.content} />
@@ -171,57 +189,54 @@ function FiltrosDeRecibos({
 function TablaDeRecibos({ filas }: { filas: ReciboEnLista[] }) {
   const navigate = useNavigate()
   const { search } = useLocation()
-  const fechas = new Set(filas.map((r) => r.total.actualizado_a))
-  const comun = fechas.size === 1 ? filas[0].total.actualizado_a : undefined
+  const comun = fechaComun(filas.map((r) => r.total))
   const ver = (numero: string) => navigate({ pathname: `/duplicado-recibo/${encodeURIComponent(numero)}`, search })
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Recibos">
-        <thead>
-          <tr>
-            <Th>Número</Th>
-            <Th>Emitido</Th>
-            <Th>Documento</Th>
-            <Th>Pagador</Th>
-            <Th className="text-right">
-              Importe
-              {comun && (
-                <>
-                  {' '}
-                  <FechaDeLasCifras fecha={comun} />
-                </>
-              )}
-            </Th>
-            <Th>Medio de pago</Th>
-            <Th className="text-right">Duplicados</Th>
-            <Th>Estado</Th>
-            <Th>
-              <span className="sr-only">Ver</span>
-            </Th>
+    <Table aria-label="Recibos">
+      <thead>
+        <tr>
+          <Th>Número</Th>
+          <Th>Emitido</Th>
+          <Th>Documento</Th>
+          <Th>Pagador</Th>
+          <Th className="text-right">
+            Importe
+            {comun && (
+              <>
+                {' '}
+                <FechaDeLasCifras fecha={comun} />
+              </>
+            )}
+          </Th>
+          <Th>Medio de pago</Th>
+          <Th className="text-right">Duplicados</Th>
+          <Th>Estado</Th>
+          <Th>
+            <span className="sr-only">Ver</span>
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {filas.map((recibo) => (
+          <tr key={recibo.numero_impreso}>
+            <Td className="tabular-nums">{recibo.numero_impreso}</Td>
+            <Td>{fechaYHoraEnLima(recibo.emitido_en)}</Td>
+            <Td>{recibo.pagador_documento ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
+            <Td>{recibo.pagador_nombre ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
+            <Td className="text-right">
+              <Importe cifra={recibo.total} fechaDeLaTabla={comun} />
+            </Td>
+            <Td>{etiqueta('forma_pago', recibo.forma_pago)}</Td>
+            <Td className="text-right tabular-nums">{recibo.duplicados}</Td>
+            <Td>{etiqueta('estado_recibo', recibo.estado)}</Td>
+            <Td>
+              <Button size="sm" variant="secondary" aria-label={`Ver ${recibo.numero_impreso}`} onClick={() => ver(recibo.numero_impreso)}>
+                Ver
+              </Button>
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {filas.map((recibo) => (
-            <tr key={recibo.numero_impreso}>
-              <Td className="tabular-nums">{recibo.numero_impreso}</Td>
-              <Td>{fechaYHoraEnLima(recibo.emitido_en)}</Td>
-              <Td>{recibo.pagador_documento ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
-              <Td>{recibo.pagador_nombre ?? <SinDato motivo={SIN_PAGADOR} />}</Td>
-              <Td className="text-right">
-                <Importe cifra={recibo.total} fechaDeLaTabla={comun} />
-              </Td>
-              <Td>{etiqueta('forma_pago', recibo.forma_pago)}</Td>
-              <Td className="text-right tabular-nums">{recibo.duplicados}</Td>
-              <Td>{etiqueta('estado_recibo', recibo.estado)}</Td>
-              <Td>
-                <Button size="sm" variant="secondary" aria-label={`Ver ${recibo.numero_impreso}`} onClick={() => ver(recibo.numero_impreso)}>
-                  Ver
-                </Button>
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   )
 }

@@ -5,13 +5,13 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
+import { fechaComun } from '../cifras/fechaComun'
 import { FechaDeLasCifras, Importe, SinDato } from '../cifras/Importe'
 import type { Cifra } from '../cifras/Importe'
-import { conError, ErrorDelCampo } from '../cobro/Formulario'
+import { conError, ErrorDelCampo } from '../forms/campos'
 import { Dato } from '../turno/Arqueo'
 import type { ConciliacionDelDia as LaConciliacion, LineaDeConciliacion } from '../types'
 import { recaudacion } from './api'
-import { fechaComun } from './comun'
 
 // «Conciliación del día», in «Cierre y arqueo de caja» (caja-web's blocks «Conciliación del día» and «El cuadre del
 // día»): what was charged at the window against what each source system says it applied. the day is chosen by whoever
@@ -47,7 +47,11 @@ function DelOrigen({ linea, children }: { linea: LineaDeConciliacion; children: 
 export function ConciliacionDelDia() {
   const [params, setParams] = useSearchParams()
   const fecha = params.get(PARAMETRO) ?? ''
-  const conciliacion = useQuery({ queryKey: ['caja', 'conciliacion', fecha], queryFn: () => recaudacion.conciliacion(fecha), enabled: fecha !== '' })
+  const conciliacion = useQuery({
+    queryKey: [...recaudacion.claveDeLaConciliacion, fecha],
+    queryFn: () => recaudacion.conciliacion(fecha),
+    enabled: fecha !== ''
+  })
 
   // the day chosen goes to the url, beside what else is there (the turno). the same day again is the same query: it is
   // asked again, not left as it was read
@@ -144,66 +148,64 @@ function PorSistema({ lineas }: { lineas: LineaDeConciliacion[] }) {
   const derecha = 'text-right'
   const cifra = (valor: Cifra) => <Importe cifra={valor} fechaDeLaTabla={fecha} />
   return (
-    <div className="overflow-x-auto">
-      <Table aria-label="Por sistema de origen">
-        {fecha && (
-          <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
-            Cifras <FechaDeLasCifras fecha={fecha} />
-          </caption>
-        )}
-        <thead>
-          <tr>
-            <Th>Sistema</Th>
-            <Th className={derecha}>Registrados</Th>
-            <Th className={derecha}>Anulados</Th>
-            <Th className={derecha}>En tránsito</Th>
-            <Th className={derecha}>Sin entregar</Th>
-            <Th className={derecha}>Explicados</Th>
-            <Th className={derecha}>Cobrado</Th>
-            <Th className={derecha}>Anulado</Th>
-            <Th className={derecha}>Neto</Th>
-            <Th className={derecha}>Recibidos en el origen</Th>
-            <Th className={derecha}>Aplicados en el origen</Th>
-            <Th className={derecha}>Rechazados en el origen</Th>
-            <Th className={derecha}>Importe aplicado</Th>
-            <Th className={derecha}>Diferencia</Th>
-            <Th>¿Cuadra?</Th>
-            <Th>Situación</Th>
+    <Table aria-label="Por sistema de origen">
+      {fecha && (
+        <caption className="caption-top pb-1 text-left text-xs text-ink-muted">
+          Cifras <FechaDeLasCifras fecha={fecha} />
+        </caption>
+      )}
+      <thead>
+        <tr>
+          <Th>Sistema</Th>
+          <Th className={derecha}>Registrados</Th>
+          <Th className={derecha}>Anulados</Th>
+          <Th className={derecha}>En tránsito</Th>
+          <Th className={derecha}>Sin entregar</Th>
+          <Th className={derecha}>Explicados</Th>
+          <Th className={derecha}>Cobrado</Th>
+          <Th className={derecha}>Anulado</Th>
+          <Th className={derecha}>Neto</Th>
+          <Th className={derecha}>Recibidos en el origen</Th>
+          <Th className={derecha}>Aplicados en el origen</Th>
+          <Th className={derecha}>Rechazados en el origen</Th>
+          <Th className={derecha}>Importe aplicado</Th>
+          <Th className={derecha}>Diferencia</Th>
+          <Th>¿Cuadra?</Th>
+          <Th>Situación</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {lineas.map((linea) => (
+          <tr key={linea.sistema_destino}>
+            <Td>{linea.sistema_destino}</Td>
+            <Td className={`${derecha} tabular-nums`}>{linea.registrados}</Td>
+            <Td className={`${derecha} tabular-nums`}>{linea.anulados}</Td>
+            <Td className={`${derecha} tabular-nums`}>{linea.en_transito}</Td>
+            <Td className={`${derecha} tabular-nums`}>{linea.muertos}</Td>
+            <Td className={`${derecha} tabular-nums`}>{linea.explicados}</Td>
+            <Td className={derecha}>{cifra(linea.cobrado)}</Td>
+            <Td className={derecha}>{cifra(linea.anulado)}</Td>
+            <Td className={derecha}>{cifra(linea.neto)}</Td>
+            <Td className={`${derecha} tabular-nums`}>
+              <DelOrigen linea={linea}>{linea.recibidos}</DelOrigen>
+            </Td>
+            <Td className={`${derecha} tabular-nums`}>
+              <DelOrigen linea={linea}>{linea.aplicados}</DelOrigen>
+            </Td>
+            <Td className={`${derecha} tabular-nums`}>
+              <DelOrigen linea={linea}>{linea.rechazados}</DelOrigen>
+            </Td>
+            <Td className={derecha}>
+              <DelOrigen linea={linea}>{linea.importe_aplicado && cifra(linea.importe_aplicado)}</DelOrigen>
+            </Td>
+            <Td className={derecha}>
+              <DelOrigen linea={linea}>{linea.diferencia && cifra(linea.diferencia)}</DelOrigen>
+            </Td>
+            <Td>{linea.cuadra ? 'Sí' : 'No'}</Td>
+            <Td>{situacion(linea)}</Td>
           </tr>
-        </thead>
-        <tbody>
-          {lineas.map((linea) => (
-            <tr key={linea.sistema_destino}>
-              <Td>{linea.sistema_destino}</Td>
-              <Td className={`${derecha} tabular-nums`}>{linea.registrados}</Td>
-              <Td className={`${derecha} tabular-nums`}>{linea.anulados}</Td>
-              <Td className={`${derecha} tabular-nums`}>{linea.en_transito}</Td>
-              <Td className={`${derecha} tabular-nums`}>{linea.muertos}</Td>
-              <Td className={`${derecha} tabular-nums`}>{linea.explicados}</Td>
-              <Td className={derecha}>{cifra(linea.cobrado)}</Td>
-              <Td className={derecha}>{cifra(linea.anulado)}</Td>
-              <Td className={derecha}>{cifra(linea.neto)}</Td>
-              <Td className={`${derecha} tabular-nums`}>
-                <DelOrigen linea={linea}>{linea.recibidos}</DelOrigen>
-              </Td>
-              <Td className={`${derecha} tabular-nums`}>
-                <DelOrigen linea={linea}>{linea.aplicados}</DelOrigen>
-              </Td>
-              <Td className={`${derecha} tabular-nums`}>
-                <DelOrigen linea={linea}>{linea.rechazados}</DelOrigen>
-              </Td>
-              <Td className={derecha}>
-                <DelOrigen linea={linea}>{linea.importe_aplicado && cifra(linea.importe_aplicado)}</DelOrigen>
-              </Td>
-              <Td className={derecha}>
-                <DelOrigen linea={linea}>{linea.diferencia && cifra(linea.diferencia)}</DelOrigen>
-              </Td>
-              <Td>{linea.cuadra ? 'Sí' : 'No'}</Td>
-              <Td>{situacion(linea)}</Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   )
 }

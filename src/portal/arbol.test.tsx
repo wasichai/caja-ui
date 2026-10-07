@@ -109,13 +109,16 @@ describe('a leaf without a screen', () => {
   it('is not drawn, even for an account that may open it', async () => {
     registradas['duplicado-recibo'] = Prueba
     start({ user: ADMIN, permisos: { admin: true, objects: {} } })
-    expect(await inicio().findByText('Elija una pantalla del menú.')).toBeInTheDocument()
+    expect(await inicio().findByText('Elija una pantalla del menú.')).toHaveAttribute('role', 'status')
     expect(hojas()).toEqual(['Ir al inicio', 'Duplicado de recibo', 'Administración'])
   })
 
   it('has no page either', async () => {
     start({ permisos: { admin: false, objects: { orden_de_cobro: ['READ'] } }, path: '/caja-tributaria' })
-    expect(await screen.findByText('Esta página no existe')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Esta página no existe' })).toBeInTheDocument()
+    // and the way back
+    await userEvent.click(screen.getByRole('link', { name: 'Volver al inicio' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
   })
 
   // none has one in this version: home says so, and the tree has no module

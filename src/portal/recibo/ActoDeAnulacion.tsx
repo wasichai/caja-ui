@@ -1,10 +1,10 @@
 import { ApiError } from '@wasichai/core'
-import { ConfirmDialog } from '@wasichai/ui'
 import { useState } from 'react'
 import { RecordForm } from '../../kit/forms/RecordForm'
 import type { FieldSpec, SectionSpec } from '../../kit/forms/spec'
 import { Importe } from '../cifras/Importe'
-import { OBSERVACION } from '../cobro/envio'
+import { OBSERVACION } from '../forms/campos'
+import { ConfirmarEscritura } from '../components/ConfirmarEscritura'
 import { AvisoDeBorrador, SesionCaducada, type useEscritura } from '../escritura/useEscritura'
 import type { AnulacionHecha, PeticionDeAnulacion, ReciboEnFicha } from '../types'
 import { recibos } from './api'
@@ -132,7 +132,7 @@ export function ActoDeAnulacion({
         onSubmit={(tecleado) => new Promise<void>((resolver, rechazar) => setPorConfirmar({ tecleado, resolver, rechazar }))}
       />
       {porConfirmar && (
-        <ConfirmDialog
+        <ConfirmarEscritura
           title="Confirmar la anulación"
           description={
             <>
@@ -149,7 +149,8 @@ export function ActoDeAnulacion({
           confirmLabel="Anular"
           cancelLabel="Volver"
           variant="danger"
-          busy={enviando}
+          enviando={enviando}
+          enviandoLabel="Anulando…"
           onConfirm={() => void anular()}
           onCancel={volver}
         />
