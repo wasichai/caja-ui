@@ -494,7 +494,7 @@ yarn build           # dist/, luego yarn preview
 
 ## Notas
 
-- Versión de wasichai-ui: `@wasichai/*` 0.5.0, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
+- Versión de wasichai-ui: `@wasichai/*` 0.5.1, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
   `testing`). Para actualizar, cambiar la versión de todos a la vez en `package.json`, alinear las dependencias que
   comparten (react-query, testing-library…) y correr `yarn install`. Luego reiniciar el servidor con `yarn dev --force`:
   Vite guarda los paquetes pre-empaquetados y, si no, sigue sirviendo la versión anterior.
