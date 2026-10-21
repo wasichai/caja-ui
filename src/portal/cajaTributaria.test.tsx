@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { AuthUser, CallerPermissions } from '@wasichai/core'
 import { mockFetch, type FetchMock, type MockRoute } from '@wasichai/testing'
@@ -659,6 +659,185 @@ describe('Caja tributaria: cobrar', () => {
     start({ path: EN_C01, permisos: { admin: false, objects: { recibo: ['CREATE'], caja: ['READ'] } } })
     expect(await main().findByText('Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.')).toBeInTheDocument()
     expect(fetch!.calls.filter((c) => c.path.startsWith('/caja/'))).toEqual([])
+  })
+})
+
+describe('Caja tributaria: withdrawn orders', () => {
+  const RETIRADA = 'La orden PREDIAL-2026-0002 fue retirada por el sistema de origen.'
+  // what the backend answers now: the order of PREDIAL-2026-0002 is no longer pending (caja-backend's retiro)
+  const sinLaSegunda = () => {
+    const listado = ordenes()
+    listado.content = listado.content.filter((o) => o.orden_id !== O2)
+    listado.totalElements = listado.content.length
+    return listado
+  }
+  const volverALaVentana = () => fireEvent.focus(window)
+
+  it('rereads the pending orders before confirming, and unmarks a withdrawn one with a warning', async () => {
+    start({ path: EN_C01 })
+    await marcar('PREDIAL-2026-0001')
+    await marcar('PREDIAL-2026-0002')
+    await waitFor(() => expect(botonCobrar()).toBeEnabled())
+    const antes = llamadas('GET', '/caja/ordenes-de-cobro').length
+
+    rutaDe('GET', '/caja/ordenes-de-cobro').body = sinLaSegunda()
+    await llenarYCobrar()
+    expect(await main().findByText(RETIRADA)).toBeInTheDocument()
+    expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(antes + 1)
+    expect(screen.queryByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0002' })).not.toBeInTheDocument()
+    expect(casilla('PREDIAL-2026-0001')).toBeChecked()
+    // the clerk sees what changed before confirming: no dialog opens on what was marked before
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    // pressed again, what is marked is still pending: it confirms only the one left
+    await waitFor(() => expect(botonCobrar()).toBeEnabled())
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    expect(await main().findByRole('heading', { name: 'Recibo 001-0000001' })).toBeInTheDocument()
+    expect(llamadas('POST', '/caja/cobros')[0].body).toMatchObject({ ordenes: [O1] })
+  })
+
+  it('says the 422 of the cobro with its detail and offers «Volver a buscar»', async () => {
+    const detail = `La orden ${O1} (rentas/PREDIAL-2026-0001) no se puede cobrar: el sistema que la emitió la retiró`
+    start({ path: EN_C01 })
+    Object.assign(rutaDe('POST', '/caja/cobros'), { status: 422, body: { title: 'Unprocessable Content', status: 422, detail } })
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    const alerta = await main().findByRole('alert')
+    expect(alerta).toHaveTextContent(detail)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    const antes = llamadas('GET', '/caja/ordenes-de-cobro').length
+    rutaDe('GET', '/caja/ordenes-de-cobro').body = sinLaSegunda()
+    await userEvent.click(within(alerta).getByRole('button', { name: 'Volver a buscar' }))
+    await waitFor(() => expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(antes + 1))
+    expect(casilla('PREDIAL-2026-0001')).not.toBeChecked()
+    expect(main().queryByText(detail)).not.toBeInTheDocument()
+    expect(botonCobrar()).toHaveAccessibleDescription('Marque las órdenes que va a cobrar.')
+  })
+
+  it('offers «Volver a buscar» only for the 422: a 409 says its detail alone', async () => {
+    start({ path: EN_C01 })
+    Object.assign(rutaDe('POST', '/caja/cobros'), { status: 409, body: { title: 'Conflict', status: 409, detail: 'La caja C-01 está de baja' } })
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    expect(await main().findByRole('alert')).toHaveTextContent('La caja C-01 está de baja')
+    expect(main().queryByRole('button', { name: 'Volver a buscar' })).not.toBeInTheDocument()
+  })
+
+  it('keeps an attempt whose outcome is not known through a 422 and «Volver a buscar»', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+
+    caida = null
+    Object.assign(rutaDe('POST', '/caja/cobros'), {
+      status: 422,
+      body: { title: 'Unprocessable Content', status: 422, detail: 'el sistema que la emitió la retiró' }
+    })
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    await userEvent.click(await main().findByRole('button', { name: 'Volver a buscar' }))
+    expect(texto(document.querySelector('main'))).toContain(NO_SE_SABE)
+
+    // the next cobro still goes with the first attempt's key
+    Object.assign(rutaDe('POST', '/caja/cobros'), { status: 200, body: { ...RECIBO, emitido: false } })
+    await marcar('PREDIAL-2026-0001')
+    await waitFor(() => expect(botonCobrar()).toBeEnabled())
+    await userEvent.click(botonCobrar())
+    await confirmar()
+    await waitFor(() => expect(cabeceras).toHaveLength(3))
+    expect(cabeceras[2].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
+  })
+
+  it('refetches on window focus on this screen', async () => {
+    start({ path: EN_C01 })
+    await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })
+    expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(1)
+    volverALaVentana()
+    await waitFor(() => expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(2))
+    // and back to the browser's tab
+    fireEvent(window, new Event('visibilitychange'))
+    await waitFor(() => expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(3))
+  })
+
+  it('warns once, not on every refetch, and forgets the warning when another order is marked', async () => {
+    start({ path: EN_C01 })
+    await marcar('PREDIAL-2026-0001')
+    await marcar('PREDIAL-2026-0002')
+    rutaDe('GET', '/caja/ordenes-de-cobro').body = sinLaSegunda()
+
+    volverALaVentana()
+    expect(await main().findByText(RETIRADA)).toBeInTheDocument()
+    expect(casilla('PREDIAL-2026-0001')).toBeChecked()
+    volverALaVentana()
+    await waitFor(() => expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(3))
+    expect(main().getAllByText(RETIRADA)).toHaveLength(1)
+
+    await userEvent.click(casilla('PREDIAL-2026-0001'))
+    await marcar('PREDIAL-2026-0001')
+    expect(main().queryByText(RETIRADA)).not.toBeInTheDocument()
+  })
+
+  it('does not call withdrawn an order that may have gone with its own cobro, whose outcome is not known', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await listoParaCobrar()
+    await llenarYCobrar()
+    await confirmar()
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+    const leidas = llamadas('GET', '/caja/ordenes-de-cobro').length
+
+    // it was charged after all: the backend no longer lists it as pending. coming back to the window does not read it
+    // (the attempt would leave with it); «Buscar» does, and says nothing of a withdrawal
+    const listado = ordenes()
+    listado.content = listado.content.filter((o) => o.orden_id !== O1)
+    rutaDe('GET', '/caja/ordenes-de-cobro').body = listado
+    volverALaVentana()
+    fireEvent(window, new Event('visibilitychange'))
+    await new Promise((resolver) => setTimeout(resolver, 50))
+    expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(leidas)
+    await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
+    await waitFor(() => expect(screen.queryByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })).not.toBeInTheDocument())
+    expect(main().queryByText(/fue retirada por el sistema de origen/)).not.toBeInTheDocument()
+  })
+
+  it('does not read again before confirming while an attempt’s outcome is not known: it goes again as it was', async () => {
+    start({ path: EN_C01 })
+    caida = new TypeError('Failed to fetch')
+    await marcar('PREDIAL-2026-0001')
+    await marcar('PREDIAL-2026-0002')
+    await waitFor(() => expect(botonCobrar()).toBeEnabled())
+    await llenarYCobrar()
+    await confirmar()
+    expect(texto(await main().findByRole('alert'))).toContain(NO_SE_SABE)
+    const leidas = llamadas('GET', '/caja/ordenes-de-cobro').length
+
+    caida = null
+    rutaDe('GET', '/caja/ordenes-de-cobro').body = sinLaSegunda()
+    await userEvent.click(botonCobrar())
+    await screen.findByRole('dialog', { name: 'Confirmar el cobro' })
+    expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(leidas)
+    await confirmar()
+    await waitFor(() => expect(cabeceras).toHaveLength(2))
+    expect(llamadas('POST', '/caja/cobros').at(-1)?.body).toMatchObject({ ordenes: [O1, O2] })
+    expect(cabeceras[1].get('Idempotency-Key')).toBe(cabeceras[0].get('Idempotency-Key'))
+  })
+
+  it('labels «reemplaza a» an order that substitutes another', async () => {
+    const listado = ordenes()
+    listado.content[1] = { ...listado.content[1], sustituye_a: 'PREDIAL-2026-0002-v1' } as (typeof listado.content)[number]
+    start({ path: EN_C01, listado })
+    await screen.findByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0002' })
+    const fila = main().getAllByRole('row')[2]
+    const referencia = within(fila).getAllByRole('cell')[3]
+    expect(texto(referencia)).toBe('PREDIAL-2026-0002reemplaza a PREDIAL-2026-0002-v1')
+    expect(main().getAllByText(/reemplaza a/)).toHaveLength(1)
   })
 })
 

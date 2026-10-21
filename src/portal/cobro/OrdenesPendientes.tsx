@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoadingState } from '@wasichai/core'
 import { Alert, Table, Td, Th } from '@wasichai/ui'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { formatDate } from '../../kit/format'
 import { errorMessage } from '../../kit/ui/errorMessage'
 import { Importe, SinDato } from '../cifras/Importe'
@@ -12,7 +12,11 @@ import { Cobro } from './Cobro'
 
 // the pending orders of a payer, a box per row to mark what is cobrado. an order that cannot be marked says why:
 // one not yet due, and one of another system than what is marked (a recibo is annulled whole, so it cobra the orders
-// of one system). the backend checks both again (the preview, the cobro): this only spares the clerk a refusal
+// of one system). the backend checks both again (the preview, the cobro): this only spares the clerk a refusal.
+//
+// the source system may withdraw an order after it was read (caja-backend's retiro, or a sustitución by a new version):
+// the list is read again when the clerk comes back to the window and before the confirmation (Cobro), and a marked
+// order that is no longer pending is unmarked and said, once, above the table
 
 const SIN_DATO = 'El sistema de origen no lo mandó'
 
@@ -51,8 +55,55 @@ export function OrdenesPendientes({
   sinCaja: string
   onCobrado: (hecho: CobroHecho) => void
 }) {
-  const ordenes = useQuery({ queryKey: ['caja', 'ordenes', documento], queryFn: () => cobro.ordenesPendientes(documento) })
+  const queryClient = useQueryClient()
+  // whether the cobro below is on its way or its outcome is not known (Cobro's onEnVilo)
+  const [enVilo, setEnVilo] = useState(false)
+  // only this screen refetches on focus (PortalApp turns it off for the rest): what is cobrado here must still be pending.
+  // not while a cobro is in the air: if it was charged, its orders would leave the list, and with them the attempt the
+  // clerk has to send again with the same key (envio.ts). «Buscar» still reads them, as before
+  const ordenes = useQuery({
+    queryKey: ['caja', 'ordenes', documento],
+    queryFn: () => cobro.ordenesPendientes(documento),
+    refetchOnWindowFocus: !enVilo
+  })
   const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(new Set())
+  // the names of the marked orders the last read no longer had, said until another order is marked
+  const [retiradas, setRetiradas] = useState<string[]>([])
+  // the read the marks were last compared with
+  const [leidas, setLeidas] = useState(ordenes.data)
+
+  // react-query's focus is the tab's visibility: coming back from another window of the same screen is a focus. a fetch
+  // already on its way is not started again (cancelRefetch false), so the two events of one return ask once
+  useEffect(() => {
+    if (enVilo) return
+    const alVolver = () => void queryClient.refetchQueries({ queryKey: ['caja', 'ordenes', documento], exact: true }, { cancelRefetch: false })
+    window.addEventListener('focus', alVolver)
+    return () => window.removeEventListener('focus', alVolver)
+  }, [queryClient, documento, enVilo])
+
+  // a new read: the marked orders it no longer has were withdrawn (or paid elsewhere) and are unmarked. while a cobro is
+  // in the air they are left alone: they may have gone with it, and its attempt must go again as it was (envio.ts).
+  // adjusted while rendering, not in an effect, so no frame shows a mark the read no longer has
+  if (ordenes.data !== leidas) {
+    setLeidas(ordenes.data)
+    const ahora = new Set(ordenes.data?.content.map((o) => o.orden_id))
+    const idas = leidas && ordenes.data && !enVilo ? leidas.content.filter((o) => marcadas.has(o.orden_id) && !ahora.has(o.orden_id)) : []
+    if (idas.length > 0) {
+      setMarcadas(new Set([...marcadas].filter((id) => ahora.has(id))))
+      setRetiradas(idas.map(nombreDe))
+    }
+  }
+
+  const releer = useCallback(async () => {
+    const leido = await queryClient.fetchQuery({ queryKey: ['caja', 'ordenes', documento], queryFn: () => cobro.ordenesPendientes(documento), staleTime: 0 })
+    return leido.content.map((o) => o.orden_id)
+  }, [queryClient, documento])
+
+  const volverABuscar = useCallback(() => {
+    setMarcadas(new Set())
+    setRetiradas([])
+    void queryClient.invalidateQueries({ queryKey: ['caja', 'ordenes', documento], exact: true })
+  }, [queryClient, documento])
 
   if (ordenes.isPending) return <LoadingState label="Buscando las órdenes pendientes…" />
   if (!ordenes.data) return <Alert tone="danger">No se pudieron leer las órdenes: {errorMessage(ordenes.error, 'el backend no contestó')}</Alert>
@@ -64,11 +115,27 @@ export function OrdenesPendientes({
     </Alert>
   )
 
+  const avisoDeRetiro = retiradas.length > 0 && (
+    <Alert tone="warning">
+      {retiradas.map((nombre) => (
+        <span key={nombre} className="block">
+          La orden {nombre} fue retirada por el sistema de origen.
+        </span>
+      ))}
+      <span className="mt-1 block">
+        {retiradas.length === 1
+          ? 'Ya no está pendiente: se quitó de lo marcado y el total se vuelve a pedir sin ella.'
+          : 'Ya no están pendientes: se quitaron de lo marcado y el total se vuelve a pedir sin ellas.'}
+      </span>
+    </Alert>
+  )
+
   const filas = ordenes.data.content
   if (filas.length === 0)
     return (
       <>
         {sinReleer}
+        {avisoDeRetiro}
         <p className="text-sm text-ink-muted">Este documento no tiene órdenes pendientes</p>
       </>
     )
@@ -79,12 +146,14 @@ export function OrdenesPendientes({
   const hoy = hoyEnLima()
   const pagador = filas.find((o) => o.pagador_nombre)?.pagador_nombre
 
-  const alternar = (id: string) =>
+  const alternar = (id: string) => {
+    setRetiradas([])
     setMarcadas((antes) => {
       const despues = new Set(antes)
       if (!despues.delete(id)) despues.add(id)
       return despues
     })
+  }
 
   return (
     <>
@@ -93,6 +162,7 @@ export function OrdenesPendientes({
           Órdenes pendientes
         </h2>
         {sinReleer}
+        {avisoDeRetiro}
         <p className="text-sm text-ink">
           Pagador: {pagador ? <strong>{pagador}</strong> : <SinDato motivo={SIN_DATO} />} ({documento})
         </p>
@@ -138,7 +208,11 @@ export function OrdenesPendientes({
                     )}
                   </Td>
                   <Td>{orden.detalle ?? <SinDato motivo={SIN_DATO} />}</Td>
-                  <Td>{orden.referencia_externa ?? <SinDato motivo={SIN_DATO} />}</Td>
+                  <Td>
+                    {orden.referencia_externa ?? <SinDato motivo={SIN_DATO} />}
+                    {/* a new version of a debt the source system redetermined: the one it replaces is no longer listed */}
+                    {orden.sustituye_a && <p className="mt-0.5 text-xs text-ink-muted">reemplaza a {orden.sustituye_a}</p>}
+                  </Td>
                   <Td>{orden.sistema_origen ?? <SinDato motivo={SIN_DATO} />}</Td>
                   <Td>{orden.fecha_exigibilidad ? formatDate(orden.fecha_exigibilidad) : <SinDato motivo={SIN_DATO} />}</Td>
                   <Td className="text-right">
@@ -163,6 +237,9 @@ export function OrdenesPendientes({
         sinCaja={sinCaja}
         ordenes={elegidas.map((o) => o.orden_id)}
         onCobrado={onCobrado}
+        releer={releer}
+        volverABuscar={volverABuscar}
+        onEnVilo={setEnVilo}
       />
     </>
   )

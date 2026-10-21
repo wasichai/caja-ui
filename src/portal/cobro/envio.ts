@@ -64,6 +64,8 @@ export function useEnvioDelCobro<Campo extends string>({
   const { borrador, escribir } = useEscritura(acto, borradorDe)
   const [errores, setErrores] = useState<Partial<Record<Campo, string>>>({})
   const [general, setGeneral] = useState<string | null>(null)
+  // whether the refusal was caja-backend's 422: an order marked was withdrawn by its source system after it was read
+  const [retirada, setRetirada] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const intento = useRef<Intento | null>(null)
   // what happened to the attempt whose outcome is not known (its key stays while this is not null), or null
@@ -73,6 +75,7 @@ export function useEnvioDelCobro<Campo extends string>({
   const revisar = (halladas: Partial<Record<Campo, string>>) => {
     setErrores(halladas)
     setGeneral(null)
+    setRetirada(false)
     return Object.keys(halladas).length === 0
   }
 
@@ -80,6 +83,7 @@ export function useEnvioDelCobro<Campo extends string>({
     const rechazo = repartirElRechazo(e, controles, rotular, 'No se pudo cobrar')
     setErrores(rechazo.errores)
     setGeneral(rechazo.general)
+    setRetirada(e instanceof ApiError && e.status === 422)
   }
 
   // sends `cuerpo` with the attempt's key (the same one when the same body is sent again). what it answered, or null:
@@ -91,12 +95,14 @@ export function useEnvioDelCobro<Campo extends string>({
     try {
       const hecho = await escribir(tecleado, () => mandar(clave))
       setIncierto(null)
+      setRetirada(false)
       return hecho
     } catch (e) {
       if (e instanceof SesionCaducada) return null
       if (sinDesenlace(e)) {
         setErrores({})
         setGeneral(null)
+        setRetirada(false)
         setIncierto(loQuePaso(e))
       } else contar(e)
       return null
@@ -111,5 +117,5 @@ export function useEnvioDelCobro<Campo extends string>({
     setIncierto(null)
   }
 
-  return { borrador, errores, general, incierto, enviando, revisar, enviar, olvidarIntento }
+  return { borrador, errores, general, retirada, incierto, enviando, revisar, enviar, olvidarIntento }
 }

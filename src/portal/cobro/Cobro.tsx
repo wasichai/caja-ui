@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@wasichai/core'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Importe } from '../cifras/Importe'
 import { AvisoDeBorrador } from '../escritura/useEscritura'
 import { loQueFalta, type Par } from '../shell/navTree'
@@ -32,7 +32,10 @@ export function Cobro({
   caja,
   sinCaja,
   ordenes,
-  onCobrado
+  onCobrado,
+  releer,
+  volverABuscar,
+  onEnVilo
 }: {
   // the draft's key: the caja and the document of the route
   acto: string
@@ -42,9 +45,17 @@ export function Cobro({
   // the orden_id marked, in the table's order
   ordenes: string[]
   onCobrado: (hecho: CobroHecho) => void
+  // reads the pending orders again and gives the orden_id still pending: the source system may have withdrawn one since
+  // they were read (caja-backend's retiro). it throws if they could not be read
+  releer: () => Promise<string[]>
+  // after a withdrawn order's 422: the orders are read again and nothing stays marked
+  volverABuscar: () => void
+  // whether a cobro is on its way or its outcome is not known: an order that leaves the pending list then may have gone
+  // with this cobro, and is not to be called withdrawn
+  onEnVilo: (enVilo: boolean) => void
 }) {
   const { can } = useAuth()
-  const { borrador, errores, general, incierto, enviando, revisar, enviar, olvidarIntento } = useEnvioDelCobro({
+  const { borrador, errores, general, retirada, incierto, enviando, revisar, enviar, olvidarIntento } = useEnvioDelCobro({
     acto,
     borradorDe: CAMPOS,
     controles: CAMPOS,
@@ -53,6 +64,10 @@ export function Cobro({
   const [forma, setForma] = useState(borrador?.forma_pago ?? '')
   const [observacion, setObservacion] = useState(borrador?.observacion ?? '')
   const [confirmando, setConfirmando] = useState(false)
+  const [releyendo, setReleyendo] = useState(false)
+
+  const enVilo = enviando || incierto !== null
+  useEffect(() => onEnVilo(enVilo), [enVilo, onEnVilo])
 
   const vista = useQuery({
     queryKey: ['caja', 'vista-previa', ordenes],
@@ -70,10 +85,26 @@ export function Cobro({
         ? 'Marque las órdenes que va a cobrar.'
         : impedimentoDeLaVistaPrevia(vista.isError, previa)
 
-  const pedir = (event: FormEvent) => {
+  // the orders are read again before the confirmation: one withdrawn since they were read is unmarked, with a warning
+  // above (OrdenesPendientes), and the clerk sees the new total before confirming. not while an attempt's outcome is
+  // not known: its orders may be missing because it was charged, and the same key must go again (envio.ts). a read that
+  // fails does not stop the cobro: caja-backend refuses a withdrawn order anyway (422)
+  const pedir = async (event: FormEvent) => {
     event.preventDefault()
-    if (impedido) return
-    if (revisar(validarCobro(forma, observacion))) setConfirmando(true)
+    if (impedido || releyendo) return
+    if (!revisar(validarCobro(forma, observacion))) return
+    if (incierto === null) {
+      setReleyendo(true)
+      const pendientes = await releer().catch(() => null)
+      setReleyendo(false)
+      if (pendientes && ordenes.some((id) => !pendientes.includes(id))) return
+    }
+    setConfirmando(true)
+  }
+
+  const deNuevo = () => {
+    revisar({})
+    volverABuscar()
   }
 
   const cobrar = async () => {
@@ -100,10 +131,17 @@ export function Cobro({
         />
       )}
 
-      <form onSubmit={pedir} noValidate className="max-w-xl space-y-4">
+      <form onSubmit={(event) => void pedir(event)} noValidate className="max-w-xl space-y-4">
         <CampoFormaDePago value={forma} onChange={setForma} error={errores.forma_pago} />
         <CampoObservacion value={observacion} onChange={setObservacion} error={errores.observacion} />
-        <PieDelCobro general={general} incierto={incierto} onOtroCobro={olvidarIntento} impedido={impedido} enviando={enviando} />
+        <PieDelCobro
+          general={general}
+          incierto={incierto}
+          onOtroCobro={olvidarIntento}
+          impedido={impedido}
+          enviando={enviando || releyendo}
+          onVolverABuscar={retirada ? deNuevo : undefined}
+        />
       </form>
 
       {confirmando && previa && caja && (

@@ -125,10 +125,30 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   - **El botón «Cobrar» nunca está mudo**: si no se puede (sin CREATE de `recibo` o UPDATE de `orden_de_cobro`, sin
     caja, sin nada marcado, sin el total, o con motivos del backend) dice por qué a su lado. Si las cajas no se
     pudieron leer (un 403, un error), dice eso con su motivo, no «Elija la caja».
-  - Un 400 se dice bajo su campo, o encima del botón si el formulario no tiene ese campo. Un 403, 404 o 409, con su
-    `detail`.
+  - Un 400 se dice bajo su campo, o encima del botón si el formulario no tiene ese campo. Un 403, 404, 409 o 422, con
+    su `detail`.
   - Un 401 guarda la forma de pago y la observación con `useEscritura`, con la clave `caja-tributaria.<caja>.<documento>`,
     y al volver a entrar con la misma cuenta el formulario se rellena.
+- **La orden que el sistema de origen retiró** (caja-backend #39 y #40): el origen puede retirar una orden, o
+  sustituirla por otra versión, después de que el cajero la leyó. Por eso:
+  - **La lista se vuelve a leer** al volver a la pestaña o a la ventana (solo en esta pantalla: `PortalApp` lo apaga
+    para el resto), y antes de abrir la confirmación del cobro. Una orden marcada que ya no está pendiente se desmarca,
+    y encima de la tabla se dice una sola vez «La orden {referencia} fue retirada por el sistema de origen.», hasta que
+    se marque otra. La confirmación no se abre: el cajero ve antes el total nuevo. Si esa lectura falla, el cobro
+    sigue, porque el backend rechaza igual una orden retirada.
+  - **Mientras un cobro va en camino o no se sabe si se cobró**, la lista no se vuelve a leer sola ni antes de
+    confirmar, y lo que falta en ella no se llama retirado: puede haberse ido con ese cobro, y su intento tiene que
+    salir otra vez igual, con la misma clave. «Buscar» la sigue leyendo, como antes.
+  - **El 422 del cobro** (una orden retirada entre la lectura y el cobro) se dice con su `detail`, con el botón
+    «Volver a buscar», que vuelve a leer las órdenes y deja sin marcar. No suelta la clave de un intento que no se sabe
+    si se cobró. Un 409 no lleva el botón.
+  - **Una orden que reemplaza a otra** (`sustituye_a`) dice «reemplaza a {referencia}» bajo su referencia. La
+    reemplazada ya no viene en la lista de pendientes.
+  - Hueco conocido: la lista de pendientes no dice por qué una orden dejó de estarlo, así que una cobrada en otra caja
+    entre las dos lecturas también se avisa como retirada, y sin el `motivo_retiro`. La consulta de las retiradas
+    (caja-ui #28) da el motivo.
+
+  Tests: el `describe('Caja tributaria: withdrawn orders')` de `cajaTributaria.test.tsx`.
 - **El recibo emitido**: número, emitido en (hora de Lima), forma de pago, total, pagador y líneas, en `FieldGrid` con
   el `kind` `importe`. El pagador es el que guardó el backend (`recibo.pagador_*`: el documento recortado y en
   mayúsculas), nunca el tecleado; sin pagador dice «No se identificó al pagador», como el PDF. Si fue el reenvío de un intento ya cobrado (200, `emitido: false`), lo dice. «Ver el recibo» abre
