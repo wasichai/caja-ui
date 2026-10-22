@@ -133,7 +133,8 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   sustituirla por otra versión, después de que el cajero la leyó. Por eso:
   - **La lista se vuelve a leer** al volver a la pestaña o a la ventana (solo en esta pantalla: `PortalApp` lo apaga
     para el resto), y antes de abrir la confirmación del cobro. Una orden marcada que ya no está pendiente se desmarca,
-    y encima de la tabla se dice una sola vez «La orden {referencia} fue retirada por el sistema de origen.», hasta que
+    y encima de la tabla se dice una sola vez «La orden {referencia} ya no está pendiente: la retiró el sistema de
+    origen o se cobró en otra caja.», hasta que
     se marque otra. La confirmación no se abre: el cajero ve antes el total nuevo. Si esa lectura falla, el cobro
     sigue, porque el backend rechaza igual una orden retirada.
   - **Mientras un cobro va en camino o no se sabe si se cobró**, la lista no se vuelve a leer sola ni antes de
@@ -144,9 +145,9 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
     si se cobró. Un 409 no lleva el botón.
   - **Una orden que reemplaza a otra** (`sustituye_a`) dice «reemplaza a {referencia}» bajo su referencia. La
     reemplazada ya no viene en la lista de pendientes.
-  - Hueco conocido: la lista de pendientes no dice por qué una orden dejó de estarlo, así que una cobrada en otra caja
-    entre las dos lecturas también se avisa como retirada, y sin el `motivo_retiro`. La consulta de las retiradas
-    (caja-ui #28) da el motivo.
+  - La lista de pendientes no dice por qué una orden dejó de estarlo: el aviso nombra las dos causas posibles (retirada
+    por el origen o cobrada en otra caja) y no da el `motivo_retiro`. La consulta de las retiradas (caja-ui #28) da el
+    motivo.
 
   Tests: el `describe('Caja tributaria: withdrawn orders')` de `cajaTributaria.test.tsx`.
 - **El recibo emitido**: número, emitido en (hora de Lima), forma de pago, total, pagador y líneas, en `FieldGrid` con

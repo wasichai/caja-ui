@@ -119,7 +119,7 @@ export function OrdenesPendientes({
     <Alert tone="warning">
       {retiradas.map((nombre) => (
         <span key={nombre} className="block">
-          La orden {nombre} fue retirada por el sistema de origen.
+          La orden {nombre} ya no está pendiente: la retiró el sistema de origen o se cobró en otra caja.
         </span>
       ))}
       <span className="mt-1 block">

@@ -663,7 +663,7 @@ describe('Caja tributaria: cobrar', () => {
 })
 
 describe('Caja tributaria: withdrawn orders', () => {
-  const RETIRADA = 'La orden PREDIAL-2026-0002 fue retirada por el sistema de origen.'
+  const RETIRADA = 'La orden PREDIAL-2026-0002 ya no está pendiente: la retiró el sistema de origen o se cobró en otra caja.'
   // what the backend answers now: the order of PREDIAL-2026-0002 is no longer pending (caja-backend's retiro)
   const sinLaSegunda = () => {
     const listado = ordenes()
@@ -804,7 +804,7 @@ describe('Caja tributaria: withdrawn orders', () => {
     expect(llamadas('GET', '/caja/ordenes-de-cobro')).toHaveLength(leidas)
     await userEvent.click(main().getByRole('button', { name: 'Buscar' }))
     await waitFor(() => expect(screen.queryByRole('checkbox', { name: 'Cobrar PREDIAL-2026-0001' })).not.toBeInTheDocument())
-    expect(main().queryByText(/fue retirada por el sistema de origen/)).not.toBeInTheDocument()
+    expect(main().queryByText(/ya no está pendiente: la retiró el sistema de origen/)).not.toBeInTheDocument()
   })
 
   it('does not read again before confirming while an attempt’s outcome is not known: it goes again as it was', async () => {
