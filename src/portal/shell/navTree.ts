@@ -12,7 +12,8 @@ import { PANTALLAS } from '../pantallas'
 // takes there. a tree is groups (with subgroups, optionally) and leaves
 
 // the leaves of tesorería, by the key and label of caja's tree (caja/frontend/src/pantallas/arbol.ts)
-export type ClaveDeHoja = 'caja-tributaria' | 'caja-tasas' | 'duplicado-recibo' | 'cierre-caja' | 'avance-recaudacion' | 'recaudacion-area'
+export type ClaveDeHoja =
+  'caja-tributaria' | 'ordenes-retiradas' | 'caja-tasas' | 'duplicado-recibo' | 'cierre-caja' | 'avance-recaudacion' | 'recaudacion-area'
 
 // what an account may do on an object of the model, as GET /api/auth/me/permissions lists it (ADR-020)
 export type Accion = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE'
@@ -47,6 +48,13 @@ export const NAV_TREE: NodoNav[] = [
     label: 'Tesorería',
     children: [
       { clave: 'caja-tributaria', label: 'Caja tributaria', to: '/caja-tributaria', seOfreceCon: [[lee('orden_de_cobro')]] },
+      // what the sources withdrew: GET /ordenes-de-cobro asks READ on orden_de_cobro, as the cash desk does
+      {
+        clave: 'ordenes-retiradas',
+        label: 'Órdenes retiradas por el origen',
+        to: '/ordenes-retiradas',
+        seOfreceCon: [[lee('orden_de_cobro')]]
+      },
       { clave: 'caja-tasas', label: 'Caja de tasas y derechos administrativos', to: '/caja-tasas', seOfreceCon: [[lee('tasa')]] },
       {
         clave: 'duplicado-recibo',

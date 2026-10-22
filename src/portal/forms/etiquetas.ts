@@ -12,7 +12,9 @@ const POR_CAMPO: Record<string, Record<string, string>> = {
   estado_orden: {
     PENDIENTE: 'Pendiente',
     PAGADA: 'Pagada',
-    ANULADA: 'Anulada'
+    // only its source system withdraws an order (POST /ordenes-de-cobro/retiro, or its replacement): annulling a recibo
+    // leaves its orders PENDIENTE again
+    ANULADA: 'Retirada por el origen'
   },
   tipo_pago: {
     NORMAL: 'Orden de cobro',

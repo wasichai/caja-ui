@@ -11,7 +11,7 @@ describe('etiqueta', () => {
     ['forma_pago', 'TRANSFERENCIA', 'Transferencia'],
     ['estado_orden', 'PENDIENTE', 'Pendiente'],
     ['estado_orden', 'PAGADA', 'Pagada'],
-    ['estado_orden', 'ANULADA', 'Anulada'],
+    ['estado_orden', 'ANULADA', 'Retirada por el origen'],
     ['estado_recibo', 'EMITIDO', 'Emitido'],
     ['estado_recibo', 'ANULADO', 'Anulado'],
     ['tipo_pago', 'NORMAL', 'Orden de cobro'],

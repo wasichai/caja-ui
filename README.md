@@ -22,14 +22,15 @@ comparten el login (el mismo token en `localStorage['caja.*']`):
 - **La cuenta de la barra** es la que contesta wasichai (`GET /api/auth/me`, con el nombre que core recibió al iniciar
   sesión). Si esa lectura falla, la barra dice «No se conoce la cuenta»: nunca inventa un nombre ni usa el correo
   tecleado.
-- **El árbol de Tesorería** (`src/portal/shell/navTree.ts`) tiene las seis hojas de `caja` con su clave y su rótulo.
+- **El árbol de Tesorería** (`src/portal/shell/navTree.ts`) tiene las seis hojas de `caja` con su clave y su rótulo,
+  y la de las órdenes retiradas por el origen.
   Cada hoja declara cuándo se ofrece: una lista de alternativas, y cada alternativa es una lista de pares objeto/acción
   que hay que tener todos. Se cruza con `GET /api/auth/me/permissions` (ADR-020) por `useAuth().can`: ADMIN las ve
   todas.
   - **Una hoja sin pantalla no se dibuja** (caja ADR-0044): una entrada de menú que no lleva a ninguna parte es un
     defecto. Las pantallas se registran en `src/portal/pantallas.ts`, una por PR. Mientras no haya ninguna, el Inicio
-    lo dice. Hoy están las seis: Caja tributaria, Caja de tasas y derechos administrativos, Duplicado de recibo, Cierre y
-    arqueo de caja, Avance de recaudación y Recaudación por área.
+    lo dice. Hoy están las siete: Caja tributaria, Órdenes retiradas por el origen, Caja de tasas y derechos
+    administrativos, Duplicado de recibo, Cierre y arqueo de caja, Avance de recaudación y Recaudación por área.
   - Un módulo que se queda sin hojas tampoco se dibuja.
   - **La pantalla se guarda con el mismo `seOfreceCon`** (`GuardaDeHoja`): quien llega por la URL sin permiso lee qué
     le falta («Su cuenta no puede abrir «Caja tributaria»: le falta lectura de orden_de_cobro.»), en vez de una
@@ -157,6 +158,29 @@ Cobra las órdenes pendientes que envían los sistemas de origen y emite el reci
   original ya no se puede pedir y que hay que pedir un duplicado.
 
 Tests: `src/portal/cajaTributaria.test.tsx`, `src/portal/guarda.test.tsx` y `src/portal/pdf.test.tsx`.
+
+### Órdenes retiradas por el origen (`/ordenes-retiradas`)
+
+`src/portal/cobro/OrdenesRetiradasPage.tsx`. Las órdenes que su sistema de origen retiró (`ANULADA`, que la etiqueta
+de `estado_orden` dice «Retirada por el origen»: un recibo anulado deja sus órdenes `PENDIENTE`, así que solo el origen
+deja una `ANULADA`). Se ofrece con READ sobre `orden_de_cobro`, el mismo par que exige
+`GET /api/caja/ordenes-de-cobro`: la ve el supervisor (`SUPERVISOR_CAJA`) y también el cajero que tiene ese permiso.
+
+- **La lista** es `GET /api/caja/ordenes-de-cobro?estado=ANULADA&pagador_documento=&page=&size=`, por fecha de
+  exigibilidad, como la ordena el backend. Cada fila lleva referencia, origen, concepto, pagador, importe con su fecha,
+  `motivo_retiro`, `retirada_en` (hora de Lima) y estado. Un motivo o una fecha que no llegan (un backend anterior a
+  caja-backend #39) dicen por qué, con `SinDato`.
+- **«sustituida por»**: una orden que el origen reemplazó (`sustituida_por`, de caja-backend #40) lo dice junto a su
+  referencia. Sin ese campo, la fila no lo menciona.
+- **El filtro vive en la ruta** (`?documento=&page=`): recargar o pasar el enlace lista lo mismo. Una búsqueda nueva
+  empieza en su primera página; la misma, en la primera página, se vuelve a pedir.
+- **Sin filtro de fecha.** El backend no filtra por fecha, así que la lista va por páginas de `TAMANO_DE_PAGINA` (200)
+  con `Pagination`. Una página que ya no tiene filas (un enlace viejo) lleva a la primera, no dice que no hay ninguna.
+- **El rechazo** de la lista se dice con el `detail` del backend.
+
+Tests: `src/portal/ordenesRetiradas.test.tsx` (la lista con motivo y fecha, sin motivo ni fecha, el filtro en la ruta
+al buscar y al cargar, las páginas, la página vacía, ninguna retirada, el rechazo, «sustituida por» y la hoja con y
+sin el permiso) y `src/portal/shell/navTree.test.tsx`.
 
 ### Caja de tasas y derechos administrativos (`/caja-tasas`)
 

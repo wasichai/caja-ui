@@ -16,13 +16,14 @@ const ofrecidas = (pares: string[]) =>
     .map((hoja) => hoja.clave)
 
 describe('NAV_TREE', () => {
-  it("has caja's six leaves of tesorería, with their keys and labels, and the administration for admins", () => {
+  it("has caja's six leaves of tesorería and the withdrawn orders, with their keys and labels, and the administration for admins", () => {
     const ver = (nodos: typeof NAV_TREE): unknown => nodos.map((nodo) => ('children' in nodo ? [nodo.label, ver(nodo.children)] : `${nodo.label} ${nodo.to}`))
     expect(ver(arbolPara(NAV_TREE, { isAdmin: true, can: () => true, conPantalla: () => true }))).toEqual([
       [
         'Tesorería',
         [
           'Caja tributaria /caja-tributaria',
+          'Órdenes retiradas por el origen /ordenes-retiradas',
           'Caja de tasas y derechos administrativos /caja-tasas',
           'Duplicado de recibo /duplicado-recibo',
           'Cierre y arqueo de caja /cierre-caja',
@@ -42,7 +43,7 @@ describe('NAV_TREE', () => {
 
   // the brief's table: each leaf with the pairs it needs, and the ones that are near but not enough
   it.each([
-    [['orden_de_cobro READ'], ['caja-tributaria']],
+    [['orden_de_cobro READ'], ['caja-tributaria', 'ordenes-retiradas']],
     [['tasa READ'], ['caja-tasas']],
     [['recibo READ'], ['duplicado-recibo']],
     [['anulacion_recibo CREATE'], ['duplicado-recibo']],
