@@ -155,6 +155,8 @@ function start({
     { method: 'POST', path: '/caja/turnos/cierre', status: 201, body: CIERRE },
     { method: 'POST', path: '/caja/turnos/reversion', status: 201, body: REVERSION },
     { method: 'GET', path: '/caja/pagos/sin-entregar', body: [] },
+    { method: 'GET', path: '/caja/pagos/a-cuenta', body: [] },
+    { method: 'GET', path: '/caja/cobros/sin-verificar', body: [] },
     ...rutasDeSesion(user, permisos)
   ]
   window.history.pushState({}, '', path)
@@ -949,5 +951,102 @@ describe('Cierre y arqueo de caja: no mute button, each impediment says why', ()
     await tablaDeArqueo()
     expect(await botonReversar()).toBeDisabled()
     expect(await botonReversar()).toHaveAccessibleDescription('Este turno está abierto: no hay ningún cierre que reversar.')
+  })
+})
+
+// what the source system received a cuenta in the day's turnos, and what was charged without checking with it
+// (caja-backend #44 and #45): listed apart, they keep nothing from closing
+const A_CUENTA = {
+  pago_id: '8f14e45f-ceea-467a-9575-4e1d2b1c0a11',
+  tipo: 'PAGO_REGISTRADO',
+  recibo: 'B001-00000123',
+  sistema_destino: 'rentas',
+  total: cifra('30.00'),
+  motivo_a_cuenta: 'la deuda ARB-p1|LIMP|2026|3|1|1 fue sustituida por ARB-p1|LIMP|2026|3|1|2',
+  entregado_en: '2026-10-02T10:15:30.123456-05:00'
+}
+const SIN_VERIFICAR = {
+  numero_impreso: 'B001-00000124',
+  cajero: CAJERA.email,
+  pagador_documento: '10203040',
+  pagador_nombre: 'ROSA QUISPE',
+  emitido_en: '2026-10-02T11:05:00.000001-05:00',
+  total: cifra('45.50'),
+  advertencia_origen: 'No se pudo comprobar con «rentas» que la deuda siguiera vigente; se cobró igual (sin-respuesta COBRAR): rentas no contestó'
+}
+const lista = (nombre: string) => main().findByRole('list', { name: nombre })
+const renglones = async (nombre: string) =>
+  within(await lista(nombre))
+    .getAllByRole('listitem')
+    .map((li) => texto(li))
+
+describe('Cierre y arqueo de caja: what the source received a cuenta, and what was charged without checking with it', () => {
+  it('lists the payments received a cuenta with motivo and importe', async () => {
+    start()
+    rutaDe('GET', '/caja/pagos/a-cuenta').body = [
+      A_CUENTA,
+      { ...A_CUENTA, pago_id: 'otro', recibo: null, total: null, motivo_a_cuenta: null, entregado_en: null }
+    ]
+    expect(await renglones('Recibidos a cuenta por el origen')).toEqual([
+      `Recibo B001-00000123 · rentas · S/ 30.00 · Motivo: ${A_CUENTA.motivo_a_cuenta} · Entregado el 02/10/2026 10:15 (hora de Lima)`,
+      'Recibo — el recibo no se pudo leer · rentas · — el backend no mandó el total del recibo · Motivo: — el origen no dijo por qué · Entregado el — el backend no mandó cuándo se entregó'
+    ])
+    // the day is the clerk's, the one of today's turnos
+    expect(llamadas('GET', '/caja/pagos/a-cuenta').map((c) => c.path)).toEqual([`/caja/pagos/a-cuenta?fecha=${AL}`])
+  })
+
+  it('says a day with no payment a cuenta, and none without verification', async () => {
+    start()
+    expect(await main().findByText('Ese día el sistema de origen no recibió ningún pago a cuenta.')).toBeInTheDocument()
+    expect(await main().findByText('Ese día no se cobró nada sin comprobarlo con el sistema de origen.')).toBeInTheDocument()
+  })
+
+  it('lists the cobros without verification with their advertencia', async () => {
+    start()
+    rutaDe('GET', '/caja/cobros/sin-verificar').body = [
+      SIN_VERIFICAR,
+      { ...SIN_VERIFICAR, numero_impreso: 'B001-00000125', pagador_nombre: null, pagador_documento: null }
+    ]
+    expect(await renglones('Cobrados sin verificar con el origen')).toEqual([
+      `Recibo B001-00000124 · ${CAJERA.email} · ROSA QUISPE (10203040) · S/ 45.50 · Emitido el 02/10/2026 11:05 (hora de Lima) · ${SIN_VERIFICAR.advertencia_origen}`,
+      `Recibo B001-00000125 · ${CAJERA.email} · — pagador anónimo · S/ 45.50 · Emitido el 02/10/2026 11:05 (hora de Lima) · ${SIN_VERIFICAR.advertencia_origen}`
+    ])
+    expect(llamadas('GET', '/caja/cobros/sin-verificar').map((c) => c.path)).toEqual([`/caja/cobros/sin-verificar?fecha=${AL}`])
+  })
+
+  it('says what is missing without pago_evento READ', async () => {
+    const { pago_evento: _sinLectura, ...sinPagoEvento } = SUPERVISOR.objects
+    start({ user: SUPERVISORA, permisos: { admin: false, objects: sinPagoEvento } })
+    expect(await main().findByText('Su cuenta no puede ver los pagos recibidos a cuenta: le falta lectura de pago_evento.')).toBeInTheDocument()
+    // the cobros without verification ask only READ on recibo: they are still listed
+    await main().findByText('Ese día no se cobró nada sin comprobarlo con el sistema de origen.')
+    expect(llamadas('GET', '/caja/pagos/a-cuenta')).toEqual([])
+  })
+
+  it('says what is missing without recibo READ, and asks neither list', async () => {
+    const { recibo: _sinLectura, ...sinRecibo } = CAJERO.objects
+    start({ permisos: { admin: false, objects: sinRecibo } })
+    expect(await main().findByText('Su cuenta no puede ver los pagos recibidos a cuenta: le falta lectura de recibo.')).toBeInTheDocument()
+    expect(await main().findByText('Su cuenta no puede ver los cobros sin verificar: le falta lectura de recibo.')).toBeInTheDocument()
+    expect(llamadas('GET', '/caja/pagos/a-cuenta')).toEqual([])
+    expect(llamadas('GET', '/caja/cobros/sin-verificar')).toEqual([])
+  })
+
+  it('says the backend’s refusal in its slot, and the leaf goes on', async () => {
+    start()
+    const detail = 'Ver los pagos recibidos a cuenta exige permiso de lectura sobre pago_evento: la lista dice qué pagos y de qué recibos'
+    Object.assign(rutaDe('GET', '/caja/pagos/a-cuenta'), { status: 403, body: problema(403, detail) })
+    Object.assign(rutaDe('GET', '/caja/cobros/sin-verificar'), { status: 400, body: problema(400, 'La fecha no es válida') })
+    expect(await main().findByText(`No se pudieron leer los pagos recibidos a cuenta: ${detail}`)).toBeInTheDocument()
+    expect(await main().findByText('No se pudieron leer los cobros sin verificar: La fecha no es válida')).toBeInTheDocument()
+    expect(await tablaDeArqueo()).toBeInTheDocument()
+  })
+
+  it('asks nothing until today’s turnos say the day', async () => {
+    start()
+    Object.assign(rutaDe('GET', '/caja/turnos/del-dia'), { status: 500, body: problema(500, 'falló') })
+    expect(await main().findAllByText('Sin el día de sus turnos no se sabe qué día listar.')).toHaveLength(2)
+    expect(llamadas('GET', '/caja/pagos/a-cuenta')).toEqual([])
+    expect(llamadas('GET', '/caja/cobros/sin-verificar')).toEqual([])
   })
 })

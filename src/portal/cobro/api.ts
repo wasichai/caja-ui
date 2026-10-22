@@ -1,5 +1,5 @@
 import { client, enviar } from '../api'
-import type { CajaEnLista, CobroHecho, NuevoCobro, OrdenDeCobro, Pagina, VistaPrevia } from '../types'
+import type { CajaEnLista, CobroHecho, CobroSinVerificar, NuevoCobro, OrdenDeCobro, Pagina, VistaPrevia } from '../types'
 
 // caja-backend's cobro (/api/caja/**), as the screens of the cash desk use it. the largest page the backend gives
 // (wasichai's PageRequest.MAX_SIZE): a screen that gets fewer than there are says so
@@ -28,6 +28,9 @@ export const cobro = {
   vistaPrevia: (ordenes: string[]) => enviar<VistaPrevia>('/caja/cobros/vista-previa', { ordenes }),
   // one key per attempt (cobro/intento.ts): the same one when the same attempt is sent again
   cobrar: (cuerpo: NuevoCobro, clave: string) => enviar<CobroHecho>('/caja/cobros', cuerpo, { 'Idempotency-Key': clave }),
+  // the recibos of a day charged without being able to check with their source, by emitido_en
+  sinVerificar: (fecha: string) => client.request<CobroSinVerificar[]>(`/caja/cobros/sin-verificar?${new URLSearchParams({ fecha })}`),
+  claveSinVerificar: ['caja', 'cobros', 'sin-verificar'] as const,
   // the original in PDF, for blob (PdfDialog)
   pdfDelRecibo: (numeroImpreso: string) => `/caja/recibos/${encodeURIComponent(numeroImpreso)}/pdf`
 }

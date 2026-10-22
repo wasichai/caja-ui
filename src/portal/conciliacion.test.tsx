@@ -64,6 +64,8 @@ const MERCADOS = {
   aplicados: 1,
   rechazados: 0,
   importe_aplicado: cifra('100.00'),
+  recibidos_a_cuenta: 0,
+  importe_a_cuenta: cifra('0.00'),
   diferencia: cifra('0.00'),
   por_que_no_se_sabe: null,
   cuadra: true
@@ -82,6 +84,8 @@ const RENTAS = {
   aplicados: null,
   rechazados: null,
   importe_aplicado: null,
+  recibidos_a_cuenta: null,
+  importe_a_cuenta: null,
   diferencia: null,
   por_que_no_se_sabe: NO_CONTESTO,
   cuadra: false
@@ -113,6 +117,8 @@ function start(path = '/cierre-caja') {
     { method: 'GET', path: `/caja/turnos/${T1}/arqueo`, body: { ...ARQUEO, turno_id: T1 } },
     { method: 'GET', path: `/caja/turnos/${T2}/arqueo`, body: { ...ARQUEO, turno_id: T2 } },
     { method: 'GET', path: '/caja/pagos/sin-entregar', body: [] },
+    { method: 'GET', path: '/caja/pagos/a-cuenta', body: [] },
+    { method: 'GET', path: '/caja/cobros/sin-verificar', body: [] },
     { method: 'GET', path: '/caja/conciliacion', body: CONCILIACION },
     ...rutasDeSesion(CAJERA, TESORERIA)
   ]
@@ -225,11 +231,12 @@ describe('Conciliación del día: the cuadre', () => {
         'Aplicados en el origen',
         'Rechazados en el origen',
         'Importe aplicado',
+        'A cuenta',
         'Diferencia',
         '¿Cuadra?',
         'Situación'
       ],
-      ['mercados', '1', '0', '0', '0', '0', 'S/ 100.00', 'S/ 0.00', 'S/ 100.00', '1', '1', '0', 'S/ 100.00', 'S/ 0.00', 'Sí', 'Cuadra'],
+      ['mercados', '1', '0', '0', '0', '0', 'S/ 100.00', 'S/ 0.00', 'S/ 100.00', '1', '1', '0', 'S/ 100.00', '0 · S/ 0.00', 'S/ 0.00', 'Sí', 'Cuadra'],
       [
         'rentas',
         '2',
@@ -240,6 +247,7 @@ describe('Conciliación del día: the cuadre', () => {
         'S/ 150.00',
         'S/ 50.00',
         'S/ 100.00',
+        `— ${NO_CONTESTO}`,
         `— ${NO_CONTESTO}`,
         `— ${NO_CONTESTO}`,
         `— ${NO_CONTESTO}`,
@@ -264,7 +272,18 @@ describe('Conciliación del día: the cuadre', () => {
       ...CONCILIACION,
       lineas: [
         RENTAS,
-        { ...MERCADOS, recibidos: null, aplicados: null, rechazados: null, importe_aplicado: null, diferencia: null, por_que_no_se_sabe: motivo, cuadra: false }
+        {
+          ...MERCADOS,
+          recibidos: null,
+          aplicados: null,
+          rechazados: null,
+          importe_aplicado: null,
+          recibidos_a_cuenta: null,
+          importe_a_cuenta: null,
+          diferencia: null,
+          por_que_no_se_sabe: motivo,
+          cuadra: false
+        }
       ]
     }
     const [, rentas, mercados] = await filas()
@@ -272,8 +291,8 @@ describe('Conciliación del día: the cuadre', () => {
       [rentas, NO_CONTESTO],
       [mercados, motivo]
     ] as const) {
-      const delOrigen = fila.slice(9, 14)
-      expect(delOrigen).toEqual(Array(5).fill(`— ${porQue}`))
+      const delOrigen = fila.slice(9, 15)
+      expect(delOrigen).toEqual(Array(6).fill(`— ${porQue}`))
       for (const celda of delOrigen) expect(celda).not.toMatch(/\b0\b|S\//)
     }
   })
@@ -287,7 +306,7 @@ describe('Conciliación del día: the cuadre', () => {
     const [, mercados] = await filas()
     expect(mercados.at(-2)).toBe('No')
     expect(mercados.at(-1)).toBe('No cuadra: en tránsito: 2 · sin entregar: 1 · rechazados en el origen: 3 · con diferencia')
-    expect(mercados[13]).toBe('-S/ 12.50')
+    expect(mercados[14]).toBe('-S/ 12.50')
   })
 
   it('takes the diferencia as the backend gives it: never the client’s subtraction', async () => {
@@ -299,7 +318,7 @@ describe('Conciliación del día: the cuadre', () => {
     }
     const [, mercados] = await filas()
     expect(mercados[12]).toBe('S/ 99.99')
-    expect(mercados[13]).toBe('S/ 0.02')
+    expect(mercados[14]).toBe('S/ 0.02')
   })
 
   it('says a day with no cobros, which squares', async () => {
@@ -307,5 +326,47 @@ describe('Conciliación del día: the cuadre', () => {
     rutaDe('GET', '/caja/conciliacion').body = { fecha: AL, a_la_fecha: AL, cuadra: true, lineas: [] }
     expect(await (await enElBloque()).findByText('Ese día no tiene ningún cobro registrado.')).toBeInTheDocument()
     expect(texto(await bloque())).toContain('¿Cuadra el día?: Sí: todas las líneas cuadran.')
+  })
+})
+
+describe('Conciliación del día: what the source received a cuenta', () => {
+  // mercados received three, applied one and kept two a cuenta: 100.00 − 70.00 − 30.00, the backend's diferencia
+  const A_CUENTA = { ...MERCADOS, recibidos: 3, importe_aplicado: cifra('70.00'), recibidos_a_cuenta: 2, importe_a_cuenta: cifra('30.00') }
+
+  it('shows the a cuenta column with count and amount', async () => {
+    start(`/cierre-caja?fecha=${AL}`)
+    rutaDe('GET', '/caja/conciliacion').body = { ...CONCILIACION, lineas: [A_CUENTA] }
+    const [cabecera, mercados] = await filas()
+    expect(cabecera[13]).toBe('A cuenta')
+    expect(mercados[13]).toBe('2 · S/ 30.00')
+    expect(mercados[14]).toBe('S/ 0.00')
+  })
+
+  it('a line with a cuenta and no rechazos says Cuadra', async () => {
+    start(`/cierre-caja?fecha=${AL}`)
+    rutaDe('GET', '/caja/conciliacion').body = { ...CONCILIACION, cuadra: true, lineas: [A_CUENTA] }
+    const [, mercados] = await filas()
+    expect(mercados.at(-2)).toBe('Sí')
+    expect(mercados.at(-1)).toBe('Cuadra')
+  })
+
+  it('never counts the a cuenta as a reason a line does not square', async () => {
+    start(`/cierre-caja?fecha=${AL}`)
+    rutaDe('GET', '/caja/conciliacion').body = { ...CONCILIACION, lineas: [{ ...A_CUENTA, en_transito: 1, cuadra: false }] }
+    const [, mercados] = await filas()
+    expect(mercados.at(-1)).toBe('No cuadra: en tránsito: 1')
+  })
+
+  it('an old origin without a cuenta fields shows SinDato', async () => {
+    start(`/cierre-caja?fecha=${AL}`)
+    // a backend from before the pago a cuenta: the two keys are not there at all
+    const { recibidos_a_cuenta: _recibidos, importe_a_cuenta: _importe, ...viejo } = MERCADOS
+    rutaDe('GET', '/caja/conciliacion').body = { ...CONCILIACION, cuadra: true, lineas: [viejo] }
+    const [, mercados] = await filas()
+    expect(mercados[13]).toBe('— el backend no mandó lo recibido a cuenta')
+    expect(mercados[13]).not.toMatch(/\b0\b|S\//)
+    // the rest of the line is drawn as before
+    expect(mercados.slice(9, 13)).toEqual(['1', '1', '0', 'S/ 100.00'])
+    expect(mercados.at(-1)).toBe('Cuadra')
   })
 })

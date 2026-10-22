@@ -116,6 +116,19 @@ export interface CobroHecho {
   emitido: boolean
 }
 
+// a row of GET /api/caja/cobros/sin-verificar?fecha= (a list, by emitido_en): a recibo of that day charged without
+// being able to check with its source system that the debt was still in force (sin-respuesta COBRAR).
+// advertencia_origen says why, cut to 400 characters; emitido_en in Lima's offset
+export interface CobroSinVerificar {
+  numero_impreso: string
+  cajero: string
+  pagador_documento: string | null
+  pagador_nombre: string | null
+  emitido_en: string
+  total: Cifra
+  advertencia_origen: string
+}
+
 // GET /api/caja/tasas?vigentes_a=: a tasa in force that day, by code, with its price as of it. its area is the code
 export interface TasaVigente {
   codigo: string
@@ -360,6 +373,20 @@ export interface PagoDelBuzon {
   explicacion: string | null
 }
 
+// a row of GET /api/caja/pagos/a-cuenta?fecha= (a list, by entregado_en): a payment the source system received «a
+// cuenta» in the turnos of that day (delivered, but the debt was no longer in force: it kept it as a credit of the
+// payer). recibo is the printed number, null when it could not be read, and so is total, the recibo's as of the day.
+// motivo_a_cuenta is the source's, cut to 400 characters; entregado_en in Lima's offset
+export interface PagoACuenta {
+  pago_id: string
+  tipo: string
+  recibo: string | null
+  sistema_destino: string
+  total: Cifra | null
+  motivo_a_cuenta: string | null
+  entregado_en: string | null
+}
+
 // POST /api/caja/pagos/{pago_id}/explicacion: what happened and what was done (kept in the event), and the observación
 // (kept in the audit). any other key is a 400
 export interface PeticionDeExplicacion {
@@ -425,8 +452,10 @@ export interface RecaudacionPorArea {
 }
 
 // a line of the reconciliation, per destination system: the buzón's counts and the recibos' figures, and what the
-// source system says (recibidos, aplicados, rechazados, importe_aplicado) with the diferencia. when the source did not
-// answer, could not be read or is not configured, those five are null, never 0, and por_que_no_se_sabe says why
+// source system says (recibidos, aplicados, rechazados, importe_aplicado, and apart what it received a cuenta) with the
+// diferencia (neto − importe_aplicado − importe_a_cuenta, the backend's). when the source did not answer, could not be
+// read or is not configured, those seven are null, never 0, and por_que_no_se_sabe says why. a backend from before the
+// pago a cuenta (caja-backend#41) does not send recibidos_a_cuenta nor importe_a_cuenta: they may be missing
 export interface LineaDeConciliacion {
   sistema_destino: string
   registrados: number
@@ -441,6 +470,8 @@ export interface LineaDeConciliacion {
   aplicados: number | null
   rechazados: number | null
   importe_aplicado: Cifra | null
+  recibidos_a_cuenta?: number | null
+  importe_a_cuenta?: Cifra | null
   diferencia: Cifra | null
   por_que_no_se_sabe: string | null
   cuadra: boolean

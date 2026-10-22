@@ -166,6 +166,8 @@ function start({
     { method: 'GET', path: '/caja/turnos/del-dia', body: DEL_DIA },
     { method: 'GET', path: `/caja/turnos/${T1}/arqueo`, body: arqueo(impiden) },
     { method: 'GET', path: '/caja/pagos/sin-entregar', body: sinEntregar },
+    { method: 'GET', path: '/caja/pagos/a-cuenta', body: [] },
+    { method: 'GET', path: '/caja/cobros/sin-verificar', body: [] },
     { method: 'POST', path: `/caja/pagos/${PAGO}/explicacion`, body: pago({ estado: 'EXPLICADO', explicacion: EXPLICACION }) },
     { method: 'POST', path: '/caja/turnos/cierre', status: 409, body: problema(409, 'Hay pagos sin entregar') },
     { method: 'GET', path: '/caja/conciliacion', body: conciliacion(1, 0) },
