@@ -290,7 +290,8 @@ Tests: `src/portal/duplicadoRecibo.test.tsx` (una prueba por fila de la tabla y 
 
 El turno del día del cajero, su arqueo por forma de pago, el cierre con lo que contó y su reversión. Se ofrece con
 lectura de `turno` (lo que ya decía el árbol), y con lo mismo se guarda su ruta. Debajo del arqueo, el bloque **«Pagos
-sin entregar»** y su explicación (más abajo), y al final la **«Conciliación del día»** (más abajo).
+sin entregar»** y su explicación (más abajo); después del acta, **«Recibidos a cuenta por el origen»** y **«Cobrados
+sin verificar con el origen»** (más abajo), y al final la **«Conciliación del día»** (más abajo).
 
 - **El turno del día**: `GET /api/caja/turnos/del-dia` (el cajero de la sesión, hoy en Lima; no abre ningún turno). La
   situación se dice en palabras: `SIN_ABRIR` (el turno se abre con el primer cobro), `ABIERTO`, `CERRADO` (para seguir
@@ -347,7 +348,29 @@ sin entregar»** y su explicación (más abajo), y al final la **«Conciliación
     cajero del turno, y otra cuenta no puede hacerlo por él); el turno del
     día no se pudo leer; hoy no hay turno; no se eligió ninguno; el backend no mandó su caja; el turno está abierto.
 
-Tests: `src/portal/cierreCaja.test.tsx` (una prueba por situación y una por motivo de cada botón impedido).
+Tests: `src/portal/cierreCaja.test.tsx` (una prueba por situación y una por motivo de cada botón impedido, y las de
+los pagos a cuenta y los cobros sin verificar: cada lista con lo que falta en `SinDato`, el día sin ninguno, lo que le
+falta a una cuenta sin lectura de `pago_evento` o de `recibo`, el rechazo del backend en su hueco y nada pedido sin el
+día de los turnos).
+
+#### Recibidos a cuenta y cobrados sin verificar (en la hoja `cierre-caja`, `turno/LoDelOrigen.tsx`)
+
+Dos bloques después del acta, con lo que **no impide cerrar** y por eso mismo alguien tiene que mirar. El día es el de
+los turnos de hoy del cajero (`GET /turnos/del-dia`); mientras no se lee no se pide nada, y si no se pudo leer, cada
+bloque dice que sin ese día no sabe qué listar.
+
+- **«Recibidos a cuenta por el origen»**: `GET /api/caja/pagos/a-cuenta?fecha=` (una lista, por `entregado_en`), los
+  pagos entregados que el sistema de origen guardó como saldo a favor del pagador porque la deuda ya no estaba vigente.
+  Un `<ul>` con el recibo, el sistema, el total del recibo (`Importe`), el motivo del origen (`motivo_a_cuenta`) y
+  cuándo se entregó (hora de Lima). Lo que falta dice por qué (`SinDato`): el recibo que no se pudo leer, el total, el
+  motivo, la hora. Pide lectura de `pago_evento` y de `recibo`.
+- **«Cobrados sin verificar con el origen»**: `GET /api/caja/cobros/sin-verificar?fecha=` (una lista, por
+  `emitido_en`), los recibos cobrados sin poder comprobar con el origen que la deuda seguía vigente (su `sin-respuesta`
+  es `COBRAR`). Un `<ul>` con el número impreso, el cajero, el pagador (nombre y documento, o «pagador anónimo»), el
+  total, cuándo se emitió y la `advertencia_origen` tal cual. Pide lectura de `recibo`.
+- **Sin el permiso**, cada bloque dice qué le falta a la cuenta («Su cuenta no puede ver los pagos recibidos a cuenta:
+  le falta lectura de pago_evento.») y no pide nada; un rechazo del backend (403, 400) se dice con su `detail` en su
+  hueco, y la hoja sigue.
 
 #### Pagos sin entregar (en la hoja `cierre-caja`, `src/portal/buzon`)
 
@@ -396,9 +419,15 @@ Lo cobrado en ventanilla contra lo que cada sistema de origen dice haber aplicad
 - **`GET /api/caja/conciliacion?fecha=`**. El cuadre del día: el día conciliado, el día en que se leyó (`a_la_fecha`) y
   si cuadra (todas las líneas), como lo dice el backend. Una tabla «Por sistema de origen» con registrados, anulados,
   en tránsito, sin entregar (`muertos`), explicados, cobrado, anulado y neto (del buzón y los recibos), recibidos,
-  aplicados y rechazados en el origen, importe aplicado y diferencia (del origen), si cuadra y la situación. Las cifras
-  van a la fecha conciliada, una vez en el título de la tabla. **La diferencia es la del backend**: el cliente no resta.
-- **Un origen que no contestó, que no se pudo leer o que no está configurado** trae sus cinco cifras en null: cada una
+  aplicados y rechazados en el origen, importe aplicado, a cuenta y diferencia (del origen), si cuadra y la situación.
+  Las cifras van a la fecha conciliada, una vez en el título de la tabla. **La diferencia es la del backend**
+  (`neto − importe_aplicado − importe_a_cuenta`): el cliente no resta.
+- **«A cuenta»** son los pagos que el origen recibió como saldo a favor del pagador: `recibidos_a_cuenta` e
+  `importe_a_cuenta`, en una celda («2 · S/ 30.00»). **No son un rechazo**: una línea que cuadra dice «Cuadra» aunque
+  los tenga, y la situación de una que no cuadra no los nombra. Un backend de antes del pago a cuenta no manda esos
+  campos: la celda dice «el backend no mandó lo recibido a cuenta» (`SinDato`), nunca 0, y el resto de la línea se ve
+  igual.
+- **Un origen que no contestó, que no se pudo leer o que no está configurado** trae sus cifras en null: cada una
   de esas celdas dice `por_que_no_se_sabe` con `SinDato`, **nunca 0**, y la situación dice «No se sabe: …». Una línea
   que no cuadra dice por qué con lo que manda el backend (en tránsito, sin entregar, rechazados, con diferencia).
 - Un día sin cobros: «Ese día no tiene ningún cobro registrado.», y el día cuadra.
@@ -408,7 +437,8 @@ Lo cobrado en ventanilla contra lo que cada sistema de origen dice haber aplicad
 
 Tests: `src/portal/conciliacion.test.tsx` (sin día espera y no muestra ningún cero, el día en la ruta junto al turno y al
 recargar, el origen caído y el no configurado celda por celda, la situación, la diferencia del backend, el día sin
-cobros, el 400 y el 403).
+cobros, el 400 y el 403, y la columna «A cuenta»: su cuenta y su importe, la línea con pagos a cuenta que cuadra, la que
+no cuadra sin nombrarlos y el backend viejo sin esos campos).
 
 ### Avance de recaudación (`/avance-recaudacion`)
 

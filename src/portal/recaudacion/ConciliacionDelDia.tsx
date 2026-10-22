@@ -25,7 +25,9 @@ const CAMPO = 'conciliacion-fecha'
 // a zero as the backend writes it ("0.00", "-0.00"): read as text, never turned into a number
 const CERO = /^-?0+(\.0+)?$/
 
-// what the backend's verdict on a line rests on, in words: the counts and figures it sends, nothing worked out
+// what the backend's verdict on a line rests on, in words: the counts and figures it sends, nothing worked out. what
+// the source received a cuenta is never a reason: that money is the source's too, and the backend takes it off the
+// diferencia
 function situacion(linea: LineaDeConciliacion): string {
   if (linea.por_que_no_se_sabe !== null) return `No se sabe: ${linea.por_que_no_se_sabe}`
   if (linea.cuadra) return 'Cuadra'
@@ -42,6 +44,20 @@ function situacion(linea: LineaDeConciliacion): string {
 const SIN_CIFRA_DEL_ORIGEN = 'el backend no mandó la cifra del origen'
 function DelOrigen({ linea, children }: { linea: LineaDeConciliacion; children: ReactNode | null }) {
   return children === null ? <SinDato motivo={linea.por_que_no_se_sabe ?? SIN_CIFRA_DEL_ORIGEN} /> : <>{children}</>
+}
+
+// what the source received a cuenta: how many and how much. a backend from before the pago a cuenta does not send them
+// (missing, or null with no reason): that is said, never a 0
+const SIN_A_CUENTA = 'el backend no mandó lo recibido a cuenta'
+function ACuenta({ linea, cifra }: { linea: LineaDeConciliacion; cifra: (valor: Cifra) => ReactNode }) {
+  if (linea.por_que_no_se_sabe !== null) return <SinDato motivo={linea.por_que_no_se_sabe} />
+  const { recibidos_a_cuenta: recibidos, importe_a_cuenta: importe } = linea
+  if (recibidos === undefined || recibidos === null || !importe) return <SinDato motivo={SIN_A_CUENTA} />
+  return (
+    <>
+      <span className="tabular-nums">{recibidos}</span> · {cifra(importe)}
+    </>
+  )
 }
 
 export function ConciliacionDelDia() {
@@ -139,12 +155,16 @@ function ElCuadre({ conciliacion }: { conciliacion: LaConciliacion }) {
         <PorSistema lineas={conciliacion.lineas} />
       )}
       <p className="text-xs text-ink-muted">Cuando el sistema de origen no contesta, la línea dice por qué no se sabe en vez de mostrar un cero.</p>
+      <p className="text-xs text-ink-muted">
+        «A cuenta» son los pagos que el sistema de origen recibió como saldo a favor del pagador, porque la deuda ya no estaba vigente: no son un rechazo, el
+        dinero también lo tiene el origen y la diferencia ya lo descuenta.
+      </p>
     </>
   )
 }
 
 function PorSistema({ lineas }: { lineas: LineaDeConciliacion[] }) {
-  const fecha = fechaComun(lineas.flatMap((l) => [l.cobrado, l.anulado, l.neto, l.importe_aplicado, l.diferencia]))
+  const fecha = fechaComun(lineas.flatMap((l) => [l.cobrado, l.anulado, l.neto, l.importe_aplicado, l.importe_a_cuenta ?? null, l.diferencia]))
   const derecha = 'text-right'
   const cifra = (valor: Cifra) => <Importe cifra={valor} fechaDeLaTabla={fecha} />
   return (
@@ -169,6 +189,7 @@ function PorSistema({ lineas }: { lineas: LineaDeConciliacion[] }) {
           <Th className={derecha}>Aplicados en el origen</Th>
           <Th className={derecha}>Rechazados en el origen</Th>
           <Th className={derecha}>Importe aplicado</Th>
+          <Th className={derecha}>A cuenta</Th>
           <Th className={derecha}>Diferencia</Th>
           <Th>¿Cuadra?</Th>
           <Th>Situación</Th>
@@ -197,6 +218,9 @@ function PorSistema({ lineas }: { lineas: LineaDeConciliacion[] }) {
             </Td>
             <Td className={derecha}>
               <DelOrigen linea={linea}>{linea.importe_aplicado && cifra(linea.importe_aplicado)}</DelOrigen>
+            </Td>
+            <Td className={derecha}>
+              <ACuenta linea={linea} cifra={cifra} />
             </Td>
             <Td className={derecha}>
               <DelOrigen linea={linea}>{linea.diferencia && cifra(linea.diferencia)}</DelOrigen>

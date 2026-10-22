@@ -14,6 +14,7 @@ import { CLAVE_DE_LOS_TURNOS, turnos } from './api'
 import { Cuadra, Dato, PagosSinEntregar, porQueSinDeclarar, ResumenDelArqueo, TablaDeArqueo, SIN_DECLARAR } from './Arqueo'
 import { CerrarElTurno } from './CerrarElTurno'
 import { impedimentoDeCerrar, impedimentoDeReversar, type ElArqueo, type ElTurno } from './impedimentos'
+import { LoDelOrigen, type ElDia } from './LoDelOrigen'
 import { ReversarElCierre } from './ReversarElCierre'
 import { TurnoDelDia } from './TurnoDelDia'
 
@@ -21,7 +22,8 @@ import { TurnoDelDia } from './TurnoDelDia'
 // chosen (in the route, ?turno=, when there is more than one), the cierre with what was counted, and its reversal.
 // every figure is the backend's, and so is every state: after a write, the turno and its arqueo are read again, never
 // changed here. below the arqueo, the payments not delivered (MUERTO) and their explanation, which lets the turno close
-// (buzon/PagosSinEntregar.tsx). last, the reconciliation of a day chosen in the route (?fecha=,
+// (buzon/PagosSinEntregar.tsx). after the acta, what the source received a cuenta and what was charged without
+// checking with it, on the day of today's turnos (turno/LoDelOrigen.tsx). last, the reconciliation of a day chosen in the route (?fecha=,
 // recaudacion/ConciliacionDelDia.tsx)
 
 // the turno of the route, or the only one of the day; with several and none in the route, none
@@ -77,6 +79,8 @@ export function CierreCajaPage() {
       return despues
     })
   const clave = turno?.turno_id ?? 'ninguno'
+  // the day of today's turnos, the one the payments a cuenta and the cobros without verification are listed for
+  const dia: ElDia = delDia.isPending ? { estado: 'leyendo' } : delDia.data ? { estado: 'leido', fecha: delDia.data.fecha } : { estado: 'ilegible' }
 
   return (
     <div className="space-y-8">
@@ -115,6 +119,8 @@ export function CierreCajaPage() {
       ) : (
         recienCerrado && <ActaDelCierre acta={recienCerrado} titulo={`Acta del cierre del ${formatDate(recienCerrado.fecha)}`} />
       )}
+
+      <LoDelOrigen dia={dia} />
 
       <CerrarElTurno
         key={`cierre-${clave}`}
