@@ -47,8 +47,10 @@ export interface OrdenDeCobro {
   estado: string | null
   observacion: string | null
   // what caja-backend adds for an origin that withdraws or replaces its orders (#39, #40): a backend before them leaves
-  // them out. sustituye_a is the referencia_externa of the order this one replaces, of the same system
+  // them out. sustituye_a is the referencia_externa of the order this one replaces, of the same system; sustituida_por,
+  // in an ANULADA one, that of the order that replaced it
   sustituye_a?: string | null
+  sustituida_por?: string | null
   motivo_retiro?: string | null
   retirada_en?: string | null
 }
