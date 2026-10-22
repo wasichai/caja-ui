@@ -46,6 +46,11 @@ export interface OrdenDeCobro {
   pagador_externo_id: number | null
   estado: string | null
   observacion: string | null
+  // what caja-backend adds for an origin that withdraws or replaces its orders (#39, #40): a backend before them leaves
+  // them out. sustituye_a is the referencia_externa of the order this one replaces, of the same system
+  sustituye_a?: string | null
+  motivo_retiro?: string | null
+  retirada_en?: string | null
 }
 
 // a line of a recibo, or of a preview: what one order costs, or one tasa. a tasa's has its codigo, its cantidad and its

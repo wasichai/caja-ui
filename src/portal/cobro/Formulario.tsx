@@ -49,7 +49,8 @@ export function PieDelCobro({
   incierto,
   onOtroCobro,
   impedido,
-  enviando
+  enviando,
+  onVolverABuscar
 }: {
   general: string | null
   // what happened to the attempt that may have been charged, or null
@@ -57,6 +58,9 @@ export function PieDelCobro({
   onOtroCobro: () => void
   impedido: string | null
   enviando: boolean
+  // given when the refusal was a withdrawn order (envio.ts's retirada): the orders read are stale, and the way out is to
+  // read them again, not to press «Cobrar» on the same ones
+  onVolverABuscar?: () => void
 }) {
   return (
     <>
@@ -75,7 +79,18 @@ export function PieDelCobro({
           </span>
         </Alert>
       )}
-      {general && <Alert tone="danger">{general}</Alert>}
+      {general && (
+        <Alert tone="danger">
+          <span className="block">{general}</span>
+          {onVolverABuscar && (
+            <span className="mt-2 block">
+              <Button type="button" variant="secondary" size="sm" onClick={onVolverABuscar}>
+                Volver a buscar
+              </Button>
+            </span>
+          )}
+        </Alert>
+      )}
       <div className="flex flex-wrap items-center justify-end gap-3">
         {impedido && (
           <p id="cobro-impedido" className="text-sm text-ink-muted">
