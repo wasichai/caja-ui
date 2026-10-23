@@ -1,0 +1,23 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    # it only calls the github api: a hang must not burn the default 6 h
+    timeout-minutes: 10
+    steps:
+      # keeps one release pr open (version in package.json + CHANGELOG.md). merging it tags vX.Y.Z and creates the github release.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # a pr made with GITHUB_TOKEN triggers no workflow: ci.yml and commits.yml would never run on the release pr; a PAT lets them run
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
