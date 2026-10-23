@@ -567,6 +567,26 @@ yarn lint            # prettier --check (yarn format lo corrige)
 yarn build           # dist/, luego yarn preview
 ```
 
+## Releases
+
+Las versiones salen con [release-please](https://github.com/googleapis/release-please), igual que en wasichai-ui. En
+cada push a `main` (`.github/workflows/release-please.yml`) lee los commits convencionales y mantiene abierto un PR
+`chore(main): release X.Y.Z` que sube la `version` de `package.json` y escribe `CHANGELOG.md`. Al fusionarlo se crean el
+tag `vX.Y.Z` y el release de GitHub con esas notas. El paquete es `private`: no se publica nada en npm.
+
+- `feat` sube la versión menor y `fix` la de parche. `docs`, `chore`, `ci`, `refactor`, `test`, `build` y `style` no
+  salen en el changelog. Mientras la versión sea 0.x, un cambio incompatible (`feat!:` o `BREAKING CHANGE:`) también
+  sube la menor.
+- `version` y `CHANGELOG.md` no se editan a mano. La última versión publicada está en `.release-please-manifest.json` y
+  las reglas, en `release-please-config.json`.
+- **La primera release está fijada a 0.1.0** con `"release-as"` (como la v0.1.0 de wasichai-ui). Al fusionar ese primer
+  PR hay que quitar `release-as` de `release-please-config.json`: si se queda, release-please seguiría proponiendo
+  0.1.0. Para fijar otra versión más adelante, se añade de nuevo.
+- El secret `RELEASE_PLEASE_TOKEN` (Settings → Secrets and variables → Actions) es opcional: un PAT fine-grained de este
+  repo con Contents y Pull requests en lectura y escritura. Sin él se usa el `GITHUB_TOKEN`, que necesita Settings →
+  Actions → General → _Allow GitHub Actions to create and approve pull requests_ y con el que el PR de release no lanza
+  `ci.yml` ni `commits.yml`: sus checks no aparecen. Con el PAT sí.
+
 ## Notas
 
 - Versión de wasichai-ui: `@wasichai/*` 1.0.0, igual en todos los paquetes (`core`, `forms`, `pages`, `ui`, `views` y
